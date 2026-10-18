@@ -1,0 +1,27 @@
+{
+  "mode": "live_model_eval",
+  "provider": "dashscope",
+  "model": "qwen3.8-flash",
+  "passed": 3,
+  "total": 3,
+  "cases": [
+    {
+      "case_id": "read-note", "check": "answer", "passed": true,
+      "status": "completed", "verification": "unchecked", "steps": 2,
+      "seconds": 2.256, "known_input_tokens": 1661,
+      "known_output_tokens": 72, "usage_complete": true
+    },
+    {
+      "case_id": "create-report", "check": "artifact", "passed": true,
+      "status": "completed", "verification": "passed", "steps": 3,
+      "seconds": 4.297, "known_input_tokens": 2794,
+      "known_output_tokens": 185, "usage_complete": true
+    },
+    {
+      "case_id": "deny-write", "check": "no-write", "passed": true,
+      "status": "completed", "verification": "unchecked", "steps": 3,
+      "seconds": 4.047, "known_input_tokens": 2701,
+      "known_output_tokens": 220, "usage_complete": true
+    }
+  ]
+}

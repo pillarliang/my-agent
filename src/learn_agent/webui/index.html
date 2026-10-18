@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Learn Agent · 学习工作台</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="会话导航">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">a</span><div><strong>Learn Agent</strong><small>从一个循环开始</small></div></div>
+      <button id="new-session" class="primary new-session" type="button"><span aria-hidden="true">＋</span> 新建会话</button>
+      <div class="section-heading"><span>会话历史</span><button id="refresh" class="text-button" type="button">刷新</button></div>
+      <nav id="sessions" class="session-list" aria-label="已保存的会话"></nav>
+      <div class="sidebar-bottom"><span class="connection-dot" aria-hidden="true"></span>本地 Python 服务<small>UI 与 CLI 共享同一个 Agent 核心</small></div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar"><div><p class="eyebrow">AGENT WORKSPACE</p><h1 id="session-title">学习工作台</h1></div><span id="model-badge" class="badge">加载配置</span></header>
+      <div class="workspace-bar"><span id="permission" class="badge subtle">读取配置中</span><span id="workspace" class="workspace-path"></span></div>
+      <div id="mode-notice" class="mode-notice"></div>
+      <div id="error" class="error-banner" role="alert" hidden></div>
+      <section id="conversation" class="conversation" aria-label="聊天记录" aria-live="polite">
+        <div class="welcome">
+          <div class="welcome-mark" aria-hidden="true">a<span>↗</span></div>
+          <p class="eyebrow">观察一次完整的 Agent 执行</p>
+          <h2>发起任务，看见每一步。</h2>
+          <p>左侧保存会话，中间展示对话，右侧记录模型与工具的执行过程。</p>
+          <button class="example-task" id="example-task" type="button"><span>试一试</span><strong>读取 notes.txt，创建 report.md</strong><span aria-hidden="true">↗</span></button>
+          <p class="welcome-caption">直接向真实模型提交任务，并观察工具调用和执行结果。</p>
+        </div>
+      </section>
+      <div class="composer-wrap">
+        <button id="older" class="text-button older" type="button" hidden>加载更早的记录</button>
+        <form id="chat-form" class="composer">
+          <label class="sr-only" for="question">任务消息</label>
+          <textarea id="question" rows="3" maxlength="16000" placeholder="输入任务，或点击上面的示例任务…"></textarea>
+          <div class="composer-bottom"><span id="composer-hint">Enter 发送 · Shift + Enter 换行</span><button id="send" class="primary send" type="submit">发送消息 <span aria-hidden="true">↑</span></button></div>
+        </form>
+        <p id="session-identity" class="session-identity">任务与执行记录保存在本地 SQLite 中。</p>
+      </div>
+    </main>
+
+    <aside class="progress-panel" aria-label="工具调用进度">
+      <header class="progress-header"><div><p class="eyebrow">EXECUTION</p><h2>执行过程</h2></div><span id="stream-state" class="badge subtle" role="status">待命</span></header>
+      <div class="progress-intro"><p>模型提出动作，程序检查并执行。</p><span id="run-identity">发送消息后，事件将在这里出现。</span></div>
+      <ol id="progress" class="progress-list"></ol>
+      <details class="raw-events"><summary>查看原始事件</summary><pre id="raw-events">尚未选择 Run。</pre></details>
+      <div class="progress-footnote">事件来自执行记录。重新连接会补读进度，不会重新调用工具。</div>
+    </aside>
+  </div>
+</body>
+</html>

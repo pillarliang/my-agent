@@ -1,0 +1,13 @@
+.venv/
+.learn-agent/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.env
+.env.*
+!.env.example
+dist/
+*.egg-info/
+examples/workspace/report.md
