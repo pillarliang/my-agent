@@ -799,6 +799,20 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 @media print{.layout{display:block}.sidebar,.hero-actions,.diagram-actions,.code-copy,.chapter-nav,.back-top{display:none!important}.content{padding:0}.am-diagram{break-inside:avoid;border:0}.chapter{break-before:page}body{background:white}.book-group{border:0}.hero h1{font-size:30px}}
 
 .implementation-status{line-height:1.8;margin:0 0 22px;border-left:3px solid #94a3b8}.reference-extra,.historical-checks{margin:24px 0;padding:15px 18px;border:1px solid #e2e8f0;border-radius:8px;background:#fff}.reference-extra summary,.historical-checks summary{cursor:pointer;font-weight:650;font-size:14px}.reference-extra>p,.historical-checks>div{margin-top:16px}
+
+/* 系统职责地图：层次表达分工，状态文字表达当前实现范围。 */
+.system-map{padding-top:36px;scroll-margin-top:30px}
+.system-map>h2{font-size:27px;line-height:1.5;letter-spacing:-.03em;margin:0 0 12px}
+.system-tree,.system-tree ul{list-style:none;padding:0;margin:0}
+.system-tree>li{margin:22px 0}
+.system-tree>li>strong{display:block;font-size:17px;color:#111827}
+.system-tree ul{border-left:1px solid #dbe1e8;margin:8px 0 0 8px;padding-left:20px}
+.system-tree li li{padding:5px 0;font-size:14px;line-height:1.8}
+.system-tree a,.learning-route a{color:#2563eb;text-decoration:none}
+.system-tree a:hover,.learning-route a:hover{text-decoration:underline}
+.implementation-note{display:block;font-size:12px;color:#64748b}
+.learning-route{padding-left:24px;margin-bottom:0;font-size:14px}
+.learning-route li{margin:8px 0}
 </style></head><body>
 <!-- This file is the tutorial source. Edit its HTML and inline SVG directly. No Markdown build is required. -->
 <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -865,21 +879,21 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 <symbol id="diagram-stage-5-1-panel-B-1" viewBox="0 0 509 434"><defs xmlns="http://www.w3.org/2000/svg"><marker id="diagram-stage-5-1-panel-B-1-element-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><line xmlns="http://www.w3.org/2000/svg" class="am-lifeline" x1="54" y1="42" x2="54" y2="430"/><g xmlns="http://www.w3.org/2000/svg" data-key="Harness"><rect class="am-actor" x="12" y="8" width="84" height="34" rx="2"/><text x="54" y="25" text-anchor="middle" dominant-baseline="central" class="am-actor-text" font-weight="600">Harness</text></g><line xmlns="http://www.w3.org/2000/svg" class="am-lifeline" x1="231" y1="42" x2="231" y2="430"/><g xmlns="http://www.w3.org/2000/svg" data-key="状态库"><rect class="am-actor" x="189" y="8" width="84" height="34" rx="2"/><text x="231" y="25" text-anchor="middle" dominant-baseline="central" class="am-actor-text" font-weight="600">状态库</text></g><line xmlns="http://www.w3.org/2000/svg" class="am-lifeline" x1="343" y1="42" x2="343" y2="430"/><g xmlns="http://www.w3.org/2000/svg" data-key="执行器"><rect class="am-actor" x="301" y="8" width="84" height="34" rx="2"/><text x="343" y="25" text-anchor="middle" dominant-baseline="central" class="am-actor-text" font-weight="600">执行器</text></g><line xmlns="http://www.w3.org/2000/svg" class="am-lifeline" x1="455" y1="42" x2="455" y2="430"/><g xmlns="http://www.w3.org/2000/svg" data-key="外部资源"><rect class="am-actor" x="413" y="8" width="84" height="34" rx="2"/><text x="455" y="25" text-anchor="middle" dominant-baseline="central" class="am-actor-text" font-weight="600">外部资源</text></g><g xmlns="http://www.w3.org/2000/svg" data-step="0"><text x="142.5" y="70" text-anchor="middle">保存逻辑动作与幂等键</text><path class="am-edge" d="M54,80 L229,80" marker-end="url(#diagram-stage-5-1-panel-B-1-element-2)"/><text class="am-step" x="60" y="74" text-anchor="start">1</text></g><g xmlns="http://www.w3.org/2000/svg" data-step="1"><text x="198.5" y="110" text-anchor="middle">派发一次尝试</text><path class="am-edge" d="M54,120 L341,120" marker-end="url(#diagram-stage-5-1-panel-B-1-element-2)"/><text class="am-step" x="60" y="114" text-anchor="start">2</text></g><g xmlns="http://www.w3.org/2000/svg" data-step="2"><text x="399" y="150" text-anchor="middle">创建资源</text><path class="am-edge" d="M343,160 L453,160" marker-end="url(#diagram-stage-5-1-panel-B-1-element-2)"/><text class="am-step" x="349" y="154" text-anchor="start">3</text></g><g xmlns="http://www.w3.org/2000/svg" data-step="3"><text x="399" y="190" text-anchor="middle">创建成功</text><path class="am-edge am-edge--dashed" d="M455,200 L345,200" marker-end="url(#diagram-stage-5-1-panel-B-1-element-2)"/><text class="am-step" x="449" y="194" text-anchor="end">4</text></g><g xmlns="http://www.w3.org/2000/svg" data-step="4"><rect class="am-note" x="34" y="224" width="329" height="28" rx="2"/><text x="198.5" y="238" text-anchor="middle" dominant-baseline="central" font-size="12">回执到达前进程或网络中断</text></g><g xmlns="http://www.w3.org/2000/svg" data-step="5"><text x="142.5" y="274" text-anchor="middle">效果未知，不能推断失败</text><path class="am-edge" d="M54,284 L229,284" marker-end="url(#diagram-stage-5-1-panel-B-1-element-2)"/><text class="am-step" x="60" y="278" text-anchor="start">5</text></g><g xmlns="http://www.w3.org/2000/svg" data-step="6"><text x="254.5" y="314" text-anchor="middle">查询回执或实际资源</text><path class="am-edge" d="M54,324 L453,324" marker-end="url(#diagram-stage-5-1-panel-B-1-element-2)"/><text class="am-step" x="60" y="318" text-anchor="start">6</text></g><g xmlns="http://www.w3.org/2000/svg" data-step="7"><text x="254.5" y="354" text-anchor="middle">核对结果</text><path class="am-edge am-edge--dashed" d="M455,364 L56,364" marker-end="url(#diagram-stage-5-1-panel-B-1-element-2)"/><text class="am-step" x="449" y="358" text-anchor="end">7</text></g><g xmlns="http://www.w3.org/2000/svg" data-step="8"><text x="142.5" y="394" text-anchor="middle">补记事实并决定是否继续</text><path class="am-edge" d="M54,404 L229,404" marker-end="url(#diagram-stage-5-1-panel-B-1-element-2)"/><text class="am-step" x="60" y="398" text-anchor="start">8</text></g></symbol>
 <!-- 流程图：用户目标与总预算、主Run、子Run读取资料、子Run核对来源、汇合结果证据与未知项、检查实际产物并形成结论、授权与资源范围 · 阶段 6：按需求扩展能力与编排 -->
 <symbol id="diagram-stage-6-1-panel-C-1" viewBox="0 0 376 405"><defs xmlns="http://www.w3.org/2000/svg"><marker id="diagram-stage-6-1-panel-C-1-element-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g xmlns="http://www.w3.org/2000/svg"/><g xmlns="http://www.w3.org/2000/svg"><g data-step="0"><path class="am-edge" d="M295.5,49 L295.5,65 Q295.5,81 289.4,97 L283.4,113" marker-end="url(#diagram-stage-6-1-panel-C-1-element-2)"/></g><g data-step="1"><path class="am-edge" d="M281.1,148 L283.9,159.5 Q286.8,171 272.9,182.5 L259,194" marker-end="url(#diagram-stage-6-1-panel-C-1-element-2)"/></g><g data-step="1"><path class="am-edge" d="M244.6,147.6 L222.6,159.3 Q200.5,171 164.1,182.5 L127.7,194" marker-end="url(#diagram-stage-6-1-panel-C-1-element-2)"/></g><g data-step="2"><path class="am-edge" d="M237.9,229 L237.9,240.5 Q237.9,252 216.3,263.5 L194.6,275" marker-end="url(#diagram-stage-6-1-panel-C-1-element-2)"/></g><g data-step="3"><path class="am-edge" d="M72.2,229 L72.2,240.5 Q72.2,252 97.6,263.5 L123,275" marker-end="url(#diagram-stage-6-1-panel-C-1-element-2)"/></g><g data-step="4"><path class="am-edge" d="M161.7,310 L161.7,321.5 Q161.7,333 161.7,344.5 L161.7,356" marker-end="url(#diagram-stage-6-1-panel-C-1-element-2)"/></g><g data-step="5"><path class="am-edge am-edge--dashed" d="M144.1,49 L176.7,65 Q209.3,81 231.1,97 L252.9,113" marker-end="url(#diagram-stage-6-1-panel-C-1-element-2)"/><g class="am-edge-label"><rect x="192.8" y="72" width="33" height="18" rx="3"/><text x="209.3" y="81" text-anchor="middle" dominant-baseline="central">约束</text></g></g><g data-step="6"><path class="am-edge am-edge--dashed" d="M123.7,49 L137.7,65 Q151.7,81 151.7,105.8 Q151.7,130.5 151.7,150.8 Q151.7,171 176.2,182.5 L200.7,194" marker-end="url(#diagram-stage-6-1-panel-C-1-element-2)"/><g class="am-edge-label"><rect x="135.2" y="121.5" width="33" height="18" rx="3"/><text x="151.7" y="130.5" text-anchor="middle" dominant-baseline="central">约束</text></g></g><g data-step="7"><path class="am-edge am-edge--dashed" d="M87.1,49 L67.5,65 Q48,81 48,105.8 Q48,130.5 48,150.8 Q48,171 54.9,182.5 L61.7,194" marker-end="url(#diagram-stage-6-1-panel-C-1-element-2)"/><g class="am-edge-label"><rect x="31.5" y="121.5" width="33" height="18" rx="3"/><text x="48" y="130.5" text-anchor="middle" dominant-baseline="central">约束</text></g></g></g><g xmlns="http://www.w3.org/2000/svg"><g class="am-node am-node--rect" data-key="用户目标与总预算" data-step="0"><rect class="am-node-shape" x="229.5" y="14" width="132" height="35" rx="3"/><text x="295.5" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">用户目标与总预算</text></g><g class="am-node am-node--rect" data-key="主Run" data-step="0"><rect class="am-node-shape" x="244.6" y="113" width="64.4" height="35" rx="3"/><text x="276.8" y="130.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">主Run</text></g><g class="am-node am-node--rect" data-key="子Run读取资料" data-step="1"><rect class="am-node-shape" x="179.7" y="194" width="116.4" height="35" rx="3"/><text x="237.9" y="211.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">子Run读取资料</text></g><g class="am-node am-node--rect" data-key="子Run核对来源" data-step="1"><rect class="am-node-shape" x="14" y="194" width="116.4" height="35" rx="3"/><text x="72.2" y="211.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">子Run核对来源</text></g><g class="am-node am-node--rect" data-key="汇合结果证据与未知项" data-step="2"><rect class="am-node-shape" x="82.7" y="275" width="158" height="35" rx="3"/><text x="161.7" y="292.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">汇合结果证据与未知项</text></g><g class="am-node am-node--rect" data-key="检查实际产物并形成结论" data-step="4"><rect class="am-node-shape" x="76.2" y="356" width="171" height="35" rx="3"/><text x="161.7" y="373.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">检查实际产物并形成结论</text></g><g class="am-node am-node--rect" data-key="授权与资源范围" data-step="5"><rect class="am-node-shape" x="48.9" y="14" width="119" height="35" rx="3"/><text x="108.5" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">授权与资源范围</text></g></g></symbol>
-<!-- 流程图：构建Context与预算检查、请求模型并校验响应、停止并保留原因、有工具调用?、执行工具并保存回执、最终说明与可选检查、程序结论与证据 · Loop：控制一次任务怎样继续和停止 -->
+<!-- 流程图：构建Context与预算检查、请求模型并校验响应、停止并保留原因、有工具调用?、执行工具并保存回执、最终说明与可选检查、程序结论与证据 · Loop / Runner：控制一次任务怎样继续和停止 -->
 <symbol id="diagram-module-loop-1-panel-A-1" viewBox="0 0 570 444"><defs xmlns="http://www.w3.org/2000/svg"><marker id="diagram-module-loop-1-panel-A-1-element-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g xmlns="http://www.w3.org/2000/svg"/><g xmlns="http://www.w3.org/2000/svg"><g data-step="0"><path class="am-edge" d="M285.3,43.7 L380.7,57.9 Q476.1,72 476.1,83.5 L476.1,95" marker-end="url(#diagram-module-loop-1-panel-A-1-element-2)"/></g><g data-step="1"><path class="am-edge" d="M232.7,49 L252.5,60.5 Q272.3,72 272.3,92.3 Q272.3,112.5 272.3,137.3 Q272.3,162 284,183.3 L295.7,204.5" marker-end="url(#diagram-module-loop-1-panel-A-1-element-2)"/><g class="am-edge-label"><rect x="255.8" y="103.5" width="33" height="18" rx="3"/><text x="272.3" y="112.5" text-anchor="middle" dominant-baseline="central">超限</text></g></g><g data-step="2"><path class="am-edge" d="M487.8,130 L498.5,146 Q509.2,162 437,183.3 L364.8,204.5" marker-end="url(#diagram-module-loop-1-panel-A-1-element-2)"/><g class="am-edge-label"><rect x="464" y="153" width="90.5" height="18" rx="3"/><text x="509.2" y="162" text-anchor="middle" dominant-baseline="central">协议或模型错误</text></g></g><g data-step="3"><path class="am-edge" d="M464.4,130 L453.7,146 Q443,162 453.1,180.4 L463.3,198.8" marker-end="url(#diagram-module-loop-1-panel-A-1-element-2)"/></g><g data-step="4"><path class="am-edge" d="M485,246.7 L491.4,264.3 Q497.8,282 438.4,298 L378.9,314" marker-end="url(#diagram-module-loop-1-panel-A-1-element-2)"/><g class="am-edge-label"><rect x="487.1" y="273" width="21.5" height="18" rx="3"/><text x="497.8" y="282" text-anchor="middle" dominant-baseline="central">是</text></g></g><g data-step="5"><path class="am-edge" d="M268.2,314 L226.5,298 Q184.8,282 184.8,252 Q184.8,222 184.8,192 Q184.8,162 184.8,137.3 Q184.8,112.5 184.8,92.3 Q184.8,72 189.8,60.5 L194.9,49" marker-end="url(#diagram-module-loop-1-panel-A-1-element-2)"/></g><g data-step="6"><path class="am-edge" d="M440.3,236.7 L385,259.3 Q329.7,282 255.7,298.6 L181.8,315.2" marker-end="url(#diagram-module-loop-1-panel-A-1-element-2)"/><g class="am-edge-label"><rect x="319" y="273" width="21.5" height="18" rx="3"/><text x="329.7" y="282" text-anchor="middle" dominant-baseline="central">否</text></g></g><g data-step="7"><path class="am-edge" d="M109.3,349 L109.3,360.5 Q109.3,372 109.3,383.5 L109.3,395" marker-end="url(#diagram-module-loop-1-panel-A-1-element-2)"/></g><g data-step="8"><path class="am-edge am-edge--dashed" d="M91.9,314 L76.1,298 Q60.3,282 60.3,252 Q60.3,222 60.3,192 Q60.3,162 60.3,137.3 Q60.3,112.5 60.3,92.3 Q60.3,72 100.7,60.5 L141.1,49" marker-end="url(#diagram-module-loop-1-panel-A-1-element-2)"/><g class="am-edge-label"><rect x="15" y="153" width="90.5" height="18" rx="3"/><text x="60.3" y="162" text-anchor="middle" dominant-baseline="central">可选的有界修复</text></g></g></g><g xmlns="http://www.w3.org/2000/svg"><g class="am-node am-node--rect" data-key="构建Context与预算检查" data-step="0"><rect class="am-node-shape" x="120" y="14" width="165.3" height="35" rx="3"/><text x="202.6" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">构建Context与预算检查</text></g><g class="am-node am-node--rect" data-key="请求模型并校验响应" data-step="0"><rect class="am-node-shape" x="403.6" y="95" width="145" height="35" rx="3"/><text x="476.1" y="112.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">请求模型并校验响应</text></g><g class="am-node am-node--rect" data-key="停止并保留原因" data-step="1"><rect class="am-node-shape" x="245.9" y="204.5" width="119" height="35" rx="3"/><text x="305.4" y="222" text-anchor="middle" dominant-baseline="central" class="am-node-text">停止并保留原因</text></g><g class="am-node am-node--diamond" data-key="有工具调用?" data-step="3"><polygon class="am-node-shape" points="476.1,194 551.3,222 476.1,250 400.9,222"/><text x="476.1" y="222" text-anchor="middle" dominant-baseline="central" class="am-node-text">有工具调用?</text></g><g class="am-node am-node--rect" data-key="执行工具并保存回执" data-step="4"><rect class="am-node-shape" x="241.4" y="314" width="145" height="35" rx="3"/><text x="313.9" y="331.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">执行工具并保存回执</text></g><g class="am-node am-node--rect" data-key="最终说明与可选检查" data-step="6"><rect class="am-node-shape" x="36.8" y="314" width="145" height="35" rx="3"/><text x="109.3" y="331.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">最终说明与可选检查</text></g><g class="am-node am-node--rect" data-key="程序结论与证据" data-step="7"><rect class="am-node-shape" x="49.8" y="395" width="119" height="35" rx="3"/><text x="109.3" y="412.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">程序结论与证据</text></g></g></symbol>
-<!-- 流程图：有界自主循环、明确用量与停止原因、有界验证修复、可更新任务计划、按需接业务Graph · Loop：控制一次任务怎样继续和停止 -->
+<!-- 流程图：有界自主循环、明确用量与停止原因、有界验证修复、可更新任务计划、按需接业务Graph · Loop / Runner：控制一次任务怎样继续和停止 -->
 
 <!-- 流程图：Context与调用限制、供应商编码器、真实API请求、状态与内容解码、Reply或ModelError、完整续接材料、持久记录与下一次编码 · Model：隔离供应商协议，保留续接语义 -->
 <symbol id="diagram-module-model-1-panel-A-1" viewBox="0 0 338 468"><defs xmlns="http://www.w3.org/2000/svg"><marker id="diagram-module-model-1-panel-A-1-element-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g xmlns="http://www.w3.org/2000/svg"/><g xmlns="http://www.w3.org/2000/svg"><g data-step="0"><path class="am-edge" d="M172.9,49 L172.9,60.5 Q172.9,72 172.9,83.5 L172.9,95" marker-end="url(#diagram-module-model-1-panel-A-1-element-2)"/></g><g data-step="1"><path class="am-edge" d="M172.9,130 L172.9,141.5 Q172.9,153 172.9,164.5 L172.9,176" marker-end="url(#diagram-module-model-1-panel-A-1-element-2)"/></g><g data-step="2"><path class="am-edge" d="M172.9,211 L172.9,222.5 Q172.9,234 172.9,245.5 L172.9,257" marker-end="url(#diagram-module-model-1-panel-A-1-element-2)"/></g><g data-step="3"><path class="am-edge" d="M207.4,292 L230.1,303.5 Q252.8,315 252.8,326.5 L252.8,338" marker-end="url(#diagram-module-model-1-panel-A-1-element-2)"/></g><g data-step="4"><path class="am-edge" d="M138.4,292 L115.7,303.5 Q93,315 93,326.5 L93,338" marker-end="url(#diagram-module-model-1-panel-A-1-element-2)"/></g><g data-step="5"><path class="am-edge" d="M93,373 L93,384.5 Q93,396 93,407.5 L93,419" marker-end="url(#diagram-module-model-1-panel-A-1-element-2)"/></g></g><g xmlns="http://www.w3.org/2000/svg"><g class="am-node am-node--rect" data-key="Context与调用限制" data-step="0"><rect class="am-node-shape" x="103.3" y="14" width="139.3" height="35" rx="3"/><text x="172.9" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">Context与调用限制</text></g><g class="am-node am-node--rect" data-key="供应商编码器" data-step="0"><rect class="am-node-shape" x="119.9" y="95" width="106" height="35" rx="3"/><text x="172.9" y="112.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">供应商编码器</text></g><g class="am-node am-node--rect" data-key="真实API请求" data-step="1"><rect class="am-node-shape" x="122" y="176" width="101.8" height="35" rx="3"/><text x="172.9" y="193.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">真实API请求</text></g><g class="am-node am-node--rect" data-key="状态与内容解码" data-step="2"><rect class="am-node-shape" x="113.4" y="257" width="119" height="35" rx="3"/><text x="172.9" y="274.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">状态与内容解码</text></g><g class="am-node am-node--rect" data-key="Reply或ModelError" data-step="3"><rect class="am-node-shape" x="182" y="338" width="141.6" height="35" rx="3"/><text x="252.8" y="355.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">Reply或ModelError</text></g><g class="am-node am-node--rect" data-key="完整续接材料" data-step="4"><rect class="am-node-shape" x="40" y="338" width="106" height="35" rx="3"/><text x="93" y="355.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">完整续接材料</text></g><g class="am-node am-node--rect" data-key="持久记录与下一次编码" data-step="5"><rect class="am-node-shape" x="14" y="419" width="158" height="35" rx="3"/><text x="93" y="436.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">持久记录与下一次编码</text></g></g></symbol>
 <!-- 流程图：专用文件工具、有界搜索与结果引用、预期哈希编辑与产物回执、执行端口与Worker、按需接MCP或沙箱、按业务增加幂等与查询 · Tools：把模型提出的动作变成真实回执 -->
 
-<!-- 流程图：当前要求与执行链、收集候选内容、历史与资料及工具定义、核对来源与访问范围、选择必需与相关片段、预算不足时选择策略、编码与预算复核、能够发送? · Context：构建模型本次需要的工作视图 -->
+<!-- 流程图：当前要求与执行链、收集候选内容、历史与资料及工具定义、核对来源与访问范围、选择必需与相关片段、预算不足时选择策略、编码与预算复核、能够发送? · Context Manager：构建模型本次需要的工作视图 -->
 <symbol id="diagram-module-context-1-panel-B-1" viewBox="0 0 363 669"><defs xmlns="http://www.w3.org/2000/svg"><marker id="diagram-module-context-1-panel-B-1-element-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g xmlns="http://www.w3.org/2000/svg"/><g xmlns="http://www.w3.org/2000/svg"><g data-step="0"><path class="am-edge" d="M274,49 L274,60.5 Q274,72 248.3,83.5 L222.6,95" marker-end="url(#diagram-module-context-1-panel-B-1-element-2)"/></g><g data-step="1"><path class="am-edge" d="M93,49 L93,60.5 Q93,72 118.7,83.5 L144.4,95" marker-end="url(#diagram-module-context-1-panel-B-1-element-2)"/></g><g data-step="2"><path class="am-edge" d="M183.5,130 L183.5,141.5 Q183.5,153 183.5,164.5 L183.5,176" marker-end="url(#diagram-module-context-1-panel-B-1-element-2)"/></g><g data-step="3"><path class="am-edge" d="M183.5,211 L183.5,222.5 Q183.5,234 183.5,245.5 L183.5,257" marker-end="url(#diagram-module-context-1-panel-B-1-element-2)"/></g><g data-step="4"><path class="am-edge" d="M183.5,292 L183.5,303.5 Q183.5,315 183.5,326.5 L183.5,338" marker-end="url(#diagram-module-context-1-panel-B-1-element-2)"/></g><g data-step="5"><path class="am-edge" d="M183.5,373 L183.5,384.5 Q183.5,396 183.5,407.5 L183.5,419" marker-end="url(#diagram-module-context-1-panel-B-1-element-2)"/></g><g data-step="6"><path class="am-edge" d="M183.5,454 L183.5,465.5 Q183.5,477 183.5,488.5 L183.5,500" marker-end="url(#diagram-module-context-1-panel-B-1-element-2)"/></g><g data-step="7"><path class="am-edge" d="M209.3,545 L242,566.5 Q274.8,588 274.8,604 L274.8,620" marker-end="url(#diagram-module-context-1-panel-B-1-element-2)"/><g class="am-edge-label"><rect x="264" y="579" width="21.5" height="18" rx="3"/><text x="274.8" y="588" text-anchor="middle" dominant-baseline="central">是</text></g></g><g data-step="8"><path class="am-edge" d="M157.7,545 L125,566.5 Q92.2,588 92.2,604 L92.2,620" marker-end="url(#diagram-module-context-1-panel-B-1-element-2)"/><g class="am-edge-label"><rect x="81.5" y="579" width="21.5" height="18" rx="3"/><text x="92.2" y="588" text-anchor="middle" dominant-baseline="central">否</text></g></g></g><g xmlns="http://www.w3.org/2000/svg"><g class="am-node am-node--rect" data-key="当前要求与执行链" data-step="0"><rect class="am-node-shape" x="208" y="14" width="132" height="35" rx="3"/><text x="274" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">当前要求与执行链</text></g><g class="am-node am-node--rect" data-key="收集候选内容" data-step="0"><rect class="am-node-shape" x="130.5" y="95" width="106" height="35" rx="3"/><text x="183.5" y="112.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">收集候选内容</text></g><g class="am-node am-node--rect" data-key="历史与资料及工具定义" data-step="1"><rect class="am-node-shape" x="14" y="14" width="158" height="35" rx="3"/><text x="93" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">历史与资料及工具定义</text></g><g class="am-node am-node--rect" data-key="核对来源与访问范围" data-step="2"><rect class="am-node-shape" x="111" y="176" width="145" height="35" rx="3"/><text x="183.5" y="193.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">核对来源与访问范围</text></g><g class="am-node am-node--rect" data-key="选择必需与相关片段" data-step="3"><rect class="am-node-shape" x="111" y="257" width="145" height="35" rx="3"/><text x="183.5" y="274.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">选择必需与相关片段</text></g><g class="am-node am-node--rect" data-key="预算不足时选择策略" data-step="4"><rect class="am-node-shape" x="111" y="338" width="145" height="35" rx="3"/><text x="183.5" y="355.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">预算不足时选择策略</text></g><g class="am-node am-node--rect" data-key="编码与预算复核" data-step="5"><rect class="am-node-shape" x="124" y="419" width="119" height="35" rx="3"/><text x="183.5" y="436.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">编码与预算复核</text></g><g class="am-node am-node--diamond" data-key="能够发送?" data-step="6"><polygon class="am-node-shape" points="183.5,500 249,528 183.5,556 118,528"/><text x="183.5" y="528" text-anchor="middle" dominant-baseline="central" class="am-node-text">能够发送?</text></g><g class="am-node am-node--rect" data-key="输入视图返回Runner" data-step="7"><rect class="am-node-shape" x="200.7" y="620" width="148.1" height="35" rx="3"/><text x="274.8" y="637.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">输入视图返回Runner</text></g><g class="am-node am-node--rect" data-key="明确停止或缩小输入" data-step="8"><rect class="am-node-shape" x="19.7" y="620" width="145" height="35" rx="3"/><text x="92.2" y="637.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">明确停止或缩小输入</text></g></g></symbol>
 <!-- 流程图：历史与显式输入、候选提取、检查来源范围与冲突、确认并版本化写入、有效条目与索引、当前任务与身份、范围过滤与检索、带来源的Context片段 · Memory：选择跨会话保留的知识 -->
 <symbol id="diagram-module-memory-1-panel-A-1" viewBox="0 0 403 563"><defs xmlns="http://www.w3.org/2000/svg"><marker id="diagram-module-memory-1-panel-A-1-element-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g xmlns="http://www.w3.org/2000/svg"/><g xmlns="http://www.w3.org/2000/svg"><g data-step="0"><path class="am-edge" d="M86.5,49 L86.5,60.5 Q86.5,72 86.5,83.5 L86.5,95" marker-end="url(#diagram-module-memory-1-panel-A-1-element-2)"/></g><g data-step="1"><path class="am-edge" d="M86.5,130 L86.5,141.5 Q86.5,153 86.5,164.5 L86.5,176" marker-end="url(#diagram-module-memory-1-panel-A-1-element-2)"/></g><g data-step="2"><path class="am-edge" d="M86.5,211 L86.5,222.5 Q86.5,234 111.3,245.5 L136,257" marker-end="url(#diagram-module-memory-1-panel-A-1-element-2)"/></g><g data-step="3"><path class="am-edge" d="M173.8,292 L173.8,303.5 Q173.8,315 173.8,326.5 L173.8,338" marker-end="url(#diagram-module-memory-1-panel-A-1-element-2)"/></g><g data-step="4"><path class="am-edge" d="M328.8,380 L328.8,395 Q328.8,410 306.7,421.5 L284.7,433" marker-end="url(#diagram-module-memory-1-panel-A-1-element-2)"/></g><g data-step="5"><path class="am-edge" d="M173.8,387 L173.8,398.5 Q173.8,410 195.8,421.5 L217.8,433" marker-end="url(#diagram-module-memory-1-panel-A-1-element-2)"/></g><g data-step="6"><path class="am-edge" d="M251.3,468 L251.3,479.5 Q251.3,491 251.3,502.5 L251.3,514" marker-end="url(#diagram-module-memory-1-panel-A-1-element-2)"/></g><g data-step="7"><path class="am-edge" d="M261,211 L261,222.5 Q261,234 236.2,245.5 L211.5,257" marker-end="url(#diagram-module-memory-1-panel-A-1-element-2)"/></g></g><g xmlns="http://www.w3.org/2000/svg"><g class="am-node am-node--rect" data-key="历史与显式输入" data-step="0"><rect class="am-node-shape" x="27" y="14" width="119" height="35" rx="3"/><text x="86.5" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">历史与显式输入</text></g><g class="am-node am-node--rect" data-key="候选提取" data-step="0"><rect class="am-node-shape" x="46.5" y="95" width="80" height="35" rx="3"/><text x="86.5" y="112.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">候选提取</text></g><g class="am-node am-node--rect" data-key="检查来源范围与冲突" data-step="1"><rect class="am-node-shape" x="14" y="176" width="145" height="35" rx="3"/><text x="86.5" y="193.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">检查来源范围与冲突</text></g><g class="am-node am-node--rect" data-key="确认并版本化写入" data-step="2"><rect class="am-node-shape" x="107.8" y="257" width="132" height="35" rx="3"/><text x="173.8" y="274.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">确认并版本化写入</text></g><g class="am-node am-node--db" data-key="有效条目与索引" data-step="3"><path class="am-node-shape" d="M114.3,345 A59.5,7 0 0 1 233.3,345 V380 A59.5,7 0 0 1 114.3,380 Z"/><path class="am-node-shape" d="M114.3,345 A59.5,7 0 0 0 233.3,345"/><text x="173.8" y="366.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">有效条目与索引</text></g><g class="am-node am-node--rect" data-key="当前任务与身份" data-step="4"><rect class="am-node-shape" x="269.3" y="345" width="119" height="35" rx="3"/><text x="328.8" y="362.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">当前任务与身份</text></g><g class="am-node am-node--rect" data-key="范围过滤与检索" data-step="4"><rect class="am-node-shape" x="191.8" y="433" width="119" height="35" rx="3"/><text x="251.3" y="450.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">范围过滤与检索</text></g><g class="am-node am-node--rect" data-key="带来源的Context片段" data-step="6"><rect class="am-node-shape" x="175.1" y="514" width="152.3" height="35" rx="3"/><text x="251.3" y="531.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">带来源的Context片段</text></g><g class="am-node am-node--rect" data-key="更正与遗忘及过期" data-step="7"><rect class="am-node-shape" x="195" y="176" width="132" height="35" rx="3"/><text x="261" y="193.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">更正与遗忘及过期</text></g></g></symbol>
 <!-- 流程图：只有会话历史、显式remember与recall及forget、来源范围版本与关键词检索、候选提取与用户检查、按召回问题增加混合检索、受控后台整理 · Memory：选择跨会话保留的知识 -->
 
-<!-- 流程图：记录与排他运行、动作身份与只读续做、复用已知结果与故障检查、写入幂等与unknown对账、事件事实源、持久工作流 · State：保存执行事实，并从明确边界继续 -->
+<!-- 流程图：记录与排他运行、动作身份与只读续做、复用已知结果与故障检查、写入幂等与unknown对账、事件事实源、持久工作流 · Session / State：保存执行事实，并从明确边界继续 -->
 
 <!-- 流程图：待执行调用与身份、规范化资源与动作、Policy决策、拒绝并记录原因、保存具体动作并等待、受限执行后端、真实回执 · Policy：把授权落实到真实动作 -->
 <symbol id="diagram-module-policy-1-panel-A-1" viewBox="0 0 500 426"><defs xmlns="http://www.w3.org/2000/svg"><marker id="diagram-module-policy-1-panel-A-1-element-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g xmlns="http://www.w3.org/2000/svg"/><g xmlns="http://www.w3.org/2000/svg"><g data-step="0"><path class="am-edge" d="M101.3,49 L101.3,60.5 Q101.3,72 101.3,83.5 L101.3,95" marker-end="url(#diagram-module-policy-1-panel-A-1-element-2)"/></g><g data-step="1"><path class="am-edge" d="M167.3,126.4 L230.2,139.7 Q293.1,153 293.1,164.5 L293.1,176" marker-end="url(#diagram-module-policy-1-panel-A-1-element-2)"/></g><g data-step="2"><path class="am-edge" d="M326,218.8 L376.1,241.4 Q426.2,264 426.2,280 L426.2,296" marker-end="url(#diagram-module-policy-1-panel-A-1-element-2)"/><g class="am-edge-label"><rect x="408.3" y="255" width="35.8" height="18" rx="3"/><text x="426.2" y="264" text-anchor="middle" dominant-baseline="central">deny</text></g></g><g data-step="3"><path class="am-edge" d="M309.3,225.5 L323.7,244.8 Q338.2,264 248.6,281.6 L159,299.2" marker-end="url(#diagram-module-policy-1-panel-A-1-element-2)"/><g class="am-edge-label"><rect x="290.1" y="255" width="96.3" height="18" rx="3"/><text x="338.2" y="264" text-anchor="middle" dominant-baseline="central">require approval</text></g></g><g data-step="4"><path class="am-edge" d="M86.5,296 L86.5,280 Q86.5,264 86.5,234 Q86.5,204 86.5,178.5 Q86.5,153 90.7,141.5 L94.9,130" marker-end="url(#diagram-module-policy-1-panel-A-1-element-2)"/><g class="am-edge-label"><rect x="52.8" y="195" width="67.5" height="18" rx="3"/><text x="86.5" y="204" text-anchor="middle" dominant-baseline="central">批准后复核</text></g></g><g data-step="5"><path class="am-edge" d="M276.9,225.5 L262.5,244.8 Q248,264 248,280 L248,296" marker-end="url(#diagram-module-policy-1-panel-A-1-element-2)"/><g class="am-edge-label"><rect x="227.9" y="255" width="40.1" height="18" rx="3"/><text x="248" y="264" text-anchor="middle" dominant-baseline="central">allow</text></g></g><g data-step="6"><path class="am-edge" d="M248,331 L248,342.5 Q248,354 248,365.5 L248,377" marker-end="url(#diagram-module-policy-1-panel-A-1-element-2)"/></g></g><g xmlns="http://www.w3.org/2000/svg"><g class="am-node am-node--rect" data-key="待执行调用与身份" data-step="0"><rect class="am-node-shape" x="35.3" y="14" width="132" height="35" rx="3"/><text x="101.3" y="31.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">待执行调用与身份</text></g><g class="am-node am-node--rect" data-key="规范化资源与动作" data-step="0"><rect class="am-node-shape" x="35.3" y="95" width="132" height="35" rx="3"/><text x="101.3" y="112.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">规范化资源与动作</text></g><g class="am-node am-node--diamond" data-key="Policy决策" data-step="1"><polygon class="am-node-shape" points="293.1,176 362.8,204 293.1,232 223.3,204"/><text x="293.1" y="204" text-anchor="middle" dominant-baseline="central" class="am-node-text">Policy决策</text></g><g class="am-node am-node--rect" data-key="拒绝并记录原因" data-step="2"><rect class="am-node-shape" x="366.7" y="296" width="119" height="35" rx="3"/><text x="426.2" y="313.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">拒绝并记录原因</text></g><g class="am-node am-node--rect" data-key="保存具体动作并等待" data-step="3"><rect class="am-node-shape" x="14" y="296" width="145" height="35" rx="3"/><text x="86.5" y="313.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">保存具体动作并等待</text></g><g class="am-node am-node--rect" data-key="受限执行后端" data-step="5"><rect class="am-node-shape" x="195" y="296" width="106" height="35" rx="3"/><text x="248" y="313.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">受限执行后端</text></g><g class="am-node am-node--rect" data-key="真实回执" data-step="6"><rect class="am-node-shape" x="208" y="377" width="80" height="35" rx="3"/><text x="248" y="394.5" text-anchor="middle" dominant-baseline="central" class="am-node-text">真实回执</text></g></g></symbol>
@@ -910,15 +924,50 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 <!-- 流程图：Application、模型实现选择、OpenAI适配器、DashScope适配器、Runner、Model协议、OpenAI端点、配置的DashScope端点 · 当前运行时序与证据 -->
 
 </defs></svg>
-<div class="layout"><aside class="sidebar"><a class="brand" href="#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节或关键字" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="#overview">开始阅读</a><div class="nav-group-title">一、从 0 实现</div><a class="chapter-link" href="#stage-0" data-chapter="stage-0">阶段 0：闭合独立的最小 Agent Loop</a><a class="chapter-link" href="#stage-1" data-chapter="stage-1">阶段 1：从单文件提取模块与契约</a><a class="chapter-link" href="#stage-2" data-chapter="stage-2">阶段 2：约束动作并检查真实效果</a><a class="chapter-link" href="#stage-3" data-chapter="stage-3">阶段 3：会话、记录与上下文预算</a><a class="chapter-link" href="#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、模块原理与演进方案</div><a class="chapter-link" href="#module-loop" data-chapter="module-loop">Loop：控制一次任务怎样继续和停止</a><a class="chapter-link" href="#module-model" data-chapter="module-model">Model：隔离供应商协议，保留续接语义</a><a class="chapter-link" href="#module-tools" data-chapter="module-tools">Tools：把模型提出的动作变成真实回执</a><a class="chapter-link" href="#module-context" data-chapter="module-context">Context：构建模型本次需要的工作视图</a><a class="chapter-link" href="#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="#module-state" data-chapter="module-state">State：保存执行事实，并从明确边界继续</a><a class="chapter-link" href="#module-policy" data-chapter="module-policy">Policy：把授权落实到真实动作</a><a class="chapter-link" href="#module-extensions" data-chapter="module-extensions">Extensions：扩展方法、生命周期与外部能力</a><a class="chapter-link" href="#module-quality" data-chapter="module-quality">Quality：观测过程，验收结果，评测改进</a><a class="chapter-link" href="#module-orchestration" data-chapter="module-orchestration">Orchestration：决定执行者怎样分工和交接</a><a class="chapter-link" href="#module-interfaces" data-chapter="module-interfaces">Interfaces：入口共用应用服务，运行独立于展示</a><div class="nav-group-title">三、架构与参考</div><a class="chapter-link" href="#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
-<main class="content"><div class="reading"><header class="hero" id="overview"><p class="eyebrow">LEARN AGENT · 从 0 实现</p><h1>从一个独立 Agent Loop<br>逐步构建自己的 Harness</h1><p>从单文件、真实模型和一个只读工具开始，逐步拆分与扩展。</p><div class="hero-actions"><a class="primary" href="#stage-0">从阶段 0 开始</a><a class="secondary" href="../examples/00_plain_loop.py">打开阶段 0 源码</a><a class="secondary" href="#modules">查看模块方案</a></div><div class="reading-rule"><strong>当前状态：</strong>阶段 0 的独立 Loop 与阶段 1 的 Tools、Model 边界已实现。已完成阶段 0，可从<a href="#stage-1">阶段 1</a>继续；阶段 2–6 为后续目标。</div></header>
-<section class="book-group" id="learning"><h2>学习主线：从独立 Loop 逐步扩展</h2><p class="group-description">阶段 0 理解循环；阶段 1 提取工具与模型边界，再阅读可运行实现。阶段 2–6 按需求逐步实现。</p><article class="chapter" id="stage-0"><header class="chapter-header"><span class="kind">学习主线 · 当前与后续实现范围见正文</span><h2>阶段 0：闭合独立的最小 Agent Loop</h2></header><div class="am-md"><p>打开 examples/00_plain_loop.py，从 run_agent() 开始看。</p></div><section class="lesson-section" id="stage-0-p1-panel-A"><h3>1. 一次循环</h3><div class="lesson-body"><p>模型根据本次请求里的 <code>messages</code> 了解任务进展。工具在本地执行后，程序要把真实结果写回消息链；下一次请求时，模型才能据此继续判断。</p><figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 481 454" width="481" height="454" role="img" aria-label="时序图：Runner、ModelAdapter、ReadOnlyTool"><use href="#diagram-stage-0-1-panel-A-1"></use></svg></figure></div></section><section class="lesson-section" id="stage-0-p1-panel-B"><h3>2. 阅读循环</h3><div class="lesson-body"><p><a href="../examples/00_plain_loop.py">打开 00_plain_loop.py，定位 run_agent()</a>。</p><p>阅读时先抓住两个分支：模型提出工具调用，就执行并带着结果继续；没有工具调用且有非空文字，就返回说明。请求次数上限保证循环能够停止。</p><p><code>assistant.tool_calls[].id</code> 与 <code>tool.tool_call_id</code> 表示同一次调用。先记录模型提出的调用，再记录对应回执，下一次请求才能知道每个结果属于哪个动作。</p></div></section><section class="lesson-section" id="stage-0-p1-panel-C"><h3>3. 安装、配置与运行</h3><div class="lesson-body"><div class="am-md"><p>需要 Python 3.12 或更新版本与 uv；在项目根目录执行。按 <a href="../.env.example">.env.example</a> 配置有效的 DashScope Key、匹配的 HTTPS 端点和可用模型。已有环境变量优先，已有 .env 可以复用。</p></div><div class="am-code"><div class="am-code-head">项目根目录执行</div><pre><code>uv sync --locked
+<div class="layout"><aside class="sidebar"><a class="brand" href="#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节或关键字" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="#overview">开始阅读</a><a class="chapter-link" href="#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="#stage-0" data-chapter="stage-0">阶段 0：闭合独立的最小 Agent Loop</a><a class="chapter-link" href="#stage-1" data-chapter="stage-1">阶段 1：从单文件提取模块与契约</a><a class="chapter-link" href="#stage-2" data-chapter="stage-2">阶段 2：约束动作并检查真实效果</a><a class="chapter-link" href="#stage-3" data-chapter="stage-3">阶段 3：会话、记录与上下文预算</a><a class="chapter-link" href="#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="#module-interfaces" data-chapter="module-interfaces">Interfaces：入口共用应用服务，运行独立于展示</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="#module-model" data-chapter="module-model">Model：隔离供应商协议，保留续接语义</a><a class="chapter-link" href="#module-context" data-chapter="module-context">Context Manager：构建模型本次需要的工作视图</a><a class="chapter-link" href="#module-tools" data-chapter="module-tools">Tools：把模型提出的动作变成真实回执</a><a class="chapter-link" href="#module-policy" data-chapter="module-policy">Policy：把授权落实到真实动作</a><a class="chapter-link" href="#module-state" data-chapter="module-state">Session / State：保存执行事实，并从明确边界继续</a><a class="chapter-link" href="#module-quality" data-chapter="module-quality">Quality：观测过程，验收结果，评测改进</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="#module-extensions" data-chapter="module-extensions">Extensions：扩展方法、生命周期与外部能力</a><a class="chapter-link" href="#module-orchestration" data-chapter="module-orchestration">Orchestration：决定执行者怎样分工和交接</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><header class="hero" id="overview"><p class="eyebrow">LEARN AGENT · 从 0 实现</p><h1>从一个独立 Agent Loop<br>逐步构建自己的 Harness</h1><p>按阶段实现，用职责地图理解 Harness；当前已完成最小 Loop、Tools 与 LLMService。</p><div class="hero-actions"><a class="primary" href="#system-map">先看系统职责地图</a><a class="secondary" href="#stage-1">查看当前实现</a><a class="secondary" href="#stage-2">进入下一阶段</a></div><div class="reading-rule"><strong>当前状态：</strong>阶段 0 的独立 Loop 与阶段 1 的 Tools、Model 边界已实现。已完成阶段 0，可从<a href="#stage-1">阶段 1</a>继续；阶段 2–6 为后续目标。</div></header>
+<section class="system-map" id="system-map" aria-labelledby="system-map-title"><h2 id="system-map-title">逐步建成什么样的系统</h2>
+<p class="group-description">先看职责，再按阶段实现。下列状态描述当前代码；这是一张职责地图，不要求每项都成为独立目录或服务。</p>
+<ul class="system-tree">
+<li><strong><a href="#application">应用与行为配置</a></strong><ul>
+<li><a href="#module-interfaces">用户入口、任务目标、指令与工具选择</a><span class="implementation-note">当前：CLI 入口；模型连接配置由 LLMService 内部管理</span></li>
+</ul></li>
+<li><strong><a href="#modules">Harness 核心</a></strong><ul>
+<li><a href="#module-loop">Loop / Runner</a>：推进、预算、停止与汇总。<span class="implementation-note">已实现最小循环与请求次数上限</span></li>
+<li><a href="#module-model">Model / LLMService</a>：统一模型调用，隔离协议与连接配置。<span class="implementation-note">已实现单端点、非流式调用</span></li>
+<li><a href="#module-context">Context Manager</a>：选择、组织和计量本轮输入。<span class="implementation-note">待提取；当前每轮发送完整内存历史</span></li>
+<li><a href="#module-tools">Tools</a>：能力声明、校验、分发与真实回执。<span class="implementation-note">已实现 read_file、search_text</span></li>
+<li><a href="#module-policy">Policy</a>：授权、资源约束与按需审批。<span class="implementation-note">下一步；当前仅有文件访问范围检查</span></li>
+<li><a href="#module-state">Session / State</a>：执行链、历史、事件与持久记录。<span class="implementation-note">待实现；当前记录仅在内存</span></li>
+<li><a href="#module-quality">Quality</a>：进度、追踪、产物检查与评测。<span class="implementation-note">已有控制台进度和测试；独立验收、追踪与评测待实现</span></li>
+</ul></li>
+<li><strong><a href="#capabilities">按需求增加的能力</a></strong><ul>
+<li><a href="#capability-long-tasks">长任务与知识复用</a>：计划、压缩、检索、记忆。</li>
+<li><a href="#capability-reliable-execution">可靠执行与隔离</a>：调度、恢复、Worker、沙箱。</li>
+<li><a href="#capability-extensions">扩展与编排</a>：Skills、MCP、Hooks、Graph、多 Agent、UI。</li>
+</ul></li>
+<li id="external-resources"><strong>外部资源</strong><ul>
+<li>模型服务、<a href="../examples/workspace/">工作区</a>、数据库与外部 API。<span class="implementation-note">当前接入模型服务与本地工作区</span></li>
+</ul></li>
+</ul>
+<p class="reading-rule"><strong>你现在的位置：</strong>最小 Loop、Tools 和 LLMService 已完成。下一步进入<a href="#stage-2">阶段 2</a>，用受控写入建立 Policy 与产物验收；随后再增加会话、状态和上下文预算。</p>
+</section>
+<section class="book-group" id="learning"><h2>学习主线：从独立 Loop 逐步扩展</h2><p class="group-description">阶段表达学习依赖，职责地图表达模块分工。每阶段交付一个可运行版本；观测、验证与评测贯穿全程。</p>
+<details class="reference-extra"><summary>阶段与职责地图怎样对应</summary><ol class="learning-route">
+<li><a href="#stage-0">阶段 0 · 最小 Loop</a>：跑通一次模型、工具与反馈循环。</li>
+<li><a href="#stage-1">阶段 1 · 模块化边界</a>：提取 Tools、Model，Runner 通过统一接口调用。</li>
+<li><a href="#stage-2">阶段 2 · 受控动作</a>：增加 Policy 与 Quality 中的产物检查。</li>
+<li><a href="#stage-3">阶段 3 · 连续任务</a>：增加 Session / State 与 Context Manager。</li>
+<li><a href="#stage-4">阶段 4 · 长任务</a>：按问题选择计划、压缩、检索或长期记忆。</li>
+<li><a href="#stage-5">阶段 5 · 可靠执行</a>：增加恢复、Worker 与隔离。</li>
+<li><a href="#stage-6">阶段 6 · 扩展分支</a>：按需求接 Skills、MCP、Hooks、编排与 UI。</li>
+</ol></details><article class="chapter" id="stage-0"><header class="chapter-header"><span class="kind">学习主线 · 当前与后续实现范围见正文</span><h2>阶段 0：闭合独立的最小 Agent Loop</h2></header><div class="am-md"><p>打开 examples/00_plain_loop.py，从 run_agent() 开始看。</p></div><section class="lesson-section" id="stage-0-p1-panel-A"><h3>1. 一次循环</h3><div class="lesson-body"><p>模型根据本次请求里的 <code>messages</code> 了解任务进展。工具在本地执行后，程序要把真实结果写回消息链；下一次请求时，模型才能据此继续判断。</p><figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 481 454" width="481" height="454" role="img" aria-label="时序图：Runner、ModelAdapter、ReadOnlyTool"><use href="#diagram-stage-0-1-panel-A-1"></use></svg></figure></div></section><section class="lesson-section" id="stage-0-p1-panel-B"><h3>2. 阅读循环</h3><div class="lesson-body"><p><a href="../examples/00_plain_loop.py">打开 00_plain_loop.py，定位 run_agent()</a>。</p><p>阅读时先抓住两个分支：模型提出工具调用，就执行并带着结果继续；没有工具调用且有非空文字，就返回说明。请求次数上限保证循环能够停止。</p><p><code>assistant.tool_calls[].id</code> 与 <code>tool.tool_call_id</code> 表示同一次调用。先记录模型提出的调用，再记录对应回执，下一次请求才能知道每个结果属于哪个动作。</p></div></section><section class="lesson-section" id="stage-0-p1-panel-C"><h3>3. 安装、配置与运行</h3><div class="lesson-body"><div class="am-md"><p>需要 Python 3.12 或更新版本与 uv；在项目根目录执行。按 <a href="../.env.example">.env.example</a> 配置有效的 DashScope Key、匹配的 HTTPS 端点和可用模型。已有环境变量优先，已有 .env 可以复用。</p></div><div class="am-code"><div class="am-code-head">项目根目录执行</div><pre><code>uv sync --locked
 uv run python examples/00_plain_loop.py
 </code></pre></div><div class="am-md"><p>运行会请求真实模型并产生用量。默认最多四次请求，关闭 SDK 自动重试。模型会看到读取到的资料；示例工作区只放可用于本次学习的文件。</p></div></div></section><section class="lesson-section" id="stage-0-p1-panel-D"><h3>4. 阅读工具实现</h3><div class="lesson-body"><p>在<a href="../examples/00_plain_loop.py">同一文件</a>中，沿 <code>execute_tool()</code> → <code>read_file()</code> 阅读。</p><p>工具参数来自模型，属于外部输入，因此在 <code>execute_tool()</code> 入口校验。<code>read_file()</code> 专注文件读取与资源范围，这样可以单独测试，也方便以后复用。</p><p>文件不存在等预期失败也作为回执交给模型，给它修正请求的机会。模型请求失败或响应未正常结束时，循环则停止；不能把失败改写成成功或空内容。</p></div></section><section class="lesson-section" id="stage-0-p1-panel-E"><h3>5. 用实验解释闭环</h3><div class="lesson-body"><div class="am-md"><ol><li>读取 notes.txt，观察第一次调用、真实文本回执和下一轮输入。</li><li>请求不存在的文件，观察失败也能成为模型反馈。</li><li>在本地测试越界路径、非 UTF-8 或过大文件，观察工具拒绝结果。</li><li>让本地协议响应持续请求工具，验证 max_steps 会停止循环。</li></ol></div><div class="am-code"><div class="am-code-head">不请求外部模型的本地检查</div><pre><code>uv run pytest
 uv run ruff check learn_agent examples scripts tests
 uv run mypy
 uv run python scripts/check_docs.py
-</code></pre></div><div class="am-md"><p>本地测试使用实际 SDK 和本机 HTTP 服务检查消息协议，工具读取真实临时文件。它验证程序行为，不证明真实模型一定会选择正确工具。真实模型表现需单独运行示例观察。</p></div></div></section><section class="lesson-section" id="stage-0-p1-panel-F"><h3>6. 完成条件</h3><div class="lesson-body"><div class="am-md"><p>你能指出哪行发送模型请求、哪行产生文件读取、哪行把结果送回去，并能解释正常回答、读取失败与次数耗尽，就完成阶段 0。</p><p>下一步进入 <a href="#stage-1">阶段 1</a>：从这个文件提取模块与契约。用相同任务检查提取前后的交互。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#overview">← 回到开始</a><a href="#stage-1">阶段 1：从单文件提取模块与契约 →</a></nav></article><article class="chapter" id="stage-1">
+</code></pre></div><div class="am-md"><p>本地测试使用实际 SDK 和本机 HTTP 服务检查消息协议，工具读取真实临时文件。它验证程序行为，不证明真实模型一定会选择正确工具。真实模型表现需单独运行示例观察。</p></div></div></section><section class="lesson-section" id="stage-0-p1-panel-F"><h3>6. 完成条件</h3><div class="lesson-body"><div class="am-md"><p>你能指出哪行发送模型请求、哪行产生文件读取、哪行把结果送回去，并能解释正常回答、读取失败与次数耗尽，就完成阶段 0。</p><p>下一步进入 <a href="#stage-1">阶段 1</a>：从这个文件提取模块与契约。用相同任务检查提取前后的交互。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#system-map">← 系统职责地图</a><a href="#stage-1">阶段 1：从单文件提取模块与契约 →</a></nav></article><article class="chapter" id="stage-1">
 <header class="chapter-header"><span class="kind">已实现 · Tools 与 Model 第一版</span><h2>阶段 1：从单文件提取模块与契约</h2></header>
 <div class="am-md"><p>把单文件循环拆成三个职责：<strong>Tools 执行工具，Model 请求模型，Runner 控制循环。</strong>本阶段已完成两条模块边界，下面按当前代码说明实现顺序。</p></div>
 <section class="lesson-section" id="stage-1-p1-panel-A"><h3>1. Tools：定义工具，统一注册与执行</h3><div class="lesson-body"><div class="am-md">
@@ -966,7 +1015,81 @@ uv run python -m learn_agent
 <p>本地执行 <code>uv run pytest</code>，检查见 <a href="../tests/test_tools.py">test_tools.py</a> 与 <a href="../tests/test_models.py">test_models.py</a>。本轮已通过本地检查和一次真实 DashScope 示例：两次模型请求，搜索并回答 notes.txt 第 3 行的 LEARN-42。</p>
 </div></div></section>
 <nav class="chapter-nav" aria-label="章节导航"><a href="#stage-0">← 阶段 0：闭合独立的最小 Agent Loop</a><a href="#stage-2">阶段 2：约束动作并检查真实效果 →</a></nav></article>
-<article class="chapter" id="stage-2"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 2：约束动作并检查真实效果</h2></header><div class="am-md"><p>在模块化闭环上增加具体动作与独立检查；当前仍只有只读工具。</p></div><section class="lesson-section" id="stage-2-p1-panel-A"><h3>1. 输入版本</h3><div class="lesson-body"><div class="am-md"><p>阶段 1 提取出的循环、模型与工具边界。</p></div></div></section><section class="lesson-section" id="stage-2-p1-panel-B"><h3>2. 先增加一种动作</h3><div class="lesson-body"><div class="am-md"><p>如果任务需要生成报告，再增加只允许新建的 create_file。先定义参数与回执，再定义工作区范围、显式写授权和禁止覆盖。</p></div></div></section><section class="lesson-section" id="stage-2-p1-panel-C"><h3>3. 分开三个判断</h3><div class="lesson-body"><div class="am-md"><p>Schema 判断格式是否合法，Policy 判断动作是否获准，Verifier 检查实际产物。模型文字不能代替其中任何一个判断。</p></div></div></section><section class="lesson-section" id="stage-2-p1-panel-D"><h3>4. 实验与验收</h3><div class="lesson-body"><div class="am-md"><p>保留成功创建、未授权、越界、目标已存在和产物条件失败的案例。记录工具成功与验收失败可以同时成立。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-1">← 阶段 1：从单文件提取模块与契约</a><a href="#stage-3">阶段 3：会话、记录与上下文预算 →</a></nav></article><article class="chapter" id="stage-3"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 3：会话、记录与上下文预算</h2></header><div class="am-md"><p>实现会话、持久记录与输入预算，形成能连续处理任务的版本。</p></div><section class="lesson-section" id="stage-3-p1-panel-A"><h3>1. 输入版本</h3><div class="lesson-body"><div class="am-md"><p>已能执行受控动作并检查结果的单次运行。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-B"><h3>2. 逐步保存事实</h3><div class="lesson-body"><div class="am-md"><p>先定义 Session、Run、Step，再选择 SQLite 等存储实现。消息保存完整事实，事件保存进度，终态与结果共同提交。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-C"><h3>3. 构建工作视图</h3><div class="lesson-body"><div class="am-md"><p>将历史、当前链与工具定义交给 Context Builder；Loop 取得 Context 后再调用模型。先整轮裁剪旧历史，当前链本身超限就停止。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-D"><h3>4. 验收与边界</h3><div class="lesson-body"><div class="am-md"><p>重启后能查询记录并继续同一会话；输入裁剪不删除原始记录。保存历史不等于自动恢复中断任务，也不要求此时实现 Web。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-2">← 阶段 2：约束动作并检查真实效果</a><a href="#stage-4">阶段 4：根据真实失败选择长任务机制 →</a></nav></article><section class="reading-rule" id="mvp-checkpoint"><h3>阶段 3 的未来目标：构建自己的第一版 MVP</h3><p>当前已有独立 Loop、Tools 与 Model 第一版。随后逐步实现受控动作、验收、持久记录和输入预算，再按实际需求增加其他机制。</p><p>本教程中的模块方案是设计参考，不表示这些代码已经存在。</p></section><h2 id="after-mvp">阶段 4–6：按需求选择扩展</h2><p class="group-description">阶段 4–6 均未实现，按实际需求选择机制。</p><article class="chapter" id="stage-4"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 4：根据真实失败选择长任务机制</h2></header><div class="am-md"><p>按任务问题选一种机制，不把摘要、检索、记忆全部设为必修前置。</p></div><section class="lesson-section" id="stage-4-p1-panel-A"><h3>1. 建立基线</h3><div class="lesson-body"><div class="am-md"><p>固定任务、资料、模型配置和验收条件，记录遗漏、用量、延迟与失败。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-B"><h3>2. 选择机制</h3><div class="lesson-body"><div class="am-md"><p>结果过大先尝试有限预览与外部引用；历史挤掉约束时考虑任务状态或摘要；材料较多时考虑检索；跨会话复用时再考虑长期记忆。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-C"><h3>3. 实现与比较</h3><div class="lesson-body"><div class="am-md"><p>为输入保留来源、版本、包含与省略清单。只实现一个分支，用相同任务比较收益与新失败。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>能解释模型实际看到了什么，展示错误来源、更正和遗忘路径，并保留未解决的失败。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-3">← 阶段 3：会话、记录与上下文预算</a><a href="#stage-5">阶段 5：中断后怎样安全继续 →</a></nav></article><article class="chapter" id="stage-5"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 5：中断后怎样安全继续</h2></header><div class="am-md"><p>只有在需要跨进程继续时引入恢复协议。</p></div><section class="lesson-section" id="stage-5-p1-panel-A"><h3>1. 区分事实</h3><div class="lesson-body"><div class="am-md"><p>检查点说明停在哪里，回执说明观察到什么；超时或连接断开不能证明外部动作没有发生。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-B"><h3>2. 先做只读恢复</h3><div class="lesson-body"><div class="am-md"><p>保存稳定的运行与动作身份，从已知边界重建状态。对有副作用的动作，先核对结果，再决定重试。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-C"><h3>3. 注入故障</h3><div class="lesson-body"><div class="am-md"><p>分别中断于派发前、派发后未回执、取得结果未提交、提交回执后。检查实际副作用和恢复决策。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>区分未派发、已完成、仍运行与未知；未知动作不被无条件重试。需要不可信执行时再增加 Worker 或隔离后端。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-4">← 阶段 4：根据真实失败选择长任务机制</a><a href="#stage-6">阶段 6：按需求增加入口、扩展与编排 →</a></nav></article><article class="chapter" id="stage-6"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 6：按需求增加入口、扩展与编排</h2></header><div class="am-md"><p>从稳定的单 Agent 基线选择一个需求分支。</p></div><section class="lesson-section" id="stage-6-p1-panel-A"><h3>1. 应用入口</h3><div class="lesson-body"><div class="am-md"><p>需要 Web 时先让 CLI / HTTP 共用应用用例；执行、查询与观察分开，断开 SSE 不等于取消任务。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-B"><h3>2. 能力扩展</h3><div class="lesson-body"><div class="am-md"><p>方法资料可接 Skills，生命周期可接 Hooks，外部工具可接 MCP；每种扩展仍需权限、预算与回执。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-C"><h3>3. 编排分支</h3><div class="lesson-body"><div class="am-md"><p>固定业务流程可考虑 Graph；独立上下文与分工可考虑子 Agent。先定义输入、权限、预算、取消和结果汇合。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>与单 Agent 基线比较质量、费用、延迟和协调成本。能说明新增机制解决的真实问题，再保留这项复杂度。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-5">← 阶段 5：中断后怎样安全继续</a><a href="#module-loop">Loop：控制一次任务怎样继续和停止 →</a></nav></article></section><section class="book-group" id="modules"><h2>模块方案手册：按需查阅</h2><p class="group-description">按需查阅各类模块的原理、方案、取舍与练习。</p><article class="chapter" id="module-loop"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Loop：控制一次任务怎样继续和停止</h2></header><section class="lesson-section" id="module-loop-p1-panel-A"><h3>1. 实现原理：一个有边界的状态机</h3><div class="lesson-body"><div class="am-md"><p>以生成报告为例：用户请求进入当前状态，Builder 构建输入，Model 返回读取调用，执行器读取文件，Runner 保存结果并再次调用模型。模型也可能返回不含工具调用的文字，此时进入结果整理与可选检查。</p>
+<article class="chapter" id="stage-2"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 2：约束动作并检查真实效果</h2></header><div class="am-md"><p>在模块化闭环上增加具体动作与独立检查；当前仍只有只读工具。</p></div><section class="lesson-section" id="stage-2-p1-panel-A"><h3>1. 输入版本</h3><div class="lesson-body"><div class="am-md"><p>阶段 1 提取出的循环、模型与工具边界。</p></div></div></section><section class="lesson-section" id="stage-2-p1-panel-B"><h3>2. 先增加一种动作</h3><div class="lesson-body"><div class="am-md"><p>如果任务需要生成报告，再增加只允许新建的 create_file。先定义参数与回执，再定义工作区范围、显式写授权和禁止覆盖。</p></div></div></section><section class="lesson-section" id="stage-2-p1-panel-C"><h3>3. 分开三个判断</h3><div class="lesson-body"><div class="am-md"><p>Schema 判断格式是否合法，Policy 判断动作是否获准，Verifier 检查实际产物。模型文字不能代替其中任何一个判断。</p></div></div></section><section class="lesson-section" id="stage-2-p1-panel-D"><h3>4. 实验与验收</h3><div class="lesson-body"><div class="am-md"><p>保留成功创建、未授权、越界、目标已存在和产物条件失败的案例。记录工具成功与验收失败可以同时成立。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-1">← 阶段 1：从单文件提取模块与契约</a><a href="#stage-3">阶段 3：会话、记录与上下文预算 →</a></nav></article><article class="chapter" id="stage-3"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 3：会话、记录与上下文预算</h2></header><div class="am-md"><p>实现会话、持久记录与输入预算，形成能连续处理任务的版本。</p></div><section class="lesson-section" id="stage-3-p1-panel-A"><h3>1. 输入版本</h3><div class="lesson-body"><div class="am-md"><p>已能执行受控动作并检查结果的单次运行。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-B"><h3>2. 逐步保存事实</h3><div class="lesson-body"><div class="am-md"><p>先定义 Session、Run、Step，再选择 SQLite 等存储实现。消息保存完整事实，事件保存进度，终态与结果共同提交。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-C"><h3>3. 构建工作视图</h3><div class="lesson-body"><div class="am-md"><p>将历史、当前链与工具定义交给 Context Builder；Loop 取得 Context 后再调用模型。先整轮裁剪旧历史，当前链本身超限就停止。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-D"><h3>4. 验收与边界</h3><div class="lesson-body"><div class="am-md"><p>重启后能查询记录并继续同一会话；输入裁剪不删除原始记录。保存历史不等于自动恢复中断任务，也不要求此时实现 Web。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-2">← 阶段 2：约束动作并检查真实效果</a><a href="#stage-4">阶段 4：根据真实失败选择长任务机制 →</a></nav></article><section class="reading-rule" id="mvp-checkpoint"><h3>阶段 3 的未来目标：构建自己的第一版 MVP</h3><p>当前已有独立 Loop、Tools 与 Model 第一版。随后逐步实现受控动作、验收、持久记录和输入预算，再按实际需求增加其他机制。</p><p>本教程中的模块方案是设计参考，不表示这些代码已经存在。</p></section><h2 id="after-mvp">阶段 4–6：按需求选择扩展</h2><p class="group-description">阶段 4–6 均未实现，按实际需求选择机制。</p><article class="chapter" id="stage-4"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 4：根据真实失败选择长任务机制</h2></header><div class="am-md"><p>按任务问题选一种机制，不把摘要、检索、记忆全部设为必修前置。</p></div><section class="lesson-section" id="stage-4-p1-panel-A"><h3>1. 建立基线</h3><div class="lesson-body"><div class="am-md"><p>固定任务、资料、模型配置和验收条件，记录遗漏、用量、延迟与失败。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-B"><h3>2. 选择机制</h3><div class="lesson-body"><div class="am-md"><p>结果过大先尝试有限预览与外部引用；历史挤掉约束时考虑任务状态或摘要；材料较多时考虑检索；跨会话复用时再考虑长期记忆。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-C"><h3>3. 实现与比较</h3><div class="lesson-body"><div class="am-md"><p>为输入保留来源、版本、包含与省略清单。只实现一个分支，用相同任务比较收益与新失败。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>能解释模型实际看到了什么，展示错误来源、更正和遗忘路径，并保留未解决的失败。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-3">← 阶段 3：会话、记录与上下文预算</a><a href="#stage-5">阶段 5：中断后怎样安全继续 →</a></nav></article><article class="chapter" id="stage-5"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 5：中断后怎样安全继续</h2></header><div class="am-md"><p>只有在需要跨进程继续时引入恢复协议。</p></div><section class="lesson-section" id="stage-5-p1-panel-A"><h3>1. 区分事实</h3><div class="lesson-body"><div class="am-md"><p>检查点说明停在哪里，回执说明观察到什么；超时或连接断开不能证明外部动作没有发生。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-B"><h3>2. 先做只读恢复</h3><div class="lesson-body"><div class="am-md"><p>保存稳定的运行与动作身份，从已知边界重建状态。对有副作用的动作，先核对结果，再决定重试。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-C"><h3>3. 注入故障</h3><div class="lesson-body"><div class="am-md"><p>分别中断于派发前、派发后未回执、取得结果未提交、提交回执后。检查实际副作用和恢复决策。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>区分未派发、已完成、仍运行与未知；未知动作不被无条件重试。需要不可信执行时再增加 Worker 或隔离后端。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-4">← 阶段 4：根据真实失败选择长任务机制</a><a href="#stage-6">阶段 6：按需求增加入口、扩展与编排 →</a></nav></article><article class="chapter" id="stage-6"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 6：按需求增加入口、扩展与编排</h2></header><div class="am-md"><p>从稳定的单 Agent 基线选择一个需求分支。</p></div><section class="lesson-section" id="stage-6-p1-panel-A"><h3>1. 应用入口</h3><div class="lesson-body"><div class="am-md"><p>需要 Web 时先让 CLI / HTTP 共用应用用例；执行、查询与观察分开，断开 SSE 不等于取消任务。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-B"><h3>2. 能力扩展</h3><div class="lesson-body"><div class="am-md"><p>方法资料可接 Skills，生命周期可接 Hooks，外部工具可接 MCP；每种扩展仍需权限、预算与回执。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-C"><h3>3. 编排分支</h3><div class="lesson-body"><div class="am-md"><p>固定业务流程可考虑 Graph；独立上下文与分工可考虑子 Agent。先定义输入、权限、预算、取消和结果汇合。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>与单 Agent 基线比较质量、费用、延迟和协调成本。能说明新增机制解决的真实问题，再保留这项复杂度。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-5">← 阶段 5：中断后怎样安全继续</a><a href="#module-interfaces">Interfaces：入口共用应用服务，运行独立于展示 →</a></nav></article></section><section class="book-group" id="application"><h2>应用与行为配置</h2><p class="group-description">决定用户从哪里提交任务、使用什么指令和工具，以及如何展示结果。当前入口只组装工具、工作区和 LLMService；供应商凭证与 client 仍由 Model 内部管理。</p>
+<article class="chapter" id="module-interfaces"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Interfaces：入口共用应用服务，运行独立于展示</h2></header><section class="lesson-section" id="module-interfaces-p1-panel-A"><h3>1. 实现原理：提交、执行和观察分开</h3><div class="lesson-body"><div class="am-md"><p><strong>Web 与 CLI 的入口结构</strong></p>
+<p>入口、执行与观察分别组织。</p>
+</div>
+<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 291 572" width="291" height="572" role="img" aria-label="流程图：CLI、AgentService、浏览器、HTTP适配、WebRuns、Runner、SQLite"><use href="#diagram-module-interfaces-1-panel-A-1"></use></svg></figure>
+<div class="am-md"><p>同一个生成报告的请求，无论来自命令行还是浏览器，都应经过相同配置、权限和执行流程。前端不需要理解模型协议，CLI 也不应复制另一个 Agent Loop。</p>
+<p>应用服务接收业务数据，例如会话身份和问题，而不是 HTTP Request 或 DOM 对象。存储中的 Run ID 用来关联执行、历史和进度，页面状态只是展示视图，不是执行事实源。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p1-panel-C"><h3>2. 执行服务有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 请求内同步执行</h4>
+<p>接口一直等待 Runner 返回，适合 CLI 和耗时很短的调用，实现简单、错误直接。代价是请求超时与任务生命周期紧密耦合，页面断开后也难以清楚表达执行状态。</p>
+<h4>B. 进程内后台执行</h4>
+<p>接口返回任务身份，任务由进程内集合持有，查询和进度接口独立工作。它适合本地 Web MVP，代码少，也能避免模型网络等待阻塞 HTTP 事件循环。</p>
+<p>代价是执行者与 Web 进程共同存亡，线程里的阻塞工作也不能仅靠取消异步 Task 就可靠停止。<a href="https://fastapi.tiangolo.com/async/">FastAPI 并发说明</a>有助于理解异步 HTTP 处理与同步阻塞工作的区别；实际任务所有权仍由应用设计。</p>
+<h4>C. 持久队列与独立 Worker</h4>
+<p>提交先持久化任务，由 Worker 领取并运行，前端继续按身份查询。它适合长任务、服务重启和独立扩容。</p>
+<p>新增成本包括重复投递、租约、任务状态、取消传播和外部副作用对账。队列保证受理或再次投递，并不自动保证每个工具只执行一次，参见<a href="#module-state">State</a>。</p>
+<h4>D. 外部 Agent 运行服务</h4>
+<p>Web 或 CLI 调用完整运行服务，消费其任务身份与事件。它减少自建调度，但需要明确会话、权限、历史和产物由谁管理，避免同时维护两套冲突状态。</p>
+<p>这是部署与控制权方向的选择，不必为了拥有 Web UI 就引入它。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p1-panel-D"><h3>3. 进度协议怎样选择</h3><div class="lesson-body"><div class="am-md"><p><strong>Web 进度、补读与历史查询</strong></p>
+<p>SSE 观察与 Run 执行分别进行。</p>
+</div>
+<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 607 624" width="607" height="624" role="img" aria-label="时序图：浏览器、HTTP、AgentService、Store"><use href="#diagram-module-interfaces-1-panel-D-1"></use></svg></figure>
+<div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>工作方式</th>
+<th>适用情况</th>
+<th>主要代价</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HTTP 轮询</td>
+<td>周期查询状态或增量</td>
+<td>低频状态、简单客户端</td>
+<td>间隔与重复查询</td>
+</tr>
+<tr>
+<td>POST + SSE + GET</td>
+<td>提交、单向事件、最终查询</td>
+<td>聊天与工具进度</td>
+<td>长连接、游标和补读</td>
+</tr>
+<tr>
+<td>WebSocket</td>
+<td>双向消息通道</td>
+<td>高频控制与交互</td>
+<td>消息协议、重连和连接状态</td>
+</tr>
+</tbody></table></div>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events">MDN SSE 说明</a>定义单向事件、事件 ID 和重连行为。本项目选择 SSE 是因为用户发送任务后主要接收进度；以后增加取消或审批也可以通过普通 POST，不必立即改用 WebSocket。</p>
+<p>进度传输与模型流式生成不同。当前事件说明模型和工具何时开始、何时返回，没有逐 Token 展示；新增模型流式支持需要修改 <a href="#module-model">Model 适配器</a>，而不只是切换前端连接协议。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p1-panel-E"><h3>4. 真实系统怎样组织入口</h3><div class="lesson-body"><div class="am-md"><p><strong>AgentScope Java，固定官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/architecture.md">架构说明</a>区分直接调用、当前请求内流式事件，以及持久会话任务操作。可借鉴的是让不同入口复用模型、工具与中间件配置，同时明确谁安排执行。</p>
+<p><strong>pi，固定官方文档。</strong> <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/docs/rpc.md">RPC 接口</a>通过结构化命令与事件将运行核心接入其他界面。可以借鉴“协议适配器围绕共同运行时”的组织方式；RPC 不是必须使用 HTTP 或浏览器的接口。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p1-panel-F"><h3>5. 断线、历史与重复提交</h3><div class="lesson-body"><div class="am-md"><p>事件采用稳定身份和游标，客户端重连后补读，再按身份去重。持久历史负责重建页面，实时事件负责显示后续变化；只保存前端聊天数组，无法可靠应对刷新和跨入口读取。</p>
+<p>用户点击发送后网络中断，可能不知道任务是否已经受理。后续可以增加客户端请求 ID，由服务做提交去重；仅仅重发 HTTP POST 可能启动第二次任务。这个提交身份与模型工具调用身份不同。</p>
+<p>页面关闭、请求断开、用户取消和进程退出也应分别定义。取消的接口应返回受理状态，最终停止要由执行端确认；UI 不应在发出取消请求后立即伪装所有工具已经停止。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p1-panel-G"><h3>6. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>当前有阶段 0 的独立脚本与 <a href="../learn_agent/__main__.py">阶段 1 的模块入口</a>，尚无 Web 服务。需要命令行选项时先解析配置，需要 Web 时再提取双方共用的执行用例；执行、查询与观察各有职责，不在新入口复制另一套循环。</p><p>每次只增加当前需求所需的机制，用相同任务和可观察证据检查行为。</p></div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p2-panel-A"><h3>7. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>先实现客户端请求 ID：同一请求重复提交只产生一个 Run，新请求使用新身份。分别从 CLI 和 Web 观察同一会话记录，刷新页面后按游标继续查看实际进度。</p>
+<p>随后设计取消用例，检查发出取消、执行端确认和资源回收的状态。最终结果仍展示程序结论与实际证据；后端未配置检查时，任何入口都不能因为模型文字而显示任务验收通过。</p>
+</div></div>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-6">← 阶段 6：按需求增加入口、扩展与编排</a><a href="#module-loop">Loop / Runner：控制一次任务怎样继续和停止 →</a></nav></article></section>
+<section class="book-group" id="modules"><h2>Harness 核心：七个职责模块</h2><p class="group-description">按职责查原理，不按目录数量拆系统。每个模块先看核心抽象与外部黑盒接口，再看内部方案；当前实现范围以系统地图和阶段教程为准。</p>
+<article class="chapter" id="module-loop"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Loop / Runner：控制一次任务怎样继续和停止</h2></header><section class="lesson-section" id="module-loop-p1-panel-A"><h3>1. 实现原理：一个有边界的状态机</h3><div class="lesson-body"><div class="am-md"><p>以生成报告为例：用户请求进入当前状态，Builder 构建输入，Model 返回读取调用，执行器读取文件，Runner 保存结果并再次调用模型。模型也可能返回不含工具调用的文字，此时进入结果整理与可选检查。</p>
 <p><strong>Loop：继续、停止与有界修复</strong></p>
 <p>通用控制模式 · 当前没有自动验收修复。</p>
 </div>
@@ -1043,7 +1166,7 @@ uv run python -m learn_agent
 <section class="lesson-section" id="module-loop-p2-panel-A"><h3>7. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>在检查失败时，允许真实模型进行一次修复，保留原 Step、时间和权限边界。记录初次结果、检查证据、修复动作和最终结论，不覆盖失败轨迹。</p>
 <p>验收时分别观察：检查通过、检查失败后修复、预算不足、工具拒绝和用户取消。未稳定触发的分支明确标为未验证。模型说“已经修好”不能覆盖检查失败；未配置检查时也不能自动报告任务通过。</p>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-6">← 阶段 6：按需求增加入口、扩展与编排</a><a href="#module-model">Model：隔离供应商协议，保留续接语义 →</a></nav></article><article class="chapter" id="module-model"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Model：隔离供应商协议，保留续接语义</h2></header>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-interfaces">← Interfaces：入口共用应用服务，运行独立于展示</a><a href="#module-model">Model：隔离供应商协议，保留续接语义 →</a></nav></article><article class="chapter" id="module-model"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Model：隔离供应商协议，保留续接语义</h2></header>
 <section class="lesson-section" id="module-model-p1-panel-A"><h3>1. 核心抽象：统一接口与协议适配器</h3><div class="lesson-body"><div class="am-md">
 <p>Runner 需要模型判断下一步，但不应该处理每种 SDK 的消息格式。Model 模块用<strong>统一接口</strong>表达请求和回复，用<strong>协议适配器</strong>完成编码、API 请求与解码。</p>
 <p>适配器只完成一次模型请求，不执行工具，也不推进 Agent Loop。模型模块内部负责凭证、端点、鉴权和连接生命周期；外部通过模型入口取得统一接口。Model Hub 可在此基础上扩展路由、重试与降级。</p>
@@ -1142,99 +1265,7 @@ stream_failed -&gt; retain_partial_display; do_not_execute_incomplete_call
 <section class="lesson-section" id="module-model-p2-panel-B"><h3>9. 动手练习与验收</h3><div class="lesson-body"><div class="am-md">
 <p>沿<a href="../learn_agent/models/openai_chat.py">适配器</a>读一次编码、请求与解码，再看<a href="../tests/test_models.py">模型契约检查</a>。观察工具调用与原生材料如何进入下一次请求，以及截断、拒绝和 HTTP 错误如何停止循环。</p>
 <p><a href="../tests/test_llm_service.py">模型服务检查</a>验证配置优先级、缺失配置、重复调用与关闭行为；服务关闭后再次调用会报错。新增协议实现同一个 Model 接口，Runner 与工具实现无需修改；真实供应商行为单独运行验证。</p>
-</div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-loop">← Loop：控制一次任务怎样继续和停止</a><a href="#module-tools">Tools：把模型提出的动作变成真实回执 →</a></nav></article><article class="chapter" id="module-tools"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Tools：把模型提出的动作变成真实回执</h2></header><div class="am-md"><p>本章讲工具系统的核心抽象、与 Loop 的接口和内部机制；当前实现与练习见<a href="#stage-1">阶段 1</a>。</p></div><section class="lesson-section" id="module-tools-p1-panel-A"><h3>1. 核心抽象与 Loop 交互接口</h3><div class="lesson-body"><div class="am-md"><p>模型只提出调用：工具名、调用 ID 和参数。程序决定是否存在这个工具、参数是否合法、当前主体是否获准执行，以及实际怎样执行。执行结果再通过同一调用身份回传。</p>
-<p>先用<strong>工具定义</strong>把模型可见的说明与执行函数绑定，再用<strong>注册表</strong>管理并查找这些定义。</p>
-<h4 id="module-tools-loop-interface">工具系统与 Agent Loop 的黑盒交互</h4>
-</div>
-<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 700 365" width="700" height="365" role="img" aria-label="Runner 与 Tool 系统的黑盒交互：读取 specs 返回 ToolSpec 列表；每次提交 ToolCall，返回带原调用 ID 的 ToolResult"><use href="#diagram-tools-loop-interface"></use></svg></figure>
-<div class="am-md"><ul>
-<li><code>ToolSpec</code>：工具系统 → Loop，提供名称、说明与参数 Schema，供 Loop 发给模型。</li>
-<li><code>ToolCall</code>：Loop → 工具系统，提交模型提出的调用。</li>
-<li><code>ToolResult</code>：工具系统 → Loop，返回执行结果，保留原调用 ID，供 Loop 写回消息链。</li>
-</ul>
-<p>两项操作完成交互：读取可用工具声明，以及提交调用并取得结果。Loop 无需接触工具系统内部的执行函数。图中的 <code>specs</code>、<code>execute(call)</code> 是本项目对这两项操作的命名。</p>
-<h4>工具系统内部：从声明到真实回执</h4>
-
-<p>完整演进参考 · 版本、执行账本与 Worker 尚未实现；当前管线见阶段 1。</p>
-</div>
-<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 173 567" width="173" height="567" role="img" aria-label="流程图：ToolCall、查注册表与工具版本、解析与参数校验、资源与权限检查、执行后端、回执与产物引用、Runner"><use href="#diagram-stage-2-1-panel-B-1"></use></svg></figure>
-<div class="am-md"><p>工具定义描述输入，执行回执描述实际发生的事。参数正确不表示权限正确，工具执行成功也不表示整个任务已满足要求。例如成功创建报告，只证明写入动作成功，报告格式仍要另行检查。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p1-panel-C"><h3>2. 工具粒度有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 专用结构化工具</h4>
-<p>例如 <code>read_file(path, offset, limit)</code> 和 <code>create_file(path, content)</code>，每个工具有少量明确参数。实现可以准确限制路径、大小和作用，模型也更容易理解返回值。</p>
-<p>它适合学习和明确业务边界。代价是需要维护较多工具，组合能力取决于提供的操作；工具数量增大后还要处理 Schema 占用和发现问题。</p>
-<h4>B. 通用能力工具</h4>
-<p>例如 Shell、SQL 或代码执行，一个接口可以表达很多操作。它灵活、工具表短，也方便复用现有 CLI；代价是难以从任意字符串识别真实资源和副作用，超时、进程清理和隔离也更复杂。</p>
-<p>通用工具适合已有执行环境和资源约束的场景。不能仅通过检查命令前缀就假设获得安全边界，子进程和间接调用也会产生效果。执行隔离见<a href="#module-policy">Policy</a>。</p>
-<h4>C. 高层业务工具</h4>
-<p>例如 <code>generate_monthly_report(source_ids, template_version)</code>，内部完成取数、生成和登记。它减少模型需要协调的步骤，并能把业务不变量放进确定性代码。</p>
-<p>代价是复用范围窄、接口版本与业务耦合。内部如果继续调用模型或外部服务，也必须把用量、错误、部分效果和检查范围返回给上层，不能只返回一句“已完成”。</p>
-<div class="am-table-wrap"><table>
-<thead>
-<tr>
-<th>粒度</th>
-<th>模型承担什么</th>
-<th>便于控制什么</th>
-<th>主要限制</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>专用结构化工具</td>
-<td>组合小动作</td>
-<td>参数、路径和结果范围</td>
-<td>工具与 Schema 增长</td>
-</tr>
-<tr>
-<td>通用工具</td>
-<td>生成命令或程序</td>
-<td>灵活表达复杂操作</td>
-<td>效果识别与隔离困难</td>
-</tr>
-<tr>
-<td>高层业务工具</td>
-<td>选择业务动作</td>
-<td>业务不变量和原子边界</td>
-<td>灵活性与业务耦合</td>
-</tr>
-</tbody></table></div>
-<p><a href="https://www.anthropic.com/engineering/writing-tools-for-agents">Anthropic 工具设计实践</a>讨论名称、说明和返回内容对决策的影响。它们应作为任务评测变量；“工具越少越好”和“越专用越好”都需要具体任务证据。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p1-panel-D"><h3>3. 执行放在哪里</h3><div class="lesson-body"><div class="am-md"><p><strong>进程内函数</strong>依赖少、延迟低，适合可信且有界的小工具；但阻塞、崩溃和主进程共享权限是明显限制。</p>
-<p><strong>独立 Worker 进程</strong>通过结构化协议执行，方便限制输出和强制终止。它需要进程监督和资源清理；单独启动进程并没有自动隔离主机文件和网络。</p>
-<p><strong>远程服务或沙箱后端</strong>通过 RPC 提交动作，返回任务身份和回执，适合更强隔离与独立扩容。它引入认证、网络故障、版本兼容和结果未知，需要与持久状态协议一起设计。</p>
-<p>工具 API 与执行后端可以分开。例如同一个 <code>read_file</code> 访问本地工作区、受限容器或远程逻辑文件系统；Runner 继续使用同一 <code>ToolCall</code>，后端负责真实资源映射。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p1-panel-E"><h3>4. 真实实现怎样做</h3><div class="lesson-body"><div class="am-md"><p><strong>Deep Agents，源码核对。</strong> <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/filesystem.py">FilesystemMiddleware</a>提供模型可见文件工具，并通过后端协议访问存储；<code>wrap_tool_call</code> 在结果边界处理超大内容。<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/backends/protocol.py">BackendProtocol</a>区分文件能力与执行能力。可借鉴的是将定义、结果治理和真实后端分离。</p>
-<p><strong>pi，源码核对。</strong> <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">agent-loop.ts</a>根据执行设置和工具的串行要求选择串行或并行批次。可借鉴的是让执行策略由程序决定，不能因为模型一次返回多个调用就自动并行所有副作用。</p>
-<p><strong>MCP，协议文档。</strong> <a href="https://modelcontextprotocol.io/specification/2025-11-25/architecture">架构规范</a>把外部能力放在服务器、连接放在客户端、授权和聚合放在宿主。MCP 可以统一发现与调用，但业务幂等、效果对账和访问范围仍需应用定义，详见<a href="#module-extensions">扩展教程</a>。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p1-panel-F"><h3>5. 串行、并行和长任务怎样选择</h3><div class="lesson-body"><div class="am-md"><p>互不依赖的只读操作适合受限并发；同一文件的“读 → 改 → 检查”有依赖，应保持顺序。并行写入不同路径也可能共享索引或全局状态，因此仅比较文件名不足以判断独立性。</p>
-<p>工具元数据可以增加 <code>effect_class</code>、并发分组、超时和是否可查询回执。调度器据此限制并发；这些元数据必须由可信实现提供，不能直接把外部服务器自报的“只读”当成授权证明。</p>
-<p>长任务宜返回 <code>job_id</code>，再通过事件或有间隔的状态查询续接。返回任务 ID 只表示已受理，不能视为产物已完成。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p1-panel-G"><h3>6. 回执、幂等与未知效果</h3><div class="lesson-body"><div class="am-md"><p>考虑外部创建报告的调用：服务已经创建资源，但返回前网络断开。程序只知道结果未知，不能简单按失败重试。正确设计需要先保存逻辑调用身份，执行时使用稳定幂等键，随后查询回执或真实资源。</p>
-<p>建议的后续回执结构如下，不是当前已实现的完整协议：</p>
-</div>
-<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">invocation_id, attempt_id, tool_version
-arguments_hash, authorized_scope
-state = succeeded | rejected | failed | unknown
-artifact_refs[{id, revision, sha256}]
-external_receipt, checked_at
-</code></pre></figure>
-<div class="am-md"><p>同一逻辑调用的重试复用幂等键；用户有意再次执行的新动作应取得新身份。仅按参数哈希全局去重会把合法重复动作误删。更完整的恢复设计见<a href="#module-state">State</a>。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p2-panel-A"><h3>7. 大结果与精确编辑</h3><div class="lesson-body"><div class="am-md"><p>大结果应带总量、预览范围、截断标记和补读引用。Context 可以选择少发一些内容，但完整回执仍应有位置可查；模型不应把预览当成全量结果。</p>
-<p>下一阶段的编辑工具可要求 <code>expected_sha256</code> 和精确旧片段，写入前重读并比较版本，发现外部修改就拒绝。它能减少旧视图覆盖新文件的问题，却不自动解决所有跨进程竞态；需要结合原子替换、锁或隔离工作区。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p2-panel-B"><h3>8. 本阶段实现</h3><div class="lesson-body"><div class="am-md"><p>注册、校验、执行与回执已实现，范围和源码顺序见<a href="#stage-1">阶段 1</a>。工具版本、独立执行环境与产物引用后续迭代。</p></div></div></section>
-<section class="lesson-section" id="module-tools-p2-panel-C"><h3>9. 动手练习</h3><div class="lesson-body"><div class="am-md"><p>按现有规则添加 <code>count_lines</code>，要求无需修改 Loop。具体检查见<a href="#stage-1-tools-extension">阶段 1 验收</a>。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-model">← Model：隔离供应商协议，保留续接语义</a><a href="#module-context">Context：构建模型本次需要的工作视图 →</a></nav></article><article class="chapter" id="module-context"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Context：构建模型本次需要的工作视图</h2></header><section class="lesson-section" id="module-context-p1-panel-A"><h3>1. Context 管理的对象是什么</h3><div class="lesson-body"><div class="am-md"><p>假设用户要求：“读取项目资料，生成包含来源和 UTC 时间的报告，先不要发布。”经过多次读取、修改和检查后，模型需要继续知道目标、约束、已确认事实、当前产物和下一步。直接重发全部历史容易超限；随意删除历史，又可能丢掉“不发布”这个约束。</p>
+</div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-loop">← Loop / Runner：控制一次任务怎样继续和停止</a><a href="#module-context">Context Manager：构建模型本次需要的工作视图 →</a></nav></article><article class="chapter" id="module-context"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Context Manager：构建模型本次需要的工作视图</h2></header><section class="lesson-section" id="module-context-p1-panel-A"><h3>1. Context 管理的对象是什么</h3><div class="lesson-body"><div class="am-md"><p>假设用户要求：“读取项目资料，生成包含来源和 UTC 时间的报告，先不要发布。”经过多次读取、修改和检查后，模型需要继续知道目标、约束、已确认事实、当前产物和下一步。直接重发全部历史容易超限；随意删除历史，又可能丢掉“不发布”这个约束。</p>
 <p>Context Builder 的职责是从可追溯状态中构建<strong>本次请求的工作视图</strong>。它不只是拼接聊天消息，也不负责替用户授予执行权限。</p>
 <div class="am-table-wrap"><table>
 <thead>
@@ -1424,104 +1455,184 @@ manifest = {included_ids, omitted_ids, reasons, estimate, strategy_version}
 <p>样本至少包含：早期格式约束、用户更正、长日志、一次工具失败、文件被外部修改，以及未完成的工具调用。分别检查：关键约束是否保留、引用是否对应原文、调用是否配对、用量是否包含摘要请求、产物是否通过指定检查。</p>
 <p>不要只报告“节省了多少 Token”。同时记录约束召回、证据正确性、任务检查结果、额外调用、总耗时和压缩失败率。没有运行的比较应保留为实验计划，不能写成优化已经生效。</p>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-tools">← Tools：把模型提出的动作变成真实回执</a><a href="#module-memory">Memory：选择跨会话保留的知识 →</a></nav></article><article class="chapter" id="module-memory"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Memory：选择跨会话保留的知识</h2></header><section class="lesson-section" id="module-memory-p1-panel-A"><h3>1. 实现原理：写入和读取是两条管线</h3><div class="lesson-body"><div class="am-md"><p>报告任务结束后，可以复用的知识可能是“这个项目使用 uv”和“用户偏好报告列出来源”。“本次测试失败”则与产物版本和时刻相关，不宜直接保存为永远有效的项目事实。</p>
-<p><strong>Memory：受控写入、读取与遗忘</strong></p>
-<p>后续能力 · 当前没有会话存储或长期记忆。</p>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-model">← Model：隔离供应商协议，保留续接语义</a><a href="#module-tools">Tools：把模型提出的动作变成真实回执 →</a></nav></article><article class="chapter" id="module-tools"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Tools：把模型提出的动作变成真实回执</h2></header><div class="am-md"><p>本章讲工具系统的核心抽象、与 Loop 的接口和内部机制；当前实现与练习见<a href="#stage-1">阶段 1</a>。</p></div><section class="lesson-section" id="module-tools-p1-panel-A"><h3>1. 核心抽象与 Loop 交互接口</h3><div class="lesson-body"><div class="am-md"><p>模型只提出调用：工具名、调用 ID 和参数。程序决定是否存在这个工具、参数是否合法、当前主体是否获准执行，以及实际怎样执行。执行结果再通过同一调用身份回传。</p>
+<p>先用<strong>工具定义</strong>把模型可见的说明与执行函数绑定，再用<strong>注册表</strong>管理并查找这些定义。</p>
+<h4 id="module-tools-loop-interface">工具系统与 Agent Loop 的黑盒交互</h4>
 </div>
-<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 403 563" width="403" height="563" role="img" aria-label="流程图：历史与显式输入、候选提取、检查来源范围与冲突、确认并版本化写入、有效条目与索引、当前任务与身份、范围过滤与检索、带来源的Context片段"><use href="#diagram-module-memory-1-panel-A-1"></use></svg></figure>
-<div class="am-md"><p>写入链路判断“是否值得记住”；读取链路判断“现在是否适用”。即使自动提取质量很好，后续仍要处理过期、冲突和撤销。相似度只帮助寻找候选，不证明内容真实、有效或获准使用。</p>
+<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 700 365" width="700" height="365" role="img" aria-label="Runner 与 Tool 系统的黑盒交互：读取 specs 返回 ToolSpec 列表；每次提交 ToolCall，返回带原调用 ID 的 ToolResult"><use href="#diagram-tools-loop-interface"></use></svg></figure>
+<div class="am-md"><ul>
+<li><code>ToolSpec</code>：工具系统 → Loop，提供名称、说明与参数 Schema，供 Loop 发给模型。</li>
+<li><code>ToolCall</code>：Loop → 工具系统，提交模型提出的调用。</li>
+<li><code>ToolResult</code>：工具系统 → Loop，返回执行结果，保留原调用 ID，供 Loop 写回消息链。</li>
+</ul>
+<p>两项操作完成交互：读取可用工具声明，以及提交调用并取得结果。Loop 无需接触工具系统内部的执行函数。图中的 <code>specs</code>、<code>execute(call)</code> 是本项目对这两项操作的命名。</p>
+<h4>工具系统内部：从声明到真实回执</h4>
+
+<p>完整演进参考 · 版本、执行账本与 Worker 尚未实现；当前管线见阶段 1。</p>
+</div>
+<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 173 567" width="173" height="567" role="img" aria-label="流程图：ToolCall、查注册表与工具版本、解析与参数校验、资源与权限检查、执行后端、回执与产物引用、Runner"><use href="#diagram-stage-2-1-panel-B-1"></use></svg></figure>
+<div class="am-md"><p>工具定义描述输入，执行回执描述实际发生的事。参数正确不表示权限正确，工具执行成功也不表示整个任务已满足要求。例如成功创建报告，只证明写入动作成功，报告格式仍要另行检查。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-memory-p1-panel-C"><h3>2. 先区分知识类型和存储方案</h3><div class="lesson-body"><div class="am-md"><p>知识可以分成事实与偏好、经验案例、可复用方法。前两类适合保存来源和适用条件；多步骤方法也可能更适合整理成 Skill。分类帮助确定生命周期，不要求为每类部署一个数据库。</p>
-<p>文件、SQL 和向量索引则属于另一组选择：文件方便人工编辑，SQL 方便结构化约束，向量索引方便语义召回。它们可以组合，不是知识类型，也不是固定的技术升级阶梯。</p>
+<section class="lesson-section" id="module-tools-p1-panel-C"><h3>2. 工具粒度有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 专用结构化工具</h4>
+<p>例如 <code>read_file(path, offset, limit)</code> 和 <code>create_file(path, content)</code>，每个工具有少量明确参数。实现可以准确限制路径、大小和作用，模型也更容易理解返回值。</p>
+<p>它适合学习和明确业务边界。代价是需要维护较多工具，组合能力取决于提供的操作；工具数量增大后还要处理 Schema 占用和发现问题。</p>
+<h4>B. 通用能力工具</h4>
+<p>例如 Shell、SQL 或代码执行，一个接口可以表达很多操作。它灵活、工具表短，也方便复用现有 CLI；代价是难以从任意字符串识别真实资源和副作用，超时、进程清理和隔离也更复杂。</p>
+<p>通用工具适合已有执行环境和资源约束的场景。不能仅通过检查命令前缀就假设获得安全边界，子进程和间接调用也会产生效果。执行隔离见<a href="#module-policy">Policy</a>。</p>
+<h4>C. 高层业务工具</h4>
+<p>例如 <code>generate_monthly_report(source_ids, template_version)</code>，内部完成取数、生成和登记。它减少模型需要协调的步骤，并能把业务不变量放进确定性代码。</p>
+<p>代价是复用范围窄、接口版本与业务耦合。内部如果继续调用模型或外部服务，也必须把用量、错误、部分效果和检查范围返回给上层，不能只返回一句“已完成”。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>粒度</th>
+<th>模型承担什么</th>
+<th>便于控制什么</th>
+<th>主要限制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>专用结构化工具</td>
+<td>组合小动作</td>
+<td>参数、路径和结果范围</td>
+<td>工具与 Schema 增长</td>
+</tr>
+<tr>
+<td>通用工具</td>
+<td>生成命令或程序</td>
+<td>灵活表达复杂操作</td>
+<td>效果识别与隔离困难</td>
+</tr>
+<tr>
+<td>高层业务工具</td>
+<td>选择业务动作</td>
+<td>业务不变量和原子边界</td>
+<td>灵活性与业务耦合</td>
+</tr>
+</tbody></table></div>
+<p><a href="https://www.anthropic.com/engineering/writing-tools-for-agents">Anthropic 工具设计实践</a>讨论名称、说明和返回内容对决策的影响。它们应作为任务评测变量；“工具越少越好”和“越专用越好”都需要具体任务证据。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-memory-p1-panel-D"><h3>3. 有哪些实现方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 用户维护的文件记忆</h4>
-<p>用短索引列出主题，正文放在 Markdown 文件中；每个 Run 只加载相关概览，再按需读取正文。写入由用户维护或由显式操作触发。</p>
-<p>它容易审阅、版本控制和迁移，适合单用户学习系统。代价是冲突合并、作用域和删除规则需要约定；全量加载不断增长的文件，会把记忆问题转成 Context 问题。</p>
-<h4>B. 结构化条目加关键词检索</h4>
-<p>用 SQLite 保存 ID、类型、作用域、来源、版本和状态，再按关键词、项目和时间检索。正文可以在数据库或文件中，检索索引由程序维护。</p>
-<p>它便于更正、撤销和审计，精确术语和项目名也容易命中；代价是查询与 Schema 设计，语义改写可能漏召回。这是本项目优先考虑的方案，可以先用 SQL 条件，再按需要增加 FTS。</p>
-<h4>C. 向量或混合检索</h4>
-<p>为条目生成 Embedding，按语义召回，再与关键词、时效和类型过滤组合，必要时重排。它适合知识量大、表达变化明显的检索问题。</p>
-<p>新增成本包括模型用量、索引版本、重建和质量评测。权限过滤不能只在拿到前几条结果后做，否则既可能漏掉有权内容，也会把越权数据带入后续处理。原文、来源和条目状态仍应在正式存储中维护。</p>
-<h4>D. 自动提取与后台整理</h4>
-<p>任务结束时或压缩前，从交互提取候选，再合并、去重和确认。有的系统直接更新记忆文件，有的先保存日记或观察，再周期整理。</p>
-<p>它减少人工维护，但可能把模型猜测写成事实、把一次性要求写成长期偏好，或在用户更正后写回旧值。应记录提取器版本和来源范围，先允许查看与拒绝候选，再逐步提高自动写入比例。</p>
+<section class="lesson-section" id="module-tools-p1-panel-D"><h3>3. 执行放在哪里</h3><div class="lesson-body"><div class="am-md"><p><strong>进程内函数</strong>依赖少、延迟低，适合可信且有界的小工具；但阻塞、崩溃和主进程共享权限是明显限制。</p>
+<p><strong>独立 Worker 进程</strong>通过结构化协议执行，方便限制输出和强制终止。它需要进程监督和资源清理；单独启动进程并没有自动隔离主机文件和网络。</p>
+<p><strong>远程服务或沙箱后端</strong>通过 RPC 提交动作，返回任务身份和回执，适合更强隔离与独立扩容。它引入认证、网络故障、版本兼容和结果未知，需要与持久状态协议一起设计。</p>
+<p>工具 API 与执行后端可以分开。例如同一个 <code>read_file</code> 访问本地工作区、受限容器或远程逻辑文件系统；Runner 继续使用同一 <code>ToolCall</code>，后端负责真实资源映射。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p1-panel-E"><h3>4. 真实实现怎样做</h3><div class="lesson-body"><div class="am-md"><p><strong>Deep Agents，源码核对。</strong> <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/filesystem.py">FilesystemMiddleware</a>提供模型可见文件工具，并通过后端协议访问存储；<code>wrap_tool_call</code> 在结果边界处理超大内容。<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/backends/protocol.py">BackendProtocol</a>区分文件能力与执行能力。可借鉴的是将定义、结果治理和真实后端分离。</p>
+<p><strong>pi，源码核对。</strong> <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">agent-loop.ts</a>根据执行设置和工具的串行要求选择串行或并行批次。可借鉴的是让执行策略由程序决定，不能因为模型一次返回多个调用就自动并行所有副作用。</p>
+<p><strong>MCP，协议文档。</strong> <a href="https://modelcontextprotocol.io/specification/2025-11-25/architecture">架构规范</a>把外部能力放在服务器、连接放在客户端、授权和聚合放在宿主。MCP 可以统一发现与调用，但业务幂等、效果对账和访问范围仍需应用定义，详见<a href="#module-extensions">扩展教程</a>。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p1-panel-F"><h3>5. 串行、并行和长任务怎样选择</h3><div class="lesson-body"><div class="am-md"><p>互不依赖的只读操作适合受限并发；同一文件的“读 → 改 → 检查”有依赖，应保持顺序。并行写入不同路径也可能共享索引或全局状态，因此仅比较文件名不足以判断独立性。</p>
+<p>工具元数据可以增加 <code>effect_class</code>、并发分组、超时和是否可查询回执。调度器据此限制并发；这些元数据必须由可信实现提供，不能直接把外部服务器自报的“只读”当成授权证明。</p>
+<p>长任务宜返回 <code>job_id</code>，再通过事件或有间隔的状态查询续接。返回任务 ID 只表示已受理，不能视为产物已完成。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p1-panel-G"><h3>6. 回执、幂等与未知效果</h3><div class="lesson-body"><div class="am-md"><p>考虑外部创建报告的调用：服务已经创建资源，但返回前网络断开。程序只知道结果未知，不能简单按失败重试。正确设计需要先保存逻辑调用身份，执行时使用稳定幂等键，随后查询回执或真实资源。</p>
+<p>建议的后续回执结构如下，不是当前已实现的完整协议：</p>
+</div>
+<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">invocation_id, attempt_id, tool_version
+arguments_hash, authorized_scope
+state = succeeded | rejected | failed | unknown
+artifact_refs[{id, revision, sha256}]
+external_receipt, checked_at
+</code></pre></figure>
+<div class="am-md"><p>同一逻辑调用的重试复用幂等键；用户有意再次执行的新动作应取得新身份。仅按参数哈希全局去重会把合法重复动作误删。更完整的恢复设计见<a href="#module-state">State</a>。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p2-panel-A"><h3>7. 大结果与精确编辑</h3><div class="lesson-body"><div class="am-md"><p>大结果应带总量、预览范围、截断标记和补读引用。Context 可以选择少发一些内容，但完整回执仍应有位置可查；模型不应把预览当成全量结果。</p>
+<p>下一阶段的编辑工具可要求 <code>expected_sha256</code> 和精确旧片段，写入前重读并比较版本，发现外部修改就拒绝。它能减少旧视图覆盖新文件的问题，却不自动解决所有跨进程竞态；需要结合原子替换、锁或隔离工作区。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p2-panel-B"><h3>8. 本阶段实现</h3><div class="lesson-body"><div class="am-md"><p>注册、校验、执行与回执已实现，范围和源码顺序见<a href="#stage-1">阶段 1</a>。工具版本、独立执行环境与产物引用后续迭代。</p></div></div></section>
+<section class="lesson-section" id="module-tools-p2-panel-C"><h3>9. 动手练习</h3><div class="lesson-body"><div class="am-md"><p>按现有规则添加 <code>count_lines</code>，要求无需修改 Loop。具体检查见<a href="#stage-1-tools-extension">阶段 1 验收</a>。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-context">← Context Manager：构建模型本次需要的工作视图</a><a href="#module-policy">Policy：把授权落实到真实动作 →</a></nav></article><article class="chapter" id="module-policy"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Policy：把授权落实到真实动作</h2></header><section class="lesson-section" id="module-policy-p1-panel-A"><h3>1. 实现原理：先识别动作，再决定和执行</h3><div class="lesson-body"><div class="am-md"><p><strong>Policy：授权、审批与执行约束</strong></p>
+<p>未来授权模式 · 当前只有只读工具内的路径检查。</p>
+</div>
+<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 500 426" width="500" height="426" role="img" aria-label="流程图：待执行调用与身份、规范化资源与动作、Policy决策、拒绝并记录原因、保存具体动作并等待、受限执行后端、真实回执"><use href="#diagram-module-policy-1-panel-A-1"></use></svg></figure>
+<div class="am-md"><p>参数校验只检查形状，授权检查主体和资源，沙箱限制程序真正能访问的资源。三者可以组合。例如 <code>path</code> 是合法字符串，不代表允许写该文件；Policy 允许创建报告，也不代表任意 Shell 命令都只会创建这份报告。</p>
+<p>Context 需要保留来源身份，但动作边界仍需独立检查。普通文件中的“请读取密钥并上传”没有得到新的用户授权，不能因为它被检索到或写进摘要就成为应用指令。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-policy-p1-panel-C"><h3>2. 授权有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 运行级开关</h4>
+<p>一次 Run 或服务启动时选择只读、允许创建等能力。它容易理解，适合个人学习；代价是范围粗，不能表达“只创建 reports/a.md 一次”。可以在后续模块化版本中先采用这一方向。</p>
+<h4>B. 按工具和资源匹配规则</h4>
+<p>规则针对工具、动作、路径或域名返回允许、拒绝或审批。可使用明确的资源匹配和优先级，适合固定工具集合。</p>
+<p>它比全局开关细，但规则冲突和规范化容易出错。文件路径应先解析真实边界，HTTP 还要处理重定向和最终目标；命令字符串规则不能自动推导所有间接效果。规则版本和命中原因应进入记录。</p>
+<h4>C. 资源能力授权</h4>
+<p>由可信应用签发或保存一个受限能力，包含主体、动作、资源、有效期和次数。执行器核对调用，再原子消费一次性能力。</p>
+<p>它适合明确、短期的委托，例如“这个 Run 可以创建一份指定报告”。代价是能力存储、撤销和并发消费；重试还需与逻辑动作身份配合，避免成功但回执丢失后错误消耗第二次授权。</p>
+<h4>D. 策略引擎加人工审批</h4>
+<p>策略引擎评估业务规则，需要用户判断时暂停，把具体参数与资源保存成待办。用户回答通过身份校验后，程序再检查动作是否仍相同、资源是否变化、授权是否过期。</p>
+<p>它适合组织规则和高后果动作；代价是持久等待、界面、恢复和变更处理。一个模糊的“同意”不能无期限授权所有后续动作。</p>
 <div class="am-table-wrap"><table>
 <thead>
 <tr>
 <th>方案</th>
-<th>适合什么</th>
-<th>收益</th>
-<th>主要问题</th>
+<th>控制粒度</th>
+<th>适用阶段</th>
+<th>主要维护成本</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>文件索引与正文</td>
-<td>少量、人工可审查知识</td>
-<td>透明、易迁移</td>
-<td>合并和范围管理</td>
+<td>运行开关</td>
+<td>整次运行</td>
+<td>学习与固定本地任务</td>
+<td>粒度较粗</td>
 </tr>
 <tr>
-<td>SQL 条目与关键词</td>
-<td>需要版本、更正与隔离</td>
-<td>行为可解释</td>
-<td>语义召回有限</td>
+<td>规则匹配</td>
+<td>工具和资源模式</td>
+<td>工具集合明确</td>
+<td>冲突、规范化和版本</td>
 </tr>
 <tr>
-<td>混合检索</td>
-<td>大量、多表达知识</td>
-<td>改善候选召回</td>
-<td>索引与评测成本</td>
+<td>资源能力</td>
+<td>单个受限动作范围</td>
+<td>一次性授权与委派</td>
+<td>撤销、消费和重试</td>
 </tr>
 <tr>
-<td>自动整理</td>
-<td>人工维护困难</td>
-<td>减少重复整理</td>
-<td>错写、冲突和遗忘失效</td>
+<td>策略与审批</td>
+<td>业务条件和人工决定</td>
+<td>组织与复杂流程</td>
+<td>状态、界面和恢复</td>
 </tr>
 </tbody></table></div>
-<p>自动整理是写入策略，混合检索是读取策略。两者可以分别引入，不能因为增加向量数据库就宣称获得了完整记忆系统。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-memory-p1-panel-E"><h3>4. 不同实现怎样做</h3><div class="lesson-body"><div class="am-md"><p><strong>Claude Code，官方文档。</strong> <a href="https://code.claude.com/docs/en/memory">记忆说明</a>区分用户维护的规则文件和自动记忆；自动记忆使用有大小限制的 <code>MEMORY.md</code> 索引，主题文件按需读取。可借鉴的是“短索引常驻、细节按需”，以及让用户能查看和修改保存内容；它不证明记忆会始终正确。</p>
-<p><strong>Deep Agents，源码核对。</strong> <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py">MemoryMiddleware</a>在 <code>before_agent</code> 加载配置来源，在请求修改阶段把记忆片段加入 System 消息；已经存在于状态中的内容不会无条件重读。<a href="https://docs.langchain.com/oss/python/deepagents/memory">官方记忆文档</a>说明通过后端配置用户或 Agent 作用域。可借鉴的是加载与存储分离；引入本项目时要自行明确哪些文件有指令身份。</p>
-<p><strong>AgentScope Java，固定官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/memory.md">Memory 设计</a>使用按日追加的记录和合并后的长期文件，区分事实提取、合并与会话摘要；长期内容作为参考材料进入 Context。它展示了“先积累、后整理”的写入管线，也会产生额外模型调用与维护工作。</p>
-<p><strong>LangChain，官方文档。</strong> <a href="https://docs.langchain.com/oss/python/langchain/long-term-memory">长期记忆 Store</a>用 namespace 和 key 管理条目，并支持范围内查找。可借鉴的是先确定用户、项目等作用域，再决定用哪种索引。namespace 的构造与访问校验仍是应用责任。</p>
-<p>这些做法不同，尤其是记忆进入 System 还是参考材料。教程不会把某个实现的默认信任方式视为所有系统必须遵循的规则。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-memory-p1-panel-F"><h3>5. 本项目可以采用的数据结构</h3><div class="lesson-body"><div class="am-md"><p>以下是建议，不是已经存在的表：</p>
+<section class="lesson-section" id="module-policy-p1-panel-D"><h3>3. 审批应绑定什么</h3><div class="lesson-body"><div class="am-md"><p>建议至少绑定以下数据，属于后续接口设计：</p>
 </div>
-<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">json</span></figcaption><pre class="am-code"><code data-lang="json">{
-  "id": "memory_001",
-  "scope": {"user_id": "local", "project_id": "learn-agent"},
-  "kind": "project_fact",
-  "text": "项目使用 uv 管理依赖。",
-  "source_ids": ["run_x/message_1"],
-  "version": 1,
-  "status": "active",
-  "supersedes": null,
-  "created_at": "2026-10-18T00:00:00Z",
-  "expires_at": null,
-  "confirmed_by": "user"
-}
+<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">principal_id, run_id, invocation_id
+resource_scope, tool_name, tool_version
+arguments_hash, policy_version
+expires_at, max_uses, decision_id
 </code></pre></figure>
-<div class="am-md"><p>ID、作用域和版本由程序产生，来源指向可追溯记录。<code>confirmed_by</code> 不能由提取模型自行伪造。对于“测试通过”，还应保存被测产物版本和检查范围，避免新版本错误继承旧结论。</p>
+<div class="am-md"><p>执行前重新核对参数摘要与资源版本。审批后模型改了路径或内容，原同意不能直接复用；中断恢复后也不能无条件继承已撤销授权。等待和恢复的机制见<a href="#module-state">State</a>。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-memory-p1-panel-G"><h3>6. 更正、遗忘和时效怎样实现</h3><div class="lesson-body"><div class="am-md"><p>事实变化时，将旧条目标为被替代，再写入新版本；读取时只选有效条目。若存在冲突且没有明确更正依据，应保留不确定性，而不是任意挑一个更相似的结果。</p>
-<p>遗忘至少涉及正式条目、检索索引和提取来源。只删除向量索引，后台仍可能从旧历史重新提取；只删除数据库，缓存或摘要还可能留有副本。可用撤销标记阻止被遗忘来源再次进入提取，但具体是否删除原始记录、备份和派生产物，需要明确操作范围。</p>
-<p>时效由知识类型决定：当前构建状态很快失效，稳定偏好可以长期保留但允许覆盖。记忆中的“用户曾经批准发送”不能代替本次动作授权，权限始终由 <a href="#module-policy">Policy</a> 判断。</p>
+<section class="lesson-section" id="module-policy-p1-panel-E"><h3>4. 沙箱有哪些实现方向</h3><div class="lesson-body"><div class="am-md"><p><strong>独立子进程</strong>方便超时终止和资源回收，但通常仍拥有同一用户的主机权限。它是执行生命周期手段，不自动构成文件与网络隔离。</p>
+<p><strong>操作系统限制或容器</strong>可以限制进程、文件挂载、网络和资源额度。配置决定真实边界：把整个主目录或宿主控制接口挂进去，会扩大可访问范围。</p>
+<p><strong>虚拟机或 microVM</strong>通过独立系统边界提供另一类隔离，通常增加启动和运维工作。<strong>托管沙箱</strong>将部分运维交给服务，仍需核对身份、数据传输、快照和清理规则。</p>
+<p>选择时先写明不可信内容或代码来自哪里、执行者能看到什么、允许产生哪些效果，再选择满足这些需求的隔离方式。更强隔离不能替代业务授权，审批也不能替代隔离。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-memory-p2-panel-A"><h3>7. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>当前没有跨会话记忆。先用具体复用需求定义保存、读取、更正和删除，再选择简单记录或数据库；自动提炼、向量检索和后台整理都需要单独证明收益。</p><p>每次只增加当前需求所需的机制，用相同任务和可观察证据检查行为。</p></div></div>
-</section>
-<section class="lesson-section" id="module-memory-p2-panel-B"><h3>8. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>在两个新会话中检验同一项目的显式记忆，再用另一个项目验证范围隔离。更正后检查新版本生效，遗忘后检查条目、索引和后续提取均不再复用它；记忆内容也不能开启写权限。</p>
-<p>引入自动化后，再统计候选准确率、错误正式写入率、过期命中率和遗忘后重新出现的比例。检索命中和实际任务检查结果一起报告，才能判断记忆是否帮助了系统。</p>
+<section class="lesson-section" id="module-policy-p1-panel-F"><h3>5. 真实产品怎样划分边界</h3><div class="lesson-body"><div class="am-md"><p><strong>Claude Code，官方文档。</strong> <a href="https://code.claude.com/docs/en/permissions">权限规则</a>控制工具操作的允许、拒绝与询问；<a href="https://code.claude.com/docs/en/sandboxing">Bash 沙箱</a>另用操作系统机制约束文件和网络。可借鉴的是将“是否批准动作”和“进程实际可访问什么”作为两层；具体保证依赖平台与启用配置。</p>
+<p><strong>pi，官方文档。</strong> <a href="https://pi.dev/docs/latest/security">安全说明</a>要求使用者理解工具与主机权限，并按需要在受限环境运行。它展示了另一种边界选择：把执行环境责任明确留给使用者和部署者。不能因为接口简单就假设已内置与其他产品相同的审批或沙箱。</p>
+<p><strong>AgentScope Java，固定官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/sandbox.md">沙箱设计</a>区分沙箱共享范围、快照与后端配置；<a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/plan-mode.md">Plan Mode</a>则处理阶段权限。运行模式、工作区共享和隔离后端是不同维度。</p>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-context">← Context：构建模型本次需要的工作视图</a><a href="#module-state">State：保存执行事实，并从明确边界继续 →</a></nav></article><article class="chapter" id="module-state"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>State：保存执行事实，并从明确边界继续</h2></header><section class="lesson-section" id="module-state-p1-panel-A"><h3>1. 实现原理：区分位置、事实和外部效果</h3><div class="lesson-body"><div class="am-md"><p>生成报告时，程序可能已保存模型的写入调用，却还没执行工具；也可能文件已经创建，但回执尚未提交。两种情况看起来都“停在写入附近”，恢复动作却不同。</p>
+</section>
+<section class="lesson-section" id="module-policy-p1-panel-G"><h3>6. Prompt 注入怎样影响实现</h3><div class="lesson-body"><div class="am-md"><p>被读取文件可能包含与用户要求相反的动作。防护需要至少贯穿来源标记、输入组织、工具范围和真实授权。仅在文本外加 XML 标签，或只告诉模型“不要受骗”，都不能证明执行边界已经成立。</p>
+<p>当前独立脚本不提供任意命令或环境变量读取工具，缩小了可执行动作范围，但并未证明完整防御。增加搜索、网络、MCP 或 Shell 时，应测试这些能力新增的数据流和效果；记忆与 Skill 也不能自行修改 Policy。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-policy-p2-panel-A"><h3>7. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>当前读取函数检查工作区、隐藏路径与文件范围。增加写入时先约定明确授权和允许效果；需要审批、多用户或不可信执行时，再引入相应机制。每个执行边界保留一次实际资源检查。</p><p>每次只增加当前需求所需的机制，用相同任务和可观察证据检查行为。</p></div></div>
+</section>
+<section class="lesson-section" id="module-policy-p2-panel-B"><h3>8. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>让 CLI 签发“当前 Run 只可创建指定报告一次”的能力。检查参数变更、跨 Run 复用、过期、并发消费和符号链接；操作应使用真实文件和执行器，无需模型才能验证规则。</p>
+<p>再用真实模型执行一次被允许和一次被拒绝的任务，确认拒绝产生真实回执，模型文字不会改变授权。未来接入沙箱时，另做实际文件和网络访问验证，并清楚报告启用了哪些边界。</p>
+</div></div>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-tools">← Tools：把模型提出的动作变成真实回执</a><a href="#module-state">Session / State：保存执行事实，并从明确边界继续 →</a></nav></article><article class="chapter" id="module-state"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Session / State：保存执行事实，并从明确边界继续</h2></header><section class="lesson-section" id="module-state-p1-panel-A"><h3>1. 实现原理：区分位置、事实和外部效果</h3><div class="lesson-body"><div class="am-md"><p>生成报告时，程序可能已保存模型的写入调用，却还没执行工具；也可能文件已经创建，但回执尚未提交。两种情况看起来都“停在写入附近”，恢复动作却不同。</p>
 <p>需要分别表达：<strong>下一步从哪里继续、哪些事实已持久提交、外部资源实际发生了什么。</strong> 数据库事务通常只保证自身记录的原子性，不能顺带把本地文件或远程 API 也纳入同一事务。</p>
 <p><strong>State：中断后的事实与恢复</strong></p>
 <p>未来恢复协议示例 · 当前没有持久记录。</p>
@@ -1640,92 +1751,193 @@ receipt_ref        可查询的实际回执
 <section class="lesson-section" id="module-state-p2-panel-B"><h3>8. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>先给只读动作保存稳定身份，在意图保存后、工具返回后和结果提交后分别中断程序。重新启动时检查已确认结果不重复执行、未派发动作可以继续，变化的文件被明确标记为新观察。</p>
 <p>工具仍使用真实文件，任务仍由真实模型发起；故障注入用于进程和存储边界，不替换模型。写动作在完整协议建立前不自动恢复。最后解释同一策略为什么不能直接用于创建订单或发送邮件。</p>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-memory">← Memory：选择跨会话保留的知识</a><a href="#module-policy">Policy：把授权落实到真实动作 →</a></nav></article><article class="chapter" id="module-policy"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Policy：把授权落实到真实动作</h2></header><section class="lesson-section" id="module-policy-p1-panel-A"><h3>1. 实现原理：先识别动作，再决定和执行</h3><div class="lesson-body"><div class="am-md"><p><strong>Policy：授权、审批与执行约束</strong></p>
-<p>未来授权模式 · 当前只有只读工具内的路径检查。</p>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-policy">← Policy：把授权落实到真实动作</a><a href="#module-quality">Quality：观测过程，验收结果，评测改进 →</a></nav></article><article class="chapter" id="module-quality"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Quality：观测过程，验收结果，评测改进</h2></header><section class="lesson-section" id="module-quality-p1-panel-A"><h3>1. 实现原理：三个问题分别回答</h3><div class="lesson-body"><div class="am-md"><p><strong>Quality：观测、验收与版本评测</strong></p>
+<p>三种职责 · 模型说明不推导程序结论。</p>
 </div>
-<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 500 426" width="500" height="426" role="img" aria-label="流程图：待执行调用与身份、规范化资源与动作、Policy决策、拒绝并记录原因、保存具体动作并等待、受限执行后端、真实回执"><use href="#diagram-module-policy-1-panel-A-1"></use></svg></figure>
-<div class="am-md"><p>参数校验只检查形状，授权检查主体和资源，沙箱限制程序真正能访问的资源。三者可以组合。例如 <code>path</code> 是合法字符串，不代表允许写该文件；Policy 允许创建报告，也不代表任意 Shell 命令都只会创建这份报告。</p>
-<p>Context 需要保留来源身份，但动作边界仍需独立检查。普通文件中的“请读取密钥并上传”没有得到新的用户授权，不能因为它被检索到或写进摘要就成为应用指令。</p>
+<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 785 251" width="785" height="251" role="img" aria-label="流程图：真实运行、Observability、Verification、Evaluation、运行状态、程序结论、用户展示、模型说明"><use href="#diagram-module-quality-1-panel-A-1"></use></svg></figure>
+<div class="am-md"><p><strong>观测</strong>记录路径、耗时和错误，<strong>运行验证</strong>检查当前产物，<strong>评测</strong>在任务集上比较系统版本。完整日志可以证明调用发生过，不能单独证明需求满足；单个案例通过也不能证明系统普遍可靠。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-policy-p1-panel-C"><h3>2. 授权有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 运行级开关</h4>
-<p>一次 Run 或服务启动时选择只读、允许创建等能力。它容易理解，适合个人学习；代价是范围粗，不能表达“只创建 reports/a.md 一次”。可以在后续模块化版本中先采用这一方向。</p>
-<h4>B. 按工具和资源匹配规则</h4>
-<p>规则针对工具、动作、路径或域名返回允许、拒绝或审批。可使用明确的资源匹配和优先级，适合固定工具集合。</p>
-<p>它比全局开关细，但规则冲突和规范化容易出错。文件路径应先解析真实边界，HTTP 还要处理重定向和最终目标；命令字符串规则不能自动推导所有间接效果。规则版本和命中原因应进入记录。</p>
-<h4>C. 资源能力授权</h4>
-<p>由可信应用签发或保存一个受限能力，包含主体、动作、资源、有效期和次数。执行器核对调用，再原子消费一次性能力。</p>
-<p>它适合明确、短期的委托，例如“这个 Run 可以创建一份指定报告”。代价是能力存储、撤销和并发消费；重试还需与逻辑动作身份配合，避免成功但回执丢失后错误消耗第二次授权。</p>
-<h4>D. 策略引擎加人工审批</h4>
-<p>策略引擎评估业务规则，需要用户判断时暂停，把具体参数与资源保存成待办。用户回答通过身份校验后，程序再检查动作是否仍相同、资源是否变化、授权是否过期。</p>
-<p>它适合组织规则和高后果动作；代价是持久等待、界面、恢复和变更处理。一个模糊的“同意”不能无期限授权所有后续动作。</p>
+<section class="lesson-section" id="module-quality-p1-panel-C"><h3>2. 观测有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 结构化本地事件</h4>
+<p>JSONL 或 SQLite 按顺序记录运行边界，保存稳定身份和必要元数据，正文单独存储。它依赖少、便于本地学习；代价是跨进程关联、聚合、查询和可视化需要继续建设。</p>
+<p>注意区分观测日志与执行事实源：可以丢失的采样日志不应承担恢复所需的关键提交。两者的关系见<a href="#module-state">State</a>。</p>
+<h4>B. Trace、Span 和指标</h4>
+<p>一个 Trace 关联整段请求或工作流，Span 表示模型、工具、子任务等操作，记录父子关系、起止时间和状态。<a href="https://opentelemetry.io/docs/specs/otel/trace/api/">OpenTelemetry Trace 规范</a>提供这些基本结构。</p>
+<p>它适合跨服务定位耗时和失败，代价是上下文传播、采样、导出和字段治理。Token、工具次数和队列时延可以作为指标；原始文件正文和密钥不宜无差别放入高基数字段。</p>
+<h4>C. 专用 Agent 观测平台</h4>
+<p>通过适配器导出调用树、Prompt 版本和评测记录，复用平台界面与数据集管理。它能减少展示开发，也带来数据存放、访问范围、费用和平台耦合。</p>
+<p>不论使用哪种平台，本地运行身份、任务版本和产物证据都应可关联。平台上出现一条绿色调用记录，不代表业务检查覆盖了全部要求。</p>
 <div class="am-table-wrap"><table>
 <thead>
 <tr>
 <th>方案</th>
-<th>控制粒度</th>
-<th>适用阶段</th>
-<th>主要维护成本</th>
+<th>适用范围</th>
+<th>主要收益</th>
+<th>主要代价</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>运行开关</td>
-<td>整次运行</td>
-<td>学习与固定本地任务</td>
-<td>粒度较粗</td>
+<td>本地事件</td>
+<td>单机学习、调查轨迹</td>
+<td>直接、可检查</td>
+<td>聚合和关联能力有限</td>
 </tr>
 <tr>
-<td>规则匹配</td>
-<td>工具和资源模式</td>
-<td>工具集合明确</td>
-<td>冲突、规范化和版本</td>
+<td>OpenTelemetry</td>
+<td>跨服务和 Worker</td>
+<td>通用链路与指标</td>
+<td>传播、采样和字段维护</td>
 </tr>
 <tr>
-<td>资源能力</td>
-<td>单个受限动作范围</td>
-<td>一次性授权与委派</td>
-<td>撤销、消费和重试</td>
-</tr>
-<tr>
-<td>策略与审批</td>
-<td>业务条件和人工决定</td>
-<td>组织与复杂流程</td>
-<td>状态、界面和恢复</td>
+<td>Agent 平台</td>
+<td>团队诊断与数据集</td>
+<td>减少界面建设</td>
+<td>数据与供应商依赖</td>
 </tr>
 </tbody></table></div>
 </div></div>
 </section>
-<section class="lesson-section" id="module-policy-p1-panel-D"><h3>3. 审批应绑定什么</h3><div class="lesson-body"><div class="am-md"><p>建议至少绑定以下数据，属于后续接口设计：</p>
+<section class="lesson-section" id="module-quality-p1-panel-D"><h3>3. 真实实现怎样组织观测</h3><div class="lesson-body"><div class="am-md"><p><strong>OpenAI Agents SDK，官方文档。</strong> <a href="https://developers.openai.com/api/docs/guides/agents/integrations-observability">观测说明</a>描述模型、工具、Handoff、Guardrail 和自定义 Span 的运行轨迹。可借鉴的是围绕真实操作建立调用树，而不是只保存最终 Prompt 和答案。</p>
+<p><strong>AgentScope Java，固定官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/session-log.md">Session Log</a>将执行记录、用户可读历史与事件订阅关联。可借鉴的是让页面刷新后能根据身份补读，而不完全依赖瞬时回调。</p>
+<p><strong>OpenTelemetry，规范现状。</strong> 原 <a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/">GenAI 页面</a>已说明迁移至<a href="https://github.com/open-telemetry/semantic-conventions-genai">独立语义约定仓库</a>。接入时应固定所采用的版本并验证映射；目标 MVP 没有声明符合这些语义约定。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-quality-p1-panel-E"><h3>4. 验收有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 确定性产物检查</h4>
+<p>检查文件、JSON Schema、编译、测试、数值或业务数据库状态。实现应读取实际产物，保存检查名、规则版本、目标版本和证据。</p>
+<p>优点是规则明确、容易复现；缺点是只能覆盖写出的条件。例如包含一个标记，不证明文章有正确来源；测试通过，也只说明被运行的测试和环境通过。</p>
+<h4>B. 模型裁判</h4>
+<p>让模型根据明确评分标准评估相关性、完整性或表达质量，可以使用参考答案、逐项标准或成对比较。它适合开放式内容，代价是用量、非确定性和偏差。</p>
+<p>裁判也需要数据和校准，不能因为它是另一模型就视为独立事实。应让裁判读取产物与来源，而不是只读取执行模型的“已完成”声明。调换候选顺序、固定标准并与人工标注比较，有助于发现位置和长度偏差。</p>
+<h4>C. 人工检查</h4>
+<p>用户或评审者根据原需求核对实际交付。它适合主观目标、边界不清的要求和重要发布；代价是等待、成本与不同评审者之间的差异。</p>
+<p>这三类可组合：先跑确定性条件，再检查开放式质量，最后在明确交付边界人工确认。<a href="https://developers.openai.com/api/docs/guides/evaluation-best-practices">OpenAI 评测原则</a>强调任务相关标准与人工校准；自动评分不应脱离实际需求。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-quality-p1-panel-F"><h3>5. 任务验收契约可以怎样设计</h3><div class="lesson-body"><div class="am-md"><p>未来可以把每个用户要求对应到检查项，而不是只返回一个总布尔值：</p>
 </div>
-<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">principal_id, run_id, invocation_id
-resource_scope, tool_name, tool_version
-arguments_hash, policy_version
-expires_at, max_uses, decision_id
+<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">requirement_id -&gt; check_id
+check = {rule_version, target_ref, target_revision, status, evidence}
+status = passed | failed | not_checked | unknown
 </code></pre></figure>
-<div class="am-md"><p>执行前重新核对参数摘要与资源版本。审批后模型改了路径或内容，原同意不能直接复用；中断恢复后也不能无条件继承已撤销授权。等待和恢复的机制见<a href="#module-state">State</a>。</p>
+<div class="am-md"><p>检查范围完整与否由应用定义，不能让模型自行宣称所有要求已覆盖。产物变化后，旧检查要按版本失效；文件创建回执与最终哈希结合，才能更清楚地判断是否检查了本次实际产物。这些机制尚未实现，属于后续质量模块的设计内容。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-policy-p1-panel-E"><h3>4. 沙箱有哪些实现方向</h3><div class="lesson-body"><div class="am-md"><p><strong>独立子进程</strong>方便超时终止和资源回收，但通常仍拥有同一用户的主机权限。它是执行生命周期手段，不自动构成文件与网络隔离。</p>
-<p><strong>操作系统限制或容器</strong>可以限制进程、文件挂载、网络和资源额度。配置决定真实边界：把整个主目录或宿主控制接口挂进去，会扩大可访问范围。</p>
-<p><strong>虚拟机或 microVM</strong>通过独立系统边界提供另一类隔离，通常增加启动和运维工作。<strong>托管沙箱</strong>将部分运维交给服务，仍需核对身份、数据传输、快照和清理规则。</p>
-<p>选择时先写明不可信内容或代码来自哪里、执行者能看到什么、允许产生哪些效果，再选择满足这些需求的隔离方式。更强隔离不能替代业务授权，审批也不能替代隔离。</p>
+<section class="lesson-section" id="module-quality-p1-panel-G"><h3>6. 测试和评测怎样分层</h3><div class="lesson-body"><div class="am-md"><p><strong>本地组件测试</strong>直接使用真实参数、文件和数据库，检查解析、权限、上下文选择与存储。无需模型的条件就直接检查，不构造替代模型响应。</p>
+<p><strong>真实协议测试</strong>连接 SDK 和服务端点，检查调用关联、输出不足、拒答和真实错误。无法稳定触发的异常明确列为覆盖限制，未配置的后端明确跳过。</p>
+<p><strong>任务评测</strong>固定任务、工作区、模型与检查器，记录检查结果、工具路径、用量和时间。它衡量整体决策表现，重要结论应重复运行并报告样本数，不能拿一次成功当作长期成功率。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-policy-p1-panel-F"><h3>5. 真实产品怎样划分边界</h3><div class="lesson-body"><div class="am-md"><p><strong>Claude Code，官方文档。</strong> <a href="https://code.claude.com/docs/en/permissions">权限规则</a>控制工具操作的允许、拒绝与询问；<a href="https://code.claude.com/docs/en/sandboxing">Bash 沙箱</a>另用操作系统机制约束文件和网络。可借鉴的是将“是否批准动作”和“进程实际可访问什么”作为两层；具体保证依赖平台与启用配置。</p>
-<p><strong>pi，官方文档。</strong> <a href="https://pi.dev/docs/latest/security">安全说明</a>要求使用者理解工具与主机权限，并按需要在受限环境运行。它展示了另一种边界选择：把执行环境责任明确留给使用者和部署者。不能因为接口简单就假设已内置与其他产品相同的审批或沙箱。</p>
-<p><strong>AgentScope Java，固定官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/sandbox.md">沙箱设计</a>区分沙箱共享范围、快照与后端配置；<a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/plan-mode.md">Plan Mode</a>则处理阶段权限。运行模式、工作区共享和隔离后端是不同维度。</p>
+<section class="lesson-section" id="module-quality-p2-panel-A"><h3>7. 怎样运行和比较本项目</h3><div class="lesson-body"><div class="am-md"><p>当前运行 <code>uv run pytest</code>，检查临时文件与本机 HTTP 协议。需要真实任务评测时，先定义案例、资料版本、成功条件、用量记录和失败分类，再实现独立评测器。</p><p>本地协议通过不等于真实模型任务通过；不要把固定响应当成模型质量证据。</p></div></div>
+</section>
+<section class="lesson-section" id="module-quality-p2-panel-B"><h3>8. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>当前用本地文件与 HTTP 协议检查循环。任务出现可检查的产物后，再增加独立验收条件；跨任务比较时再建立案例与用量记录。观测平台和模型裁判都按实际需求引入。</p><p>每次只增加当前需求所需的机制，用相同任务和可观察证据检查行为。</p></div></div>
+</section>
+<section class="lesson-section" id="module-quality-p2-panel-C"><h3>9. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>新增“旧报告已经包含标记”“报告缺来源”“资料含恶意指令”“用户中途改格式”四类案例，明确哪些条件已有检查器、哪些仍需人工核对。再比较一次 Context 改动。</p>
+<p>验收报告要能解释失败属于执行、权限、信息选择还是任务质量；每个结论附对应证据。没有配置检查的要求标记未检查，不能由模型自述补成通过。</p>
+</div></div>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-state">← Session / State：保存执行事实，并从明确边界继续</a><a href="#module-memory">Memory：选择跨会话保留的知识 →</a></nav></article></section>
+<section class="book-group" id="capabilities"><h2>按需求增加的能力</h2><p class="group-description">在核心闭环上按实际问题选择扩展。Memory、恢复、沙箱和多 Agent 都是需求分支，无需提前全部建设。</p>
+<section class="lesson-section" id="capability-long-tasks"><h3>长任务与知识复用</h3><div class="am-md"><p>计划、压缩、检索与长期记忆，用来处理任务变长、资料增多和跨会话复用。入口见<a href="#stage-4">阶段 4</a>；本轮输入组织仍属于 <a href="#module-context">Context Manager</a>，持久事实仍属于 <a href="#module-state">Session / State</a>。</p></div></section>
+<article class="chapter" id="module-memory"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Memory：选择跨会话保留的知识</h2></header><section class="lesson-section" id="module-memory-p1-panel-A"><h3>1. 实现原理：写入和读取是两条管线</h3><div class="lesson-body"><div class="am-md"><p>报告任务结束后，可以复用的知识可能是“这个项目使用 uv”和“用户偏好报告列出来源”。“本次测试失败”则与产物版本和时刻相关，不宜直接保存为永远有效的项目事实。</p>
+<p><strong>Memory：受控写入、读取与遗忘</strong></p>
+<p>后续能力 · 当前没有会话存储或长期记忆。</p>
+</div>
+<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 403 563" width="403" height="563" role="img" aria-label="流程图：历史与显式输入、候选提取、检查来源范围与冲突、确认并版本化写入、有效条目与索引、当前任务与身份、范围过滤与检索、带来源的Context片段"><use href="#diagram-module-memory-1-panel-A-1"></use></svg></figure>
+<div class="am-md"><p>写入链路判断“是否值得记住”；读取链路判断“现在是否适用”。即使自动提取质量很好，后续仍要处理过期、冲突和撤销。相似度只帮助寻找候选，不证明内容真实、有效或获准使用。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-policy-p1-panel-G"><h3>6. Prompt 注入怎样影响实现</h3><div class="lesson-body"><div class="am-md"><p>被读取文件可能包含与用户要求相反的动作。防护需要至少贯穿来源标记、输入组织、工具范围和真实授权。仅在文本外加 XML 标签，或只告诉模型“不要受骗”，都不能证明执行边界已经成立。</p>
-<p>当前独立脚本不提供任意命令或环境变量读取工具，缩小了可执行动作范围，但并未证明完整防御。增加搜索、网络、MCP 或 Shell 时，应测试这些能力新增的数据流和效果；记忆与 Skill 也不能自行修改 Policy。</p>
+<section class="lesson-section" id="module-memory-p1-panel-C"><h3>2. 先区分知识类型和存储方案</h3><div class="lesson-body"><div class="am-md"><p>知识可以分成事实与偏好、经验案例、可复用方法。前两类适合保存来源和适用条件；多步骤方法也可能更适合整理成 Skill。分类帮助确定生命周期，不要求为每类部署一个数据库。</p>
+<p>文件、SQL 和向量索引则属于另一组选择：文件方便人工编辑，SQL 方便结构化约束，向量索引方便语义召回。它们可以组合，不是知识类型，也不是固定的技术升级阶梯。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-policy-p2-panel-A"><h3>7. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>当前读取函数检查工作区、隐藏路径与文件范围。增加写入时先约定明确授权和允许效果；需要审批、多用户或不可信执行时，再引入相应机制。每个执行边界保留一次实际资源检查。</p><p>每次只增加当前需求所需的机制，用相同任务和可观察证据检查行为。</p></div></div>
-</section>
-<section class="lesson-section" id="module-policy-p2-panel-B"><h3>8. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>让 CLI 签发“当前 Run 只可创建指定报告一次”的能力。检查参数变更、跨 Run 复用、过期、并发消费和符号链接；操作应使用真实文件和执行器，无需模型才能验证规则。</p>
-<p>再用真实模型执行一次被允许和一次被拒绝的任务，确认拒绝产生真实回执，模型文字不会改变授权。未来接入沙箱时，另做实际文件和网络访问验证，并清楚报告启用了哪些边界。</p>
+<section class="lesson-section" id="module-memory-p1-panel-D"><h3>3. 有哪些实现方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 用户维护的文件记忆</h4>
+<p>用短索引列出主题，正文放在 Markdown 文件中；每个 Run 只加载相关概览，再按需读取正文。写入由用户维护或由显式操作触发。</p>
+<p>它容易审阅、版本控制和迁移，适合单用户学习系统。代价是冲突合并、作用域和删除规则需要约定；全量加载不断增长的文件，会把记忆问题转成 Context 问题。</p>
+<h4>B. 结构化条目加关键词检索</h4>
+<p>用 SQLite 保存 ID、类型、作用域、来源、版本和状态，再按关键词、项目和时间检索。正文可以在数据库或文件中，检索索引由程序维护。</p>
+<p>它便于更正、撤销和审计，精确术语和项目名也容易命中；代价是查询与 Schema 设计，语义改写可能漏召回。这是本项目优先考虑的方案，可以先用 SQL 条件，再按需要增加 FTS。</p>
+<h4>C. 向量或混合检索</h4>
+<p>为条目生成 Embedding，按语义召回，再与关键词、时效和类型过滤组合，必要时重排。它适合知识量大、表达变化明显的检索问题。</p>
+<p>新增成本包括模型用量、索引版本、重建和质量评测。权限过滤不能只在拿到前几条结果后做，否则既可能漏掉有权内容，也会把越权数据带入后续处理。原文、来源和条目状态仍应在正式存储中维护。</p>
+<h4>D. 自动提取与后台整理</h4>
+<p>任务结束时或压缩前，从交互提取候选，再合并、去重和确认。有的系统直接更新记忆文件，有的先保存日记或观察，再周期整理。</p>
+<p>它减少人工维护，但可能把模型猜测写成事实、把一次性要求写成长期偏好，或在用户更正后写回旧值。应记录提取器版本和来源范围，先允许查看与拒绝候选，再逐步提高自动写入比例。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>适合什么</th>
+<th>收益</th>
+<th>主要问题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>文件索引与正文</td>
+<td>少量、人工可审查知识</td>
+<td>透明、易迁移</td>
+<td>合并和范围管理</td>
+</tr>
+<tr>
+<td>SQL 条目与关键词</td>
+<td>需要版本、更正与隔离</td>
+<td>行为可解释</td>
+<td>语义召回有限</td>
+</tr>
+<tr>
+<td>混合检索</td>
+<td>大量、多表达知识</td>
+<td>改善候选召回</td>
+<td>索引与评测成本</td>
+</tr>
+<tr>
+<td>自动整理</td>
+<td>人工维护困难</td>
+<td>减少重复整理</td>
+<td>错写、冲突和遗忘失效</td>
+</tr>
+</tbody></table></div>
+<p>自动整理是写入策略，混合检索是读取策略。两者可以分别引入，不能因为增加向量数据库就宣称获得了完整记忆系统。</p>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-state">← State：保存执行事实，并从明确边界继续</a><a href="#module-extensions">Extensions：扩展方法、生命周期与外部能力 →</a></nav></article><article class="chapter" id="module-extensions"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Extensions：扩展方法、生命周期与外部能力</h2></header><section class="lesson-section" id="module-extensions-p1-panel-A"><h3>1. 实现原理：发现、装配和执行分开</h3><div class="lesson-body"><div class="am-md"><p><strong>扩展加载：方法、回调与工具分别接入</strong></p>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-E"><h3>4. 不同实现怎样做</h3><div class="lesson-body"><div class="am-md"><p><strong>Claude Code，官方文档。</strong> <a href="https://code.claude.com/docs/en/memory">记忆说明</a>区分用户维护的规则文件和自动记忆；自动记忆使用有大小限制的 <code>MEMORY.md</code> 索引，主题文件按需读取。可借鉴的是“短索引常驻、细节按需”，以及让用户能查看和修改保存内容；它不证明记忆会始终正确。</p>
+<p><strong>Deep Agents，源码核对。</strong> <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py">MemoryMiddleware</a>在 <code>before_agent</code> 加载配置来源，在请求修改阶段把记忆片段加入 System 消息；已经存在于状态中的内容不会无条件重读。<a href="https://docs.langchain.com/oss/python/deepagents/memory">官方记忆文档</a>说明通过后端配置用户或 Agent 作用域。可借鉴的是加载与存储分离；引入本项目时要自行明确哪些文件有指令身份。</p>
+<p><strong>AgentScope Java，固定官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/memory.md">Memory 设计</a>使用按日追加的记录和合并后的长期文件，区分事实提取、合并与会话摘要；长期内容作为参考材料进入 Context。它展示了“先积累、后整理”的写入管线，也会产生额外模型调用与维护工作。</p>
+<p><strong>LangChain，官方文档。</strong> <a href="https://docs.langchain.com/oss/python/langchain/long-term-memory">长期记忆 Store</a>用 namespace 和 key 管理条目，并支持范围内查找。可借鉴的是先确定用户、项目等作用域，再决定用哪种索引。namespace 的构造与访问校验仍是应用责任。</p>
+<p>这些做法不同，尤其是记忆进入 System 还是参考材料。教程不会把某个实现的默认信任方式视为所有系统必须遵循的规则。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-F"><h3>5. 本项目可以采用的数据结构</h3><div class="lesson-body"><div class="am-md"><p>以下是建议，不是已经存在的表：</p>
+</div>
+<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">json</span></figcaption><pre class="am-code"><code data-lang="json">{
+  "id": "memory_001",
+  "scope": {"user_id": "local", "project_id": "learn-agent"},
+  "kind": "project_fact",
+  "text": "项目使用 uv 管理依赖。",
+  "source_ids": ["run_x/message_1"],
+  "version": 1,
+  "status": "active",
+  "supersedes": null,
+  "created_at": "2026-10-18T00:00:00Z",
+  "expires_at": null,
+  "confirmed_by": "user"
+}
+</code></pre></figure>
+<div class="am-md"><p>ID、作用域和版本由程序产生，来源指向可追溯记录。<code>confirmed_by</code> 不能由提取模型自行伪造。对于“测试通过”，还应保存被测产物版本和检查范围，避免新版本错误继承旧结论。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-G"><h3>6. 更正、遗忘和时效怎样实现</h3><div class="lesson-body"><div class="am-md"><p>事实变化时，将旧条目标为被替代，再写入新版本；读取时只选有效条目。若存在冲突且没有明确更正依据，应保留不确定性，而不是任意挑一个更相似的结果。</p>
+<p>遗忘至少涉及正式条目、检索索引和提取来源。只删除向量索引，后台仍可能从旧历史重新提取；只删除数据库，缓存或摘要还可能留有副本。可用撤销标记阻止被遗忘来源再次进入提取，但具体是否删除原始记录、备份和派生产物，需要明确操作范围。</p>
+<p>时效由知识类型决定：当前构建状态很快失效，稳定偏好可以长期保留但允许覆盖。记忆中的“用户曾经批准发送”不能代替本次动作授权，权限始终由 <a href="#module-policy">Policy</a> 判断。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p2-panel-A"><h3>7. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>当前没有跨会话记忆。先用具体复用需求定义保存、读取、更正和删除，再选择简单记录或数据库；自动提炼、向量检索和后台整理都需要单独证明收益。</p><p>每次只增加当前需求所需的机制，用相同任务和可观察证据检查行为。</p></div></div>
+</section>
+<section class="lesson-section" id="module-memory-p2-panel-B"><h3>8. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>在两个新会话中检验同一项目的显式记忆，再用另一个项目验证范围隔离。更正后检查新版本生效，遗忘后检查条目、索引和后续提取均不再复用它；记忆内容也不能开启写权限。</p>
+<p>引入自动化后，再统计候选准确率、错误正式写入率、过期命中率和遗忘后重新出现的比例。检索命中和实际任务检查结果一起报告，才能判断记忆是否帮助了系统。</p>
+</div></div>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-quality">← Quality：观测过程，验收结果，评测改进</a><a href="#module-extensions">Extensions：扩展方法、生命周期与外部能力 →</a></nav></article>
+<section class="lesson-section" id="capability-reliable-execution"><h3>可靠执行与隔离</h3><div class="am-md"><p>调度、恢复、Worker 和沙箱，用来处理进程退出、长时间运行或不可信执行。入口见<a href="#stage-5">阶段 5</a>；记录与恢复机制查 <a href="#module-state">Session / State</a>，授权与隔离边界查 <a href="#module-policy">Policy</a>。这些能力当前尚未实现。</p></div></section>
+<section class="lesson-section" id="capability-extensions"><h3>扩展与编排</h3><div class="am-md"><p>Skills、MCP、Hooks 扩展方法与能力，Graph、多 Agent 组织执行者，UI 扩展用户入口。入口见<a href="#stage-6">阶段 6</a>；分别查下面的 Extensions、Orchestration，以及<a href="#module-interfaces">应用入口</a>。</p></div></section>
+<article class="chapter" id="module-extensions"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Extensions：扩展方法、生命周期与外部能力</h2></header><section class="lesson-section" id="module-extensions-p1-panel-A"><h3>1. 实现原理：发现、装配和执行分开</h3><div class="lesson-body"><div class="am-md"><p><strong>扩展加载：方法、回调与工具分别接入</strong></p>
 <p>加载能力不等于授予执行权限。</p>
 </div>
 <figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 573 306" width="573" height="306" role="img" aria-label="流程图：扩展包与配置、核对元数据与版本、按需加载方法正文、Context中的方法与资料、注册生命周期回调、Loop与模型工具边界、注册工具适配器、参数与权限及执行管线"><use href="#diagram-module-extensions-1-panel-A-1"></use></svg></figure>
@@ -1813,90 +2025,7 @@ expires_at, max_uses, decision_id
 <section class="lesson-section" id="module-extensions-p2-panel-B"><h3>8. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>读取真实方法文件的元数据，由用户选择后才加载有界正文，不自动执行引用脚本。检查未激活正文不进入模型输入、版本可追溯、路径逃逸和超大正文被拒绝。</p>
 <p>随后接一个真正只读的本地 MCP 服务，检查断连、工具定义变化和超大结果；不模拟模型返回。最后核对扩展没有获得未授予的写能力，观测日志也没有被当作授权来源。</p>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-policy">← Policy：把授权落实到真实动作</a><a href="#module-quality">Quality：观测过程，验收结果，评测改进 →</a></nav></article><article class="chapter" id="module-quality"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Quality：观测过程，验收结果，评测改进</h2></header><section class="lesson-section" id="module-quality-p1-panel-A"><h3>1. 实现原理：三个问题分别回答</h3><div class="lesson-body"><div class="am-md"><p><strong>Quality：观测、验收与版本评测</strong></p>
-<p>三种职责 · 模型说明不推导程序结论。</p>
-</div>
-<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 785 251" width="785" height="251" role="img" aria-label="流程图：真实运行、Observability、Verification、Evaluation、运行状态、程序结论、用户展示、模型说明"><use href="#diagram-module-quality-1-panel-A-1"></use></svg></figure>
-<div class="am-md"><p><strong>观测</strong>记录路径、耗时和错误，<strong>运行验证</strong>检查当前产物，<strong>评测</strong>在任务集上比较系统版本。完整日志可以证明调用发生过，不能单独证明需求满足；单个案例通过也不能证明系统普遍可靠。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-C"><h3>2. 观测有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 结构化本地事件</h4>
-<p>JSONL 或 SQLite 按顺序记录运行边界，保存稳定身份和必要元数据，正文单独存储。它依赖少、便于本地学习；代价是跨进程关联、聚合、查询和可视化需要继续建设。</p>
-<p>注意区分观测日志与执行事实源：可以丢失的采样日志不应承担恢复所需的关键提交。两者的关系见<a href="#module-state">State</a>。</p>
-<h4>B. Trace、Span 和指标</h4>
-<p>一个 Trace 关联整段请求或工作流，Span 表示模型、工具、子任务等操作，记录父子关系、起止时间和状态。<a href="https://opentelemetry.io/docs/specs/otel/trace/api/">OpenTelemetry Trace 规范</a>提供这些基本结构。</p>
-<p>它适合跨服务定位耗时和失败，代价是上下文传播、采样、导出和字段治理。Token、工具次数和队列时延可以作为指标；原始文件正文和密钥不宜无差别放入高基数字段。</p>
-<h4>C. 专用 Agent 观测平台</h4>
-<p>通过适配器导出调用树、Prompt 版本和评测记录，复用平台界面与数据集管理。它能减少展示开发，也带来数据存放、访问范围、费用和平台耦合。</p>
-<p>不论使用哪种平台，本地运行身份、任务版本和产物证据都应可关联。平台上出现一条绿色调用记录，不代表业务检查覆盖了全部要求。</p>
-<div class="am-table-wrap"><table>
-<thead>
-<tr>
-<th>方案</th>
-<th>适用范围</th>
-<th>主要收益</th>
-<th>主要代价</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>本地事件</td>
-<td>单机学习、调查轨迹</td>
-<td>直接、可检查</td>
-<td>聚合和关联能力有限</td>
-</tr>
-<tr>
-<td>OpenTelemetry</td>
-<td>跨服务和 Worker</td>
-<td>通用链路与指标</td>
-<td>传播、采样和字段维护</td>
-</tr>
-<tr>
-<td>Agent 平台</td>
-<td>团队诊断与数据集</td>
-<td>减少界面建设</td>
-<td>数据与供应商依赖</td>
-</tr>
-</tbody></table></div>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-D"><h3>3. 真实实现怎样组织观测</h3><div class="lesson-body"><div class="am-md"><p><strong>OpenAI Agents SDK，官方文档。</strong> <a href="https://developers.openai.com/api/docs/guides/agents/integrations-observability">观测说明</a>描述模型、工具、Handoff、Guardrail 和自定义 Span 的运行轨迹。可借鉴的是围绕真实操作建立调用树，而不是只保存最终 Prompt 和答案。</p>
-<p><strong>AgentScope Java，固定官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/session-log.md">Session Log</a>将执行记录、用户可读历史与事件订阅关联。可借鉴的是让页面刷新后能根据身份补读，而不完全依赖瞬时回调。</p>
-<p><strong>OpenTelemetry，规范现状。</strong> 原 <a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/">GenAI 页面</a>已说明迁移至<a href="https://github.com/open-telemetry/semantic-conventions-genai">独立语义约定仓库</a>。接入时应固定所采用的版本并验证映射；目标 MVP 没有声明符合这些语义约定。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-E"><h3>4. 验收有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 确定性产物检查</h4>
-<p>检查文件、JSON Schema、编译、测试、数值或业务数据库状态。实现应读取实际产物，保存检查名、规则版本、目标版本和证据。</p>
-<p>优点是规则明确、容易复现；缺点是只能覆盖写出的条件。例如包含一个标记，不证明文章有正确来源；测试通过，也只说明被运行的测试和环境通过。</p>
-<h4>B. 模型裁判</h4>
-<p>让模型根据明确评分标准评估相关性、完整性或表达质量，可以使用参考答案、逐项标准或成对比较。它适合开放式内容，代价是用量、非确定性和偏差。</p>
-<p>裁判也需要数据和校准，不能因为它是另一模型就视为独立事实。应让裁判读取产物与来源，而不是只读取执行模型的“已完成”声明。调换候选顺序、固定标准并与人工标注比较，有助于发现位置和长度偏差。</p>
-<h4>C. 人工检查</h4>
-<p>用户或评审者根据原需求核对实际交付。它适合主观目标、边界不清的要求和重要发布；代价是等待、成本与不同评审者之间的差异。</p>
-<p>这三类可组合：先跑确定性条件，再检查开放式质量，最后在明确交付边界人工确认。<a href="https://developers.openai.com/api/docs/guides/evaluation-best-practices">OpenAI 评测原则</a>强调任务相关标准与人工校准；自动评分不应脱离实际需求。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-F"><h3>5. 任务验收契约可以怎样设计</h3><div class="lesson-body"><div class="am-md"><p>未来可以把每个用户要求对应到检查项，而不是只返回一个总布尔值：</p>
-</div>
-<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">requirement_id -&gt; check_id
-check = {rule_version, target_ref, target_revision, status, evidence}
-status = passed | failed | not_checked | unknown
-</code></pre></figure>
-<div class="am-md"><p>检查范围完整与否由应用定义，不能让模型自行宣称所有要求已覆盖。产物变化后，旧检查要按版本失效；文件创建回执与最终哈希结合，才能更清楚地判断是否检查了本次实际产物。这些机制尚未实现，属于后续质量模块的设计内容。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-G"><h3>6. 测试和评测怎样分层</h3><div class="lesson-body"><div class="am-md"><p><strong>本地组件测试</strong>直接使用真实参数、文件和数据库，检查解析、权限、上下文选择与存储。无需模型的条件就直接检查，不构造替代模型响应。</p>
-<p><strong>真实协议测试</strong>连接 SDK 和服务端点，检查调用关联、输出不足、拒答和真实错误。无法稳定触发的异常明确列为覆盖限制，未配置的后端明确跳过。</p>
-<p><strong>任务评测</strong>固定任务、工作区、模型与检查器，记录检查结果、工具路径、用量和时间。它衡量整体决策表现，重要结论应重复运行并报告样本数，不能拿一次成功当作长期成功率。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p2-panel-A"><h3>7. 怎样运行和比较本项目</h3><div class="lesson-body"><div class="am-md"><p>当前运行 <code>uv run pytest</code>，检查临时文件与本机 HTTP 协议。需要真实任务评测时，先定义案例、资料版本、成功条件、用量记录和失败分类，再实现独立评测器。</p><p>本地协议通过不等于真实模型任务通过；不要把固定响应当成模型质量证据。</p></div></div>
-</section>
-<section class="lesson-section" id="module-quality-p2-panel-B"><h3>8. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>当前用本地文件与 HTTP 协议检查循环。任务出现可检查的产物后，再增加独立验收条件；跨任务比较时再建立案例与用量记录。观测平台和模型裁判都按实际需求引入。</p><p>每次只增加当前需求所需的机制，用相同任务和可观察证据检查行为。</p></div></div>
-</section>
-<section class="lesson-section" id="module-quality-p2-panel-C"><h3>9. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>新增“旧报告已经包含标记”“报告缺来源”“资料含恶意指令”“用户中途改格式”四类案例，明确哪些条件已有检查器、哪些仍需人工核对。再比较一次 Context 改动。</p>
-<p>验收报告要能解释失败属于执行、权限、信息选择还是任务质量；每个结论附对应证据。没有配置检查的要求标记未检查，不能由模型自述补成通过。</p>
-</div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-extensions">← Extensions：扩展方法、生命周期与外部能力</a><a href="#module-orchestration">Orchestration：决定执行者怎样分工和交接 →</a></nav></article><article class="chapter" id="module-orchestration"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Orchestration：决定执行者怎样分工和交接</h2></header><section class="lesson-section" id="module-orchestration-p1-panel-A"><h3>1. 实现原理：任务、执行和汇合分别有身份</h3><div class="lesson-body"><div class="am-md"><p>报告任务可以由主 Agent 负责整体目标，将资料检索和证据检查交给不同执行者。调度层需要知道谁拥有任务、谁在运行、结果交给谁，以及最终由谁对用户负责。</p>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-memory">← Memory：选择跨会话保留的知识</a><a href="#module-orchestration">Orchestration：决定执行者怎样分工和交接 →</a></nav></article><article class="chapter" id="module-orchestration"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Orchestration：决定执行者怎样分工和交接</h2></header><section class="lesson-section" id="module-orchestration-p1-panel-A"><h3>1. 实现原理：任务、执行和汇合分别有身份</h3><div class="lesson-body"><div class="am-md"><p>报告任务可以由主 Agent 负责整体目标，将资料检索和证据检查交给不同执行者。调度层需要知道谁拥有任务、谁在运行、结果交给谁，以及最终由谁对用户负责。</p>
 <p><strong>多 Agent：任务、子运行与汇合</strong></p>
 <p>设计方案 · 当前仍是单 Agent 基线。</p>
 </div>
@@ -1992,80 +2121,10 @@ result = {status, findings, evidence_refs, artifact_refs, checks, uncertainties}
 <section class="lesson-section" id="module-orchestration-p2-panel-B"><h3>8. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>增加一个只读 <code>review_document</code> 子 Agent 工具，使用真实模型检查固定文档快照，返回问题、证据位置和不确定项。主 Agent 检查引用再整合，子任务不再创建子任务，也没有写权限。</p>
 <p>分别检查输入遗漏、子任务超时、结果重复和父取消；最后对同一任务集比较单 Agent 与委派版本。只有收益和新增成本都可解释，才继续增加异步通信和共享任务调度。</p>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-quality">← Quality：观测过程，验收结果，评测改进</a><a href="#module-interfaces">Interfaces：入口共用应用服务，运行独立于展示 →</a></nav></article><article class="chapter" id="module-interfaces"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Interfaces：入口共用应用服务，运行独立于展示</h2></header><section class="lesson-section" id="module-interfaces-p1-panel-A"><h3>1. 实现原理：提交、执行和观察分开</h3><div class="lesson-body"><div class="am-md"><p><strong>Web 与 CLI 的入口结构</strong></p>
-<p>入口、执行与观察分别组织。</p>
-</div>
-<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 291 572" width="291" height="572" role="img" aria-label="流程图：CLI、AgentService、浏览器、HTTP适配、WebRuns、Runner、SQLite"><use href="#diagram-module-interfaces-1-panel-A-1"></use></svg></figure>
-<div class="am-md"><p>同一个生成报告的请求，无论来自命令行还是浏览器，都应经过相同配置、权限和执行流程。前端不需要理解模型协议，CLI 也不应复制另一个 Agent Loop。</p>
-<p>应用服务接收业务数据，例如会话身份和问题，而不是 HTTP Request 或 DOM 对象。存储中的 Run ID 用来关联执行、历史和进度，页面状态只是展示视图，不是执行事实源。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-C"><h3>2. 执行服务有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 请求内同步执行</h4>
-<p>接口一直等待 Runner 返回，适合 CLI 和耗时很短的调用，实现简单、错误直接。代价是请求超时与任务生命周期紧密耦合，页面断开后也难以清楚表达执行状态。</p>
-<h4>B. 进程内后台执行</h4>
-<p>接口返回任务身份，任务由进程内集合持有，查询和进度接口独立工作。它适合本地 Web MVP，代码少，也能避免模型网络等待阻塞 HTTP 事件循环。</p>
-<p>代价是执行者与 Web 进程共同存亡，线程里的阻塞工作也不能仅靠取消异步 Task 就可靠停止。<a href="https://fastapi.tiangolo.com/async/">FastAPI 并发说明</a>有助于理解异步 HTTP 处理与同步阻塞工作的区别；实际任务所有权仍由应用设计。</p>
-<h4>C. 持久队列与独立 Worker</h4>
-<p>提交先持久化任务，由 Worker 领取并运行，前端继续按身份查询。它适合长任务、服务重启和独立扩容。</p>
-<p>新增成本包括重复投递、租约、任务状态、取消传播和外部副作用对账。队列保证受理或再次投递，并不自动保证每个工具只执行一次，参见<a href="#module-state">State</a>。</p>
-<h4>D. 外部 Agent 运行服务</h4>
-<p>Web 或 CLI 调用完整运行服务，消费其任务身份与事件。它减少自建调度，但需要明确会话、权限、历史和产物由谁管理，避免同时维护两套冲突状态。</p>
-<p>这是部署与控制权方向的选择，不必为了拥有 Web UI 就引入它。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-D"><h3>3. 进度协议怎样选择</h3><div class="lesson-body"><div class="am-md"><p><strong>Web 进度、补读与历史查询</strong></p>
-<p>SSE 观察与 Run 执行分别进行。</p>
-</div>
-<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 607 624" width="607" height="624" role="img" aria-label="时序图：浏览器、HTTP、AgentService、Store"><use href="#diagram-module-interfaces-1-panel-D-1"></use></svg></figure>
-<div class="am-md"><div class="am-table-wrap"><table>
-<thead>
-<tr>
-<th>方案</th>
-<th>工作方式</th>
-<th>适用情况</th>
-<th>主要代价</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>HTTP 轮询</td>
-<td>周期查询状态或增量</td>
-<td>低频状态、简单客户端</td>
-<td>间隔与重复查询</td>
-</tr>
-<tr>
-<td>POST + SSE + GET</td>
-<td>提交、单向事件、最终查询</td>
-<td>聊天与工具进度</td>
-<td>长连接、游标和补读</td>
-</tr>
-<tr>
-<td>WebSocket</td>
-<td>双向消息通道</td>
-<td>高频控制与交互</td>
-<td>消息协议、重连和连接状态</td>
-</tr>
-</tbody></table></div>
-<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events">MDN SSE 说明</a>定义单向事件、事件 ID 和重连行为。本项目选择 SSE 是因为用户发送任务后主要接收进度；以后增加取消或审批也可以通过普通 POST，不必立即改用 WebSocket。</p>
-<p>进度传输与模型流式生成不同。当前事件说明模型和工具何时开始、何时返回，没有逐 Token 展示；新增模型流式支持需要修改 <a href="#module-model">Model 适配器</a>，而不只是切换前端连接协议。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-E"><h3>4. 真实系统怎样组织入口</h3><div class="lesson-body"><div class="am-md"><p><strong>AgentScope Java，固定官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/architecture.md">架构说明</a>区分直接调用、当前请求内流式事件，以及持久会话任务操作。可借鉴的是让不同入口复用模型、工具与中间件配置，同时明确谁安排执行。</p>
-<p><strong>pi，固定官方文档。</strong> <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/docs/rpc.md">RPC 接口</a>通过结构化命令与事件将运行核心接入其他界面。可以借鉴“协议适配器围绕共同运行时”的组织方式；RPC 不是必须使用 HTTP 或浏览器的接口。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-F"><h3>5. 断线、历史与重复提交</h3><div class="lesson-body"><div class="am-md"><p>事件采用稳定身份和游标，客户端重连后补读，再按身份去重。持久历史负责重建页面，实时事件负责显示后续变化；只保存前端聊天数组，无法可靠应对刷新和跨入口读取。</p>
-<p>用户点击发送后网络中断，可能不知道任务是否已经受理。后续可以增加客户端请求 ID，由服务做提交去重；仅仅重发 HTTP POST 可能启动第二次任务。这个提交身份与模型工具调用身份不同。</p>
-<p>页面关闭、请求断开、用户取消和进程退出也应分别定义。取消的接口应返回受理状态，最终停止要由执行端确认；UI 不应在发出取消请求后立即伪装所有工具已经停止。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-G"><h3>6. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>当前有阶段 0 的独立脚本与 <a href="../learn_agent/__main__.py">阶段 1 的模块入口</a>，尚无 Web 服务。需要命令行选项时先解析配置，需要 Web 时再提取双方共用的执行用例；执行、查询与观察各有职责，不在新入口复制另一套循环。</p><p>每次只增加当前需求所需的机制，用相同任务和可观察证据检查行为。</p></div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p2-panel-A"><h3>7. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>先实现客户端请求 ID：同一请求重复提交只产生一个 Run，新请求使用新身份。分别从 CLI 和 Web 观察同一会话记录，刷新页面后按游标继续查看实际进度。</p>
-<p>随后设计取消用例，检查发出取消、执行端确认和资源回收的状态。最终结果仍展示程序结论与实际证据；后端未配置检查时，任何入口都不能因为模型文字而显示任务验收通过。</p>
-</div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-orchestration">← Orchestration：决定执行者怎样分工和交接</a><a href="#architecture-agent-harness">当前最小骨架与未来模块蓝图 →</a></nav></article></section><section class="book-group" id="architecture"><h2>架构：现在的骨架与未来蓝图</h2><p class="group-description">把当前单文件职责与未来完整 Harness 的模块分开阅读。</p><article class="chapter" id="architecture-agent-harness"><header class="chapter-header"><span class="kind">学习主线 · 当前与后续实现范围见正文</span><h2>当前最小骨架与未来模块蓝图</h2></header><div class="am-md"><p>阶段 0 的单文件 Loop 位于 examples/00_plain_loop.py；阶段 1 已将工具与模型边界接入 learn_agent/runner.py。下方先看当前管线，再看未来蓝图。</p></div><section class="lesson-section" id="architecture-agent-harness-p1-panel-A"><h3>1. 阶段 0 的单文件执行主线</h3><div class="lesson-body"><figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 481 454" width="481" height="454" role="img" aria-label="时序图：Runner、ModelAdapter、ReadOnlyTool"><use href="#diagram-stage-0-1-panel-A-1"></use></svg></figure><div class="am-md"><p>图中 Loop 对应 run_agent，模型 SDK 对应实际 API 请求；execute_tool 是工具入口，内部委托 read_file 读取文件。消息和工具定义由 Loop 传入 SDK，工具回执回到 Loop 后进入下一轮。</p></div></div></section><section class="lesson-section" id="architecture-tools-current"><h3>2. 阶段 1 当前的 Tools 边界</h3><div class="lesson-body"><figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 700 510" width="700" height="510" role="img" aria-label="阶段 1 当前工具执行与失败回执管线"><use href="#diagram-stage-1-tools"></use></svg></figure><div class="am-md"><p>应用组装 ToolRegistry 与 ToolContext；Loop 依赖 ToolExecutor，文件工具依赖参数模型与资源上下文。具体学习顺序见<a href="#stage-1">阶段 1</a>。</p></div></div></section><section class="lesson-section" id="architecture-agent-harness-p1-panel-B"><h3>3. 后续加入 Context 后的数据往返</h3><div class="lesson-body"><div class="am-md"><p>当前 Runner 已调用独立模型适配器；未来由 Runner 取得工具定义，构建并取回 Context，再请求模型。Context Builder 不直接调用模型。</p></div><figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 643 492" width="643" height="492" role="img" aria-label="时序图：ToolExecutor、Runner、ContextBuilder、ModelAdapter"><use href="#diagram-stage-1-1-panel-C-1"></use></svg></figure>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-extensions">← Extensions：扩展方法、生命周期与外部能力</a><a href="#architecture-agent-harness">当前最小骨架与未来模块蓝图 →</a></nav></article></section>
+<section class="book-group" id="architecture"><h2>架构：现在的骨架与未来蓝图</h2><p class="group-description">把当前单文件职责与未来完整 Harness 的模块分开阅读。</p><article class="chapter" id="architecture-agent-harness"><header class="chapter-header"><span class="kind">学习主线 · 当前与后续实现范围见正文</span><h2>当前最小骨架与未来模块蓝图</h2></header><div class="am-md"><p>阶段 0 的单文件 Loop 位于 examples/00_plain_loop.py；阶段 1 已将工具与模型边界接入 learn_agent/runner.py。下方先看当前管线，再看未来蓝图。</p></div><section class="lesson-section" id="architecture-agent-harness-p1-panel-A"><h3>1. 阶段 0 的单文件执行主线</h3><div class="lesson-body"><figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 481 454" width="481" height="454" role="img" aria-label="时序图：Runner、ModelAdapter、ReadOnlyTool"><use href="#diagram-stage-0-1-panel-A-1"></use></svg></figure><div class="am-md"><p>图中 Loop 对应 run_agent，模型 SDK 对应实际 API 请求；execute_tool 是工具入口，内部委托 read_file 读取文件。消息和工具定义由 Loop 传入 SDK，工具回执回到 Loop 后进入下一轮。</p></div></div></section><section class="lesson-section" id="architecture-tools-current"><h3>2. 阶段 1 当前的 Tools 边界</h3><div class="lesson-body"><figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 700 510" width="700" height="510" role="img" aria-label="阶段 1 当前工具执行与失败回执管线"><use href="#diagram-stage-1-tools"></use></svg></figure><div class="am-md"><p>应用组装 ToolRegistry 与 ToolContext；Loop 依赖 ToolExecutor，文件工具依赖参数模型与资源上下文。具体学习顺序见<a href="#stage-1">阶段 1</a>。</p></div></div></section><section class="lesson-section" id="architecture-agent-harness-p1-panel-B"><h3>3. 后续加入 Context 后的数据往返</h3><div class="lesson-body"><div class="am-md"><p>当前 Runner 已调用独立模型适配器；未来由 Runner 取得工具定义，构建并取回 Context，再请求模型。Context Builder 不直接调用模型。</p></div><figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 643 492" width="643" height="492" role="img" aria-label="时序图：ToolExecutor、Runner、ContextBuilder、ModelAdapter"><use href="#diagram-stage-1-1-panel-C-1"></use></svg></figure>
 </div></section><section class="lesson-section" id="architecture-agent-harness-p1-panel-C"><h3>4. 完整 Harness 的参考蓝图</h3><div class="lesson-body"><div class="am-md"><p><strong>未来参考，尚未实现。</strong>按任务需要逐步增加配置、Context、Policy、存储与检查器。图中同名 Runner 的多个节点是循环阶段；不要求拆成独立服务。</p></div><figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 427 1006" width="427" height="1006" role="img" aria-label="流程图：用户任务、Application、AgentDefinition、Runner准备输入、ContextBuilder、Runner请求模型、ModelAdapter、Runner处理回复"><use href="#diagram-architecture-agent-harness-1-panel-A-1"></use></svg></figure>
-<div class="am-md"><p>可选模块与技术方案见<a href="#modules">11 类模块手册</a>。最小起步版无需把蓝图全部实现。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-interfaces">← Interfaces：入口共用应用服务，运行独立于展示</a><a href="#reference-research">方案依据：源码样本与官方资料 →</a></nav></article></section><section class="book-group" id="references"><h2>检查与研究参考</h2><p class="group-description">先使用当前本地检查，再按问题阅读历史研究材料与术语。</p><article class="chapter" id="reference-research"><header class="chapter-header"><span class="kind">当前实现与参考</span><h2>方案依据：源码样本与官方资料</h2></header><div><div class="am-md"><p>以下资料按固定源码提交或官方文档收录，供设计时对照。</p></div></div><div class="am-intro am-md"><div class="am-md"><p>核对日期：<strong>2026-10-18</strong>。本次研究服务于<a href="#modules">模块教程</a>：解释实现机制、比较设计选择，并确定 Learn Agent 的学习顺序。它是有明确样本的研究，不是所有 Agent 产品和技术方案的完整目录，也没有对所列产品进行统一性能测试。</p>
+<div class="am-md"><p>模块职责见<a href="#system-map">系统地图</a>；通用教程分为应用配置、Harness 核心和按需扩展。最小版本无需把蓝图全部实现。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-orchestration">← Orchestration：决定执行者怎样分工和交接</a><a href="#reference-research">方案依据：源码样本与官方资料 →</a></nav></article></section><section class="book-group" id="references"><h2>检查与研究参考</h2><p class="group-description">先使用当前本地检查，再按问题阅读历史研究材料与术语。</p><article class="chapter" id="reference-research"><header class="chapter-header"><span class="kind">当前实现与参考</span><h2>方案依据：源码样本与官方资料</h2></header><div><div class="am-md"><p>以下资料按固定源码提交或官方文档收录，供设计时对照。</p></div></div><div class="am-intro am-md"><div class="am-md"><p>核对日期：<strong>2026-10-18</strong>。本次研究服务于<a href="#modules">模块教程</a>：解释实现机制、比较设计选择，并确定 Learn Agent 的学习顺序。它是有明确样本的研究，不是所有 Agent 产品和技术方案的完整目录，也没有对所列产品进行统一性能测试。</p>
 </div></div>
 <section class="lesson-section" id="reference-research-p1-panel-A"><h3>1. 证据怎样标注</h3><div class="lesson-body"><div class="am-md"><p><strong>源码核对</strong>表示阅读了下列提交中与结论相关的函数和调用位置，没有逐行审计整个仓库。<strong>官方文档</strong>表示页面在核对日公开描述了该行为，网页可能继续变化。<strong>本项目建议</strong>表示从问题和约束推导的设计，不能归为某个产品的实际实现。</p>
 <p>源码入口使用提交固定链接，避免 <code>main</code> 更新后失去阅读依据。要复查行为，先读入口函数，再沿它的调用查找状态更新、失败分支和持久化位置；只看到一个类名，还不能确认它已接入默认运行链。</p>
@@ -2188,7 +2247,7 @@ uv run python scripts/check_docs.py
 <section class="lesson-section" id="reference-glossary-p1-panel-E"><h3>3. 图的阅读方法</h3><div class="lesson-body"><div class="am-md"><p>本教程直接在 HTML 正文中呈现图示、解释、示例与练习。同一张图在文件开头定义一次，相关章节重复引用，不需要维护外部图源。</p>
 <p>箭头含义以每张图的图例和标签为准：流程图的实线表示标注的调用或数据传递，虚线可能表示可选扩展或约束；时序图的虚线通常表示返回。依赖图中的箭头表示依赖方向，不能直接当作运行时调用顺序。每张图必须说明阶段 0 实现、通用机制或未来方案，不能从目标蓝图推断仓库已有对应实现。</p>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#reference-validation">← 本地检查与验证范围</a><a href="#stage-0">回到阶段 0 ↑</a></nav></article></section>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#reference-validation">← 本地检查与验证范围</a><a href="#system-map">系统职责地图 →</a></nav></article></section>
 <footer class="footer" id="about-this-file"><p>本教程是一份独立 HTML。正文、样式、交互与 SVG 图均在文件内，打开即可阅读。</p><details><summary>维护这份教程</summary><p>直接修改本文件。正文位于对应的 article / section 中；图示定义位于文件开头的 SVG symbol 区，正文通过 use 引用同一张图。不需要修改 Markdown、安装绘图工具或运行构建命令。</p><p>图中普通文本、形状和连线都是 SVG 元素。需要调整内容或布局时，可直接修改对应定义。项目代码与外部资料链接用于进一步阅读。</p></details><a class="back-top" href="#overview">回到开始 ↑</a></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 <script>

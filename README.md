@@ -1,6 +1,6 @@
 # Learn Agent：从独立 Loop 到工具与模型边界
 
-教程入口：[docs/tutorial.html](docs/tutorial.html#stage-0)。阶段 0 学习循环，完成后进入[阶段 1：Tools 与 Model 的规则和实现](docs/tutorial.html#stage-1)。
+教程入口：[系统职责地图](docs/tutorial.html#system-map)。按[学习主线](docs/tutorial.html#learning)逐步实现，按职责查通用原理；当前已完成[阶段 1：Tools 与 Model](docs/tutorial.html#stage-1)。
 
 ## 安装与运行
 
