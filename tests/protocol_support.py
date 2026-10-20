@@ -4,6 +4,7 @@ import json
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+from time import sleep
 
 from openai import DefaultHttpxClient, OpenAI
 
@@ -33,7 +34,7 @@ def completion(*, path=None, arguments=None, text="", finish="stop", name="read_
 
 
 @contextmanager
-def local_api(responses):
+def local_api(responses, *, delay=0):
     """让实际 SDK 访问本机服务，记录它真正发出的请求与消息续接。"""
     requests = []
 
@@ -41,12 +42,23 @@ def local_api(responses):
         def do_POST(self):
             requests.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
             response = responses[min(len(requests) - 1, len(responses) - 1)]
+            if isinstance(response, tuple):
+                status, response, headers = response
+            else:
+                status, headers = 200, {}
             payload = json.dumps(response).encode()
-            self.send_response(200)
+            if delay:
+                sleep(delay)
+            self.send_response(status)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(payload)))
+            for name, value in headers.items():
+                self.send_header(name, value)
             self.end_headers()
-            self.wfile.write(payload)
+            try:
+                self.wfile.write(payload)
+            except BrokenPipeError:
+                pass  # 超时测试中的客户端已经断开，本机服务无需继续写出。
 
         def log_message(self, *args):
             pass

@@ -6,6 +6,7 @@ import pytest
 from protocol_support import completion, local_api
 from pydantic import Field, JsonValue
 
+from learn_agent.models import OpenAIChatModel
 from learn_agent.runner import run_agent
 from learn_agent.tools import (
     READ_FILE,
@@ -194,7 +195,7 @@ def test_third_tool_integrates_without_loop_changes(tmp_path):
             completion(text="5"),
         ]
     ) as (client, requests):
-        assert run_agent(client, "local", "计算 2+3", registry) == "5"
+        assert run_agent(OpenAIChatModel(client, "local"), "计算 2+3", registry) == "5"
     assert requests[0]["tools"][0]["function"]["name"] == "add"
     feedback = requests[1]["messages"][-1]
     assert feedback["tool_call_id"] == "call_0"
@@ -214,7 +215,10 @@ def test_search_and_read_results_reach_next_sdk_request(tools, tmp_path):
             completion(text="notes.txt:1 LEARN-42"),
         ]
     ) as (client, requests):
-        assert run_agent(client, "local", "找到验收标记", tools) == "notes.txt:1 LEARN-42"
+        assert (
+            run_agent(OpenAIChatModel(client, "local"), "找到验收标记", tools)
+            == "notes.txt:1 LEARN-42"
+        )
     messages = requests[2]["messages"]
     assert [message["role"] for message in messages] == [
         "system",
@@ -233,7 +237,7 @@ def test_failed_tool_result_enters_next_sdk_request(tools):
     with local_api(
         [completion(path="missing.txt", finish="tool_calls"), completion(text="文件不存在")]
     ) as (client, requests):
-        assert run_agent(client, "local", "读取文件", tools) == "文件不存在"
+        assert run_agent(OpenAIChatModel(client, "local"), "读取文件", tools) == "文件不存在"
     assert json.loads(requests[1]["messages"][-1]["content"])["error"]["code"] == "file_error"
 
 
@@ -244,7 +248,7 @@ def test_new_loop_preserves_call_batch_and_request_limit(tools, tmp_path):
         requests,
     ):
         with pytest.raises(RuntimeError, match="2 次模型请求上限"):
-            run_agent(client, "local", "读取", tools, max_steps=2)
+            run_agent(OpenAIChatModel(client, "local"), "读取", tools, max_steps=2)
     assert [item["tool_call_id"] for item in requests[1]["messages"][-2:]] == ["call_0", "call_1"]
     assert len(requests) == 2
 

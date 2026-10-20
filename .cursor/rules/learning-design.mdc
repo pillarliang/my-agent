@@ -23,3 +23,4 @@ alwaysApply: true
 - 每个模块都要说明与 Agent Loop（Runner）或相邻模块的交互接口。先把双方视为黑盒，用图标明操作、输入、输出与传递方向，再按需展开内部实现。
 - 教程按“核心问题与抽象 → 黑盒交互接口 → 实现顺序与源码入口 → 最小运行和验收”组织，保持直接、简洁，不重复图中已有的信息。
 - 模块通用教程负责核心抽象、黑盒交互图和接口原理；阶段教程负责本轮实现范围、源码、运行与验收，通过链接引用通用原理，避免重复讲解。
+- 模块化实现通过 LLMService.invoke(ModelRequest) 取得 ModelResponse；Runner 只依赖统一的 invoke 接口。Key、Base URL、鉴权、SDK client、代理和连接配置由 LLMService 内部管理，应用退出时调用服务的 close()。
