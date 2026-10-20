@@ -8,17 +8,20 @@ dependencies = [
   "python-dotenv>=1,<2",
   "openai>=2,<3",
   "httpx[socks]>=0.28,<1",
+  "pydantic>=2,<3",
 ]
 
 [dependency-groups]
 dev = ["pytest>=8,<10", "ruff>=0.11,<1", "mypy>=1.15,<2"]
 
-# 阶段 0 直接运行单文件，不构建或安装 learn_agent 包。
+# 阶段 0 独立脚本；阶段 1 在项目根目录通过 python -m learn_agent 运行。
+# 当前无需构建分发包。
 [tool.uv]
 package = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-q"
 
 [tool.ruff]
@@ -31,4 +34,4 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["examples/00_plain_loop.py", "scripts/check_docs.py"]
+files = ["learn_agent", "examples/00_plain_loop.py", "scripts/check_docs.py"]

@@ -1,57 +1,59 @@
-# Learn Agent：从一个独立 Loop 开始
+# Learn Agent：从独立 Loop 到工具边界
 
-从 **阶段 0：单文件 Agent Loop** 开始。打开 [examples/00_plain_loop.py](examples/00_plain_loop.py)，先看 `run_agent()`。
+教程入口：[docs/tutorial.html](docs/tutorial.html#stage-0)。阶段 0 学习循环，完成后进入[阶段 1：Tools 模块的规则与实现](docs/tutorial.html#stage-1)。
 
-**教程入口：[docs/tutorial.html](docs/tutorial.html#stage-0)。** 当前实现与未来设计明确分开；后续从这个文件逐步提取模块、增加能力。
+## 安装与运行
 
-## 运行
-
-需要 Python 3.12 或更新版本与 uv。在项目根目录执行：
+需要 Python 3.12 或更新版本与 uv；在项目根目录执行：
 
 ```sh
 uv sync --locked
 ```
 
-参照 [.env.example](.env.example) 创建 `.env`，配置有效的 DashScope Key、匹配的 HTTPS 端点和可用模型。已有 `.env` 可以继续使用，已有环境变量优先。
+参照 [.env.example](.env.example) 创建 `.env`，配置有效的 DashScope Key、匹配的 HTTPS 端点和可用模型。已有环境变量优先。
+
+阶段 0：独立的最小反馈循环，不依赖 `learn_agent` 包。
 
 ```sh
 uv run python examples/00_plain_loop.py
 ```
 
-程序会请求真实模型并产生 API 用量。它读取 [notes.txt](examples/workspace/notes.txt)，打印每轮请求与工具回执，再输出模型说明。默认最多四次请求，工具仅支持读取工作区中的小型 UTF-8 文件。
+阶段 1：显式注册工具，通过统一执行器完成校验、分发和回执。
+
+```sh
+uv run python -m learn_agent
+```
+
+两种入口都请求真实模型并产生 API 用量，默认最多四次请求。阶段 1 在 [notes.txt](examples/workspace/notes.txt) 中搜索验收标记，输出模型说明；工具选择与回答质量需实际运行观察。
 
 ## 从哪里读
 
-打开 [examples/00_plain_loop.py](examples/00_plain_loop.py)，按职责阅读：
+阶段 0 从 [run_agent()](examples/00_plain_loop.py) 开始。阶段 1 按教程中的顺序阅读：
 
-1. `TOOLS`：模型能选择什么动作、需要什么参数。
-2. `read_file()`：实际文件读取与资源范围。
-3. `execute_tool()`：参数如何传入工具，以及成功或失败如何形成回执。
-4. `run_agent()`：消息如何追加，模型和工具如何形成反馈循环。
-5. `main()`：配置如何加载，SDK 客户端如何创建与关闭。
+1. [工具契约](learn_agent/tools/contracts.py)：定义、参数、调用、上下文、回执和执行器接口。
+2. [应用入口](learn_agent/__main__.py)：显式选择工具并注入工作区。
+3. [注册与分发](learn_agent/tools/registry.py)：生成声明、校验参数、执行与异常分流。
+4. [只读文件工具](learn_agent/tools/filesystem.py)：`read_file` 与单文件 `search_text`。
+5. [Loop 接入](learn_agent/runner.py)：将工具声明与回执编码成 SDK 消息。
 
-当前直接使用模型 API 的字典消息。`assistant.tool_calls[].id` 与 `tool.tool_call_id` 关联动作和结果。
+添加工具时遵守同一套规则；模型请求仍使用现有 SDK。后续按需求增加执行环境、写入授权、验收和状态机制。完整范围、实验与验收条件直接维护在教程中。
 
-下一阶段先从这里提取消息契约、模型调用与工具执行边界，再逐步实现存储、上下文预算、权限、验收和应用入口。完整模块方案仍在教程中，作为后续设计参考。
-
-模块按实际变化与协作需要提取，函数和字典已够用时保持简单。保留必要的输入与资源检查，避免重复判断、宽泛捕获和提前建设框架。持续约定见[项目设计规则](.cursor/rules/learning-design.mdc)。
+保持函数和模块职责清楚，避免提前建设框架。持续约定见[项目设计规则](.cursor/rules/learning-design.mdc)。
 
 ## 本地检查
 
 以下命令不请求外部模型：
 
 ```sh
-uv run ruff check examples scripts tests
-uv run ruff format --check examples scripts tests
+uv run ruff check learn_agent examples scripts tests
+uv run ruff format --check learn_agent examples scripts tests
 uv run mypy
 uv run pytest
 uv run python scripts/check_docs.py
 ```
 
-测试使用临时文件和本机 HTTP 服务检查协议与循环，不代表真实模型的任务能力已通过验证。
+测试读取真实临时文件，并让实际 SDK 请求本机 HTTP 服务，检查注册、参数与资源边界、异常、消息关联和第三个工具接入。固定协议响应不证明真实模型的任务能力。
 
-教程直接维护 `docs/tutorial.html` 中的正文与 SVG。
+教程直接维护 `docs/tutorial.html` 中的正文与 SVG，不添加文档生成流水线。
 
-
-
-参考：[file:///Users/drew/Documents/Codex/2026-10-19/qing/outputs/agent-system-architecture.html](file:///Users/drew/Documents/Codex/2026-10-19/qing/outputs/agent-system-architecture.html)
+参考：[早期架构资料](file:///Users/drew/Documents/Codex/2026-10-19/qing/outputs/agent-system-architecture.html)
