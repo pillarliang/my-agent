@@ -1,11 +1,13 @@
 """工具边界：声明、调用、执行上下文与回执，不依赖模型 SDK。"""
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Protocol, TypedDict
 
 from pydantic import BaseModel, ConfigDict, JsonValue
+
+from learn_agent.policy import PolicyEvaluator, PolicyService
 
 
 class ToolArguments(BaseModel):
@@ -24,9 +26,10 @@ class ToolSpec(TypedDict):
 
 @dataclass(frozen=True)
 class ToolContext:
-    """由应用注入的资源范围，模型不能通过工具参数改变工作区。"""
+    """应用注入工作区与策略；默认只读，规则与模型参数分开传入。"""
 
     workspace: Path
+    policy: PolicyEvaluator = field(default_factory=PolicyService)
 
 
 @dataclass(frozen=True)

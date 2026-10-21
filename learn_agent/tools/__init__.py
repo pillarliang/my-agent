@@ -10,10 +10,11 @@ from .contracts import (
     ToolResult,
     ToolSpec,
 )
-from .filesystem import READ_FILE, SEARCH_TEXT
+from .filesystem import CREATE_FILE, READ_FILE, SEARCH_TEXT
 from .registry import ToolRegistry
 
 __all__ = [
+    "CREATE_FILE",
     "READ_FILE",
     "SEARCH_TEXT",
     "ToolArguments",

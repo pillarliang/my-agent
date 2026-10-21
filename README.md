@@ -1,6 +1,6 @@
-# Learn Agent：从独立 Loop 到工具与模型边界
+# Learn Agent：从独立 Loop 到受控工具执行
 
-教程入口：[系统职责地图](docs/tutorial.html#system-map)。按[学习主线](docs/tutorial.html#learning)逐步实现，按职责查通用原理；当前已完成[阶段 1：Tools 与 Model](docs/tutorial.html#stage-1)。
+教程入口：[系统职责地图](docs/tutorial.html#system-map)。[阶段 1：Tools 与 Model](docs/tutorial.html#stage-1) 已完成；[阶段 2](docs/tutorial.html#stage-2) 已实现 Policy 与受控创建，独立产物验收待实现。
 
 ## 安装与运行
 
@@ -24,7 +24,15 @@ uv run python examples/00_plain_loop.py
 uv run python -m learn_agent
 ```
 
-两种入口都请求真实模型并产生 API 用量，默认最多四次请求。阶段 1 在 [notes.txt](examples/workspace/notes.txt) 中搜索验收标记，输出模型说明；工具选择与回答质量需实际运行观察。
+阶段 2：显式授权新建指定文件；已有目标绝不覆盖。
+
+```sh
+uv run python -m learn_agent --create-file policy-report.md
+```
+
+默认任务搜索 [notes.txt](examples/workspace/notes.txt) 的验收标记，再请求创建报告。`--workspace` 指定工作区，`--question` 自定义任务文本；文本不能扩大 `--create-file` 授权。未授权路径返回 `policy_denied`，已有目标返回 `file_exists`。创建仅支持 macOS / Linux，父目录须存在，不跟随符号链接，内容最多 16,000 个 UTF-8 字节。
+
+以上入口均请求真实模型并产生 API 用量，默认最多四次请求。工具选择与回答质量需实际运行观察；本地测试可确定性检查权限与实际文件效果。
 
 ## 从哪里读
 
@@ -37,9 +45,11 @@ uv run python -m learn_agent
 5. [模型服务](learn_agent/models/service.py)、[模型契约](learn_agent/models/contracts.py)与[协议适配器](learn_agent/models/openai_chat.py)：配置与鉴权、连接生命周期、请求与回复均由模型模块管理。
 6. [Loop 接入](learn_agent/runner.py)：请求模型、保存回复、执行工具并追加结果。
 
-添加工具时遵守同一套规则；模型协议只在适配器中处理，Runner 不依赖 SDK 消息格式。后续按需求增加执行环境、写入授权、验收和状态机制。完整范围、实验与验收条件直接维护在教程中。
+阶段 2 先读 [Policy 与决策接口](learn_agent/policy.py)，再沿文件工具的 `create_file()` 阅读授权与独占创建；[验收用例](tests/test_policy.py) 检查实际文件与回执。
 
-保持函数和模块职责清楚，避免提前建设框架。持续约定见[项目设计规则](.cursor/rules/learning-design.mdc)。
+添加有副作用的工具时，在资源执行边界调用 `PolicyEvaluator.evaluate(ActionRequest)`。策略由应用通过 `ToolContext` 注入，Runner 仍只提交 `ToolCall`、接收 `ToolResult`。当前在本地进程执行，后续按需增加独立验收、状态与隔离。完整范围与黑盒交互图直接维护在教程中。
+
+保持函数和模块职责清楚，避免提前建设框架。代码遵循[项目设计规则](.cursor/rules/learning-design.mdc)，补充教程遵循[教程写作规范](docs/tutorial-writing.md)；代码助手入口见 [AGENTS.md](AGENTS.md)。
 
 ## 本地检查
 
@@ -53,7 +63,7 @@ uv run pytest
 uv run python scripts/check_docs.py
 ```
 
-测试读取真实临时文件，并让实际 SDK 请求本机 HTTP 服务，检查注册、参数与资源边界、异常、消息关联和第三个工具接入，并验证模型用量、原生材料续接、停止原因、HTTP 错误与超时。固定协议响应不证明真实模型的任务能力。
+测试操作真实临时文件，并让实际 SDK 请求本机 HTTP 服务；覆盖授权与拒绝、禁止覆盖、并发与符号链接，以及工具注册、资源边界、消息关联和模型协议。固定协议响应不证明真实模型的任务能力。
 
 教程直接维护 `docs/tutorial.html` 中的正文与 SVG，不添加文档生成流水线。
 

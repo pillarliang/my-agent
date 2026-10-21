@@ -263,7 +263,7 @@ def test_stage_one_main_wires_registered_tools_and_configuration(tmp_path, monke
         monkeypatch.setenv("DASHSCOPE_BASE_URL", str(client.base_url))
         monkeypatch.setenv("DASHSCOPE_MODEL", "local")
         monkeypatch.setenv("DASHSCOPE_USE_ENV_PROXY", "false")
-        entry.main()
+        entry.main([])
     assert [tool["function"]["name"] for tool in requests[0]["tools"]] == [
         "read_file",
         "search_text",
