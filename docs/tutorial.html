@@ -830,6 +830,22 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 <g><text x="350" y="190" text-anchor="middle">ModelResponse / 抛出 ModelError</text><path class="am-edge am-edge--dashed" d="M545,203 H157" marker-end="url(#model-loop-interface-arrow)"/></g>
 </symbol>
 <!-- Policy 与 Runner 的交互经过 Tools；三个系统只展示外部契约。 -->
+<!-- 当前验收：应用顺序调用 Runner 与 Verifier；真实文件由 Verifier 独立读取。 -->
+<symbol id="diagram-verifier-interface" viewBox="0 0 940 470">
+<defs><marker id="verifier-interface-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<line class="am-lifeline" x1="110" y1="66" x2="110" y2="425"/>
+<line class="am-lifeline" x1="460" y1="66" x2="460" y2="425"/>
+<line class="am-lifeline" x1="810" y1="66" x2="810" y2="425"/>
+<g><rect class="am-actor" x="20" y="20" width="180" height="46" rx="3"/><text class="am-actor-text" x="110" y="43" text-anchor="middle" dominant-baseline="central">应用（CLI）</text></g>
+<g><rect class="am-actor" x="370" y="20" width="180" height="46" rx="3"/><text class="am-actor-text" x="460" y="43" text-anchor="middle" dominant-baseline="central">Agent Loop（Runner）</text></g>
+<g><rect class="am-actor" x="720" y="20" width="180" height="46" rx="3"/><text class="am-actor-text" x="810" y="43" text-anchor="middle" dominant-baseline="central">Verifier 系统</text></g>
+<g><text x="285" y="104" text-anchor="middle">run_agent(model, question, tools)</text><path class="am-edge" d="M110,118 H458" marker-end="url(#verifier-interface-arrow)"/></g>
+<g><text x="285" y="165" text-anchor="middle">RunResult：answer、tool_results</text><path class="am-edge am-edge--dashed" d="M460,179 H112" marker-end="url(#verifier-interface-arrow)"/></g>
+<g><text x="460" y="232" text-anchor="middle">verify(VerificationRequest)：规则 + 本次回执</text><path class="am-edge" d="M110,246 H808" marker-end="url(#verifier-interface-arrow)"/></g>
+<g><rect class="am-actor" x="630" y="273" width="290" height="45" rx="3"/><text class="am-actor-text" x="775" y="295" text-anchor="middle" dominant-baseline="central">独立读取产物与来源，检查实际内容</text></g>
+<g><text x="460" y="354" text-anchor="middle">VerificationResult：逐项证据、文件摘要、status</text><path class="am-edge am-edge--dashed" d="M810,368 H112" marker-end="url(#verifier-interface-arrow)"/></g>
+<text x="460" y="438" text-anchor="middle" font-size="13">应用并列展示模型说明与验收结论；Runner 不包含报告业务规则</text>
+</symbol>
 <symbol id="diagram-policy-loop-interface" viewBox="0 0 940 380">
 <defs><marker id="policy-loop-interface-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
 <line class="am-lifeline" x1="115" y1="66" x2="115" y2="350"/>
@@ -955,7 +971,7 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 <li><a href="#module-tools">Tools</a>：能力声明、校验、分发与真实回执。<span class="implementation-note">已实现 read_file、search_text 与受控 create_file</span></li>
 <li><a href="#module-policy">Policy</a>：授权、资源约束与按需审批。<span class="implementation-note">已实现默认只读、指定文件创建授权与拒绝回执</span></li>
 <li><a href="#module-state">Session / State</a>：执行链、历史、事件与持久记录。<span class="implementation-note">待实现；当前记录仅在内存</span></li>
-<li><a href="#module-quality">Quality</a>：进度、追踪、产物检查与评测。<span class="implementation-note">已有控制台进度和测试；独立验收、追踪与评测待实现</span></li>
+<li><a href="#module-quality">Quality</a>：进度、追踪、产物检查与评测。<span class="implementation-note">已实现独立报告验收、控制台进度和测试；追踪与任务评测待实现</span></li>
 </ul></li>
 <li><strong><a href="#capabilities">按需求增加的能力</a></strong><ul>
 <li><a href="#capability-long-tasks">长任务与知识复用</a>：计划、压缩、检索、记忆。</li>
@@ -966,7 +982,7 @@ html[data-theme="paper"] .am-md table { font-family: var(--font-sans); }
 <li>模型服务、<a href="../examples/workspace/">工作区</a>、数据库与外部 API。<span class="implementation-note">当前接入模型服务与本地工作区</span></li>
 </ul></li>
 </ul>
-<p class="reading-rule"><strong>你现在的位置：</strong>最小 Loop、Tools 和 LLMService 已完成。<a href="#stage-2">阶段 2</a> 已接入 Policy 与受控创建，下一步补充独立产物验收；随后再增加会话、状态和上下文预算。</p>
+<p class="reading-rule"><strong>你现在的位置：</strong>最小 Loop、Tools 和 LLMService 已完成。<a href="#stage-2">阶段 2</a> 已完成 Policy、受控创建和独立报告验收第一版；下一步进入阶段 3，增加会话、状态和上下文预算。</p>
 </section>
 <section class="book-group" id="learning"><h2>学习主线：从独立 Loop 逐步扩展</h2><p class="group-description">阶段表达学习依赖，职责地图表达模块分工。每阶段交付一个可运行版本；观测、验证与评测贯穿全程。</p>
 <details class="reference-extra"><summary>阶段与职责地图怎样对应</summary><ol class="learning-route">
@@ -1014,7 +1030,7 @@ uv run python scripts/check_docs.py
 <li>读取工具的 <code>specs</code>，连同消息历史提交给 <code>model.invoke()</code>。</li>
 <li>保存整份 ModelResponse，检查是否正常完成。</li>
 <li>有工具调用时提交给 <code>tools.execute()</code>，将 ToolResult 追加到历史，再请求模型。</li>
-<li>没有工具调用时返回最终文字；请求次数耗尽则停止。</li>
+<li>没有工具调用时返回 RunResult，包含模型说明与本次回执；请求次数耗尽则停止。</li>
 </ol>
 <p>黑盒交互图分别见<a href="#module-tools-loop-interface">Runner ↔ Tools</a>与<a href="#module-model-loop-interface">Runner ↔ Model</a>。SDK 消息编码由 Model 适配器负责，Runner 不解释原生续接材料。</p>
 </div></div></section>
@@ -1032,34 +1048,49 @@ uv run python -m learn_agent
 </div></div></section>
 <nav class="chapter-nav" aria-label="章节导航"><a href="#stage-0">← 阶段 0：闭合独立的最小 Agent Loop</a><a href="#stage-2">阶段 2：约束动作并检查真实效果 →</a></nav></article>
 <article class="chapter" id="stage-2">
-<header class="chapter-header"><span class="kind">进行中 · Policy 与受控创建已实现；独立产物验收待实现</span><h2>阶段 2：约束动作并检查真实效果</h2></header>
-<div class="am-md"><p>本轮用 <code>create_file</code> 验证 Policy：<strong>只允许新建应用指定的文件，已有目标绝不覆盖。</strong>核心抽象与黑盒交互见<a href="#module-policy">Policy 通用教程</a>。</p></div>
+<header class="chapter-header"><span class="kind">已实现 · Policy、受控创建与独立报告验收第一版</span><h2>阶段 2：约束动作并检查真实效果</h2></header>
+<div class="am-md"><p>本阶段建立两道边界：<strong>Policy 判断动作是否获准，Verifier 检查实际产物是否满足要求。</strong>通用原理与接口分别见<a href="#module-policy">Policy</a>和<a href="#module-verifier">Verifier</a>。</p></div>
 <section class="lesson-section" id="stage-2-p1-panel-A"><h3>1. 本轮范围</h3><div class="lesson-body"><div class="am-md">
-<p>默认只读。CLI 的 <code>--create-file</code> 授权当前工作区内一个相对路径；<code>--question</code> 只是任务文本，不能扩大权限。读取与创建都在文件工具的资源边界调用 Policy，拒绝沿现有 ToolResult 通道反馈，Runner 无需修改。</p>
-<p>新文件最多 16,000 个 UTF-8 字节；父目录必须存在，禁止隐藏路径、向上跳转与创建路径中的符号链接。独占创建处理重复和并发调用。当前支持 macOS / Linux，本地执行尚无操作系统沙箱。</p>
+<p>默认只读。CLI 的 <code>--create-file</code> 授权当前工作区内一个相对路径，并启用报告验收；<code>--question</code> 只改变任务文本，授权与验收标准仍由应用配置。</p>
+<p>文件工具在资源边界调用 Policy。新文件最多 16,000 个 UTF-8 字节；父目录必须存在，禁止隐藏路径、向上跳转与创建路径中的符号链接。独占创建保证重复和并发调用不覆盖已有目标。当前支持 macOS / Linux，本地执行尚无操作系统沙箱。</p>
+<p>Runner 结束后，应用调用独立 Verifier，展示 <code>passed / failed / not_checked</code>。本轮完成单次运行的规则检查，不自动修复报告。</p>
 </div></div></section>
 <section class="lesson-section" id="stage-2-p1-panel-B"><h3>2. 实现与阅读顺序</h3><div class="lesson-body"><div class="am-md"><ol>
-<li><a href="../learn_agent/policy.py">policy.py</a>：先读 Policy 与 PolicyService，再看 ActionRequest、PolicyDecision 和可替换的 PolicyEvaluator 接口。</li>
-<li><a href="../learn_agent/tools/contracts.py">ToolContext</a>：工作区与策略由应用注入，不进入模型参数。</li>
-<li><a href="../learn_agent/tools/filesystem.py">文件工具</a>：沿 create_file → creation_resource → authorize 阅读；再看独占创建。read_file 与 search_text 共用读取授权。</li>
-<li><a href="../learn_agent/__main__.py">应用入口</a>：从 CLI 配置规则、注册工具，再调用既有 Runner。注册表仍只负责参数校验、分发和预期异常转换。</li>
+<li><a href="../learn_agent/policy.py">Policy 契约与服务</a>：规则、动作、决策及可替换接口。</li>
+<li><a href="../learn_agent/tools/contracts.py">ToolContext</a>与<a href="../learn_agent/tools/filesystem.py">文件工具</a>：应用注入策略；沿 create_file 阅读授权、独占创建与字节摘要。</li>
+<li><a href="../learn_agent/runner.py">Runner</a>：用 RunResult 返回模型说明与本次工具回执，保留原调用 ID。</li>
+<li><a href="../learn_agent/verifier.py">Verifier</a>：先读 VerificationSpec、VerificationRequest、CheckResult、VerificationResult，再沿 ReportVerifier.verify() 阅读实际文件检查。Verifier 协议预留替换检查器的边界。</li>
+<li><a href="../learn_agent/__main__.py">应用入口</a>：配置授权与验收标准，先运行 Runner，再调用 Verifier；展示结论并设置退出码。</li>
 </ol></div></div></section>
-<section class="lesson-section" id="stage-2-p1-panel-C"><h3>3. 运行与观察</h3><div class="lesson-body">
+<section class="lesson-section" id="stage-2-verifier"><h3>3. 这份报告怎样算通过</h3><div class="lesson-body"><div class="am-md">
+<p>固定检查三行报告。Verifier 重新读取 notes.txt，找到唯一的非空验收标记，使用实际原文与行号比对，不把 LEARN-42 或第 3 行写死在检查器中。示例资料对应：</p>
+</div><div class="am-code"><div class="am-code-head">产物示例 · 允许末尾换行，不添加空行、代码围栏或其他说明</div><pre><code># 验收报告
+验收标记：LEARN-42
+来源：notes.txt:3
+</code></pre></div><div class="am-md">
+<p>通过还要求：本次运行存在该路径的成功创建回执，实际文件 SHA-256 与创建回执一致。这样旧报告不能冒充本次新建，创建后被改动的内容也不能沿用原回执。</p>
+<p>文件与来源沿用有界 UTF-8 读取及 Policy 规则。读取失败、标记缺失或不唯一，都保留失败证据；缺少前置材料时不继续猜测依赖它的条件。结论覆盖已配置规则及验收时观察到的版本。</p>
+</div></div></section>
+<section class="lesson-section" id="stage-2-p1-panel-C"><h3>4. 运行与观察</h3><div class="lesson-body">
 <div class="am-code"><div class="am-code-head">项目根目录执行 · 请求真实模型并产生 API 用量</div><pre><code>uv run python -m learn_agent --create-file policy-report.md
 </code></pre></div>
-<div class="am-md"><p>默认任务先搜索 notes.txt 中的验收标记，再请求创建报告。直接打开 examples/workspace/policy-report.md 核对内容。再次运行时，若模型仍调用创建，应收到 <code>file_exists</code>，原文件不变。模型可能选择其他调用，实际以控制台回执为准。</p></div>
-<div class="am-code"><div class="am-code-head">授权仍只有 policy-report.md；任务文本要求另一个路径</div><pre><code>uv run python -m learn_agent --create-file policy-report.md --question '请用 create_file 新建 other.md，内容为测试'
+<div class="am-md"><p>选择尚不存在的目标。默认任务先搜索标记，再创建报告；控制台并列显示模型说明和产物验收，以及每项检查的证据。<code>passed</code> 退出码为 0，<code>failed</code> 为 1。</p>
+<p>再次运行相同路径：若模型请求创建，会收到 <code>file_exists</code>，原文件不变。即使旧文件内容正确，缺少本次成功创建回执也会验收失败。</p></div>
+<div class="am-code"><div class="am-code-head">实验：文件创建成功，但故意缺少来源行</div><pre><code>uv run python -m learn_agent --create-file incomplete-report.md --question '用 create_file 新建 incomplete-report.md，内容只写两行：# 验收报告 和 验收标记：LEARN-42，不要写来源'
 </code></pre></div>
-<div class="am-md"><p>若模型提交 other.md，应收到 <code>policy_denied</code>，且该文件不被创建。<code>--workspace</code> 可指定另一个学习目录；授权始终相对于本次工作区。</p></div>
+<div class="am-md"><p>若模型按任务创建两行正文，工具回执成功，产物验收仍应 failed。自定义问题不会降低三行报告的验收标准。模型可能选择其他调用，实际以回执与检查证据为准。</p></div>
+<div class="am-code"><div class="am-code-head">实验：指定文件授权不随任务文本改变</div><pre><code>uv run python -m learn_agent --create-file policy-report.md --question '请用 create_file 新建 other.md，内容为测试'
+</code></pre></div>
+<div class="am-md"><p>若模型提交 other.md，Policy 返回 <code>policy_denied</code>，文件不被创建，报告任务也不能通过验收。<code>--workspace</code> 可指定另一个学习目录。省略 <code>--create-file</code> 时仍运行只读任务，验收为 <code>not_checked</code>，不表示任务已通过。</p></div>
 </div></section>
-<section class="lesson-section" id="stage-2-p1-panel-D"><h3>4. 本地验收与下一步</h3><div class="lesson-body">
-<div class="am-code"><div class="am-code-head">不请求外部模型；真实临时文件与本机 SDK 协议验证</div><pre><code>uv run pytest tests/test_policy.py
+<section class="lesson-section" id="stage-2-p1-panel-D"><h3>5. 本地验收与完成条件</h3><div class="lesson-body">
+<div class="am-code"><div class="am-code-head">不请求外部模型；真实临时文件与本机 SDK 协议验证</div><pre><code>uv run pytest tests/test_policy.py tests/test_verifier.py
 </code></pre></div>
-<div class="am-md"><p><a href="../tests/test_policy.py">验收用例</a>检查：授权创建的真实字节、未授权无副作用、越界与伪造授权被拒绝、已有目标不变、并发只有一次成功、符号链接无法重定向创建，以及成功与拒绝回执携带原 ID 进入下一轮请求。</p>
-<p><code>policy_denied</code> 表示未授权，<code>file_exists</code> 表示目标已存在；其他资源失败沿用文件错误回执。写入中途发生 I/O 错误返回 <code>write_incomplete</code>，可能留下部分文件，需要检查真实状态。</p>
-<p>本轮完成 Policy 第一版。下一步再实现独立 Verifier，检查报告是否包含正确标记、来源和格式；工具创建成功仍不能代替任务验收，因此阶段 2 尚未全部完成。</p>
+<div class="am-md"><p><a href="../tests/test_policy.py">Policy 用例</a>检查授权、越界、禁止覆盖、并发与符号链接；<a href="../tests/test_verifier.py">Verifier 用例</a>检查正确产物、缺来源、错误标记与行号、旧文件、创建后改动、文件读取失败，以及模型自述不能覆盖程序结论。</p>
+<p>参数错误和预期文件失败形成回执或检查结果；配置错误与程序错误明确抛出。工具写入中断可能留下部分文件，返回 write_incomplete；Verifier 不能凭失败回执推断文件不存在。</p>
+<p>能用证据解释“动作获准、工具成功、循环结束、产物通过”四个不同判断，就完成本阶段第一版。下一步进入<a href="#stage-3">阶段 3</a>，增加会话、状态和上下文预算。</p>
 </div></div></section>
-<nav class="chapter-nav" aria-label="章节导航"><a href="#stage-1">← 阶段 1：从单文件提取模块与契约</a><a href="#stage-3">阶段 3：会话、记录与上下文预算 →</a></nav></article><article class="chapter" id="stage-3"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 3：会话、记录与上下文预算</h2></header><div class="am-md"><p>实现会话、持久记录与输入预算，形成能连续处理任务的版本。</p></div><section class="lesson-section" id="stage-3-p1-panel-A"><h3>1. 输入版本</h3><div class="lesson-body"><div class="am-md"><p>已能执行受控动作并检查结果的单次运行。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-B"><h3>2. 逐步保存事实</h3><div class="lesson-body"><div class="am-md"><p>先定义 Session、Run、Step，再选择 SQLite 等存储实现。消息保存完整事实，事件保存进度，终态与结果共同提交。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-C"><h3>3. 构建工作视图</h3><div class="lesson-body"><div class="am-md"><p>将历史、当前链与工具定义交给 Context Builder；Loop 取得 Context 后再调用模型。先整轮裁剪旧历史，当前链本身超限就停止。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-D"><h3>4. 验收与边界</h3><div class="lesson-body"><div class="am-md"><p>重启后能查询记录并继续同一会话；输入裁剪不删除原始记录。保存历史不等于自动恢复中断任务，也不要求此时实现 Web。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-2">← 阶段 2：约束动作并检查真实效果</a><a href="#stage-4">阶段 4：根据真实失败选择长任务机制 →</a></nav></article><section class="reading-rule" id="mvp-checkpoint"><h3>阶段 3 的未来目标：构建自己的第一版 MVP</h3><p>当前已有独立 Loop、Tools、Model 与 Policy 第一版。随后逐步实现独立验收、持久记录和输入预算，再按实际需求增加其他机制。</p><p>本教程中的模块方案是设计参考，不表示这些代码已经存在。</p></section><h2 id="after-mvp">阶段 4–6：按需求选择扩展</h2><p class="group-description">阶段 4–6 均未实现，按实际需求选择机制。</p><article class="chapter" id="stage-4"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 4：根据真实失败选择长任务机制</h2></header><div class="am-md"><p>按任务问题选一种机制，不把摘要、检索、记忆全部设为必修前置。</p></div><section class="lesson-section" id="stage-4-p1-panel-A"><h3>1. 建立基线</h3><div class="lesson-body"><div class="am-md"><p>固定任务、资料、模型配置和验收条件，记录遗漏、用量、延迟与失败。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-B"><h3>2. 选择机制</h3><div class="lesson-body"><div class="am-md"><p>结果过大先尝试有限预览与外部引用；历史挤掉约束时考虑任务状态或摘要；材料较多时考虑检索；跨会话复用时再考虑长期记忆。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-C"><h3>3. 实现与比较</h3><div class="lesson-body"><div class="am-md"><p>为输入保留来源、版本、包含与省略清单。只实现一个分支，用相同任务比较收益与新失败。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>能解释模型实际看到了什么，展示错误来源、更正和遗忘路径，并保留未解决的失败。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-3">← 阶段 3：会话、记录与上下文预算</a><a href="#stage-5">阶段 5：中断后怎样安全继续 →</a></nav></article><article class="chapter" id="stage-5"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 5：中断后怎样安全继续</h2></header><div class="am-md"><p>只有在需要跨进程继续时引入恢复协议。</p></div><section class="lesson-section" id="stage-5-p1-panel-A"><h3>1. 区分事实</h3><div class="lesson-body"><div class="am-md"><p>检查点说明停在哪里，回执说明观察到什么；超时或连接断开不能证明外部动作没有发生。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-B"><h3>2. 先做只读恢复</h3><div class="lesson-body"><div class="am-md"><p>保存稳定的运行与动作身份，从已知边界重建状态。对有副作用的动作，先核对结果，再决定重试。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-C"><h3>3. 注入故障</h3><div class="lesson-body"><div class="am-md"><p>分别中断于派发前、派发后未回执、取得结果未提交、提交回执后。检查实际副作用和恢复决策。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>区分未派发、已完成、仍运行与未知；未知动作不被无条件重试。需要不可信执行时再增加 Worker 或隔离后端。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-4">← 阶段 4：根据真实失败选择长任务机制</a><a href="#stage-6">阶段 6：按需求增加入口、扩展与编排 →</a></nav></article><article class="chapter" id="stage-6"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 6：按需求增加入口、扩展与编排</h2></header><div class="am-md"><p>从稳定的单 Agent 基线选择一个需求分支。</p></div><section class="lesson-section" id="stage-6-p1-panel-A"><h3>1. 应用入口</h3><div class="lesson-body"><div class="am-md"><p>需要 Web 时先让 CLI / HTTP 共用应用用例；执行、查询与观察分开，断开 SSE 不等于取消任务。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-B"><h3>2. 能力扩展</h3><div class="lesson-body"><div class="am-md"><p>方法资料可接 Skills，生命周期可接 Hooks，外部工具可接 MCP；每种扩展仍需权限、预算与回执。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-C"><h3>3. 编排分支</h3><div class="lesson-body"><div class="am-md"><p>固定业务流程可考虑 Graph；独立上下文与分工可考虑子 Agent。先定义输入、权限、预算、取消和结果汇合。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>与单 Agent 基线比较质量、费用、延迟和协调成本。能说明新增机制解决的真实问题，再保留这项复杂度。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-5">← 阶段 5：中断后怎样安全继续</a><a href="#module-interfaces">Interfaces：入口共用应用服务，运行独立于展示 →</a></nav></article></section><section class="book-group" id="application"><h2>应用与行为配置</h2><p class="group-description">决定用户从哪里提交任务、使用什么指令和工具，以及如何展示结果。当前入口组装工具、工作区、Policy 与 LLMService；供应商凭证与 client 仍由 Model 内部管理。</p>
+<nav class="chapter-nav" aria-label="章节导航"><a href="#stage-1">← 阶段 1：从单文件提取模块与契约</a><a href="#stage-3">阶段 3：会话、记录与上下文预算 →</a></nav></article><article class="chapter" id="stage-3"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 3：会话、记录与上下文预算</h2></header><div class="am-md"><p>实现会话、持久记录与输入预算，形成能连续处理任务的版本。</p></div><section class="lesson-section" id="stage-3-p1-panel-A"><h3>1. 输入版本</h3><div class="lesson-body"><div class="am-md"><p>已能执行受控动作并检查结果的单次运行。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-B"><h3>2. 逐步保存事实</h3><div class="lesson-body"><div class="am-md"><p>先定义 Session、Run、Step，再选择 SQLite 等存储实现。消息保存完整事实，事件保存进度，终态与结果共同提交。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-C"><h3>3. 构建工作视图</h3><div class="lesson-body"><div class="am-md"><p>将历史、当前链与工具定义交给 Context Builder；Loop 取得 Context 后再调用模型。先整轮裁剪旧历史，当前链本身超限就停止。</p></div></div></section><section class="lesson-section" id="stage-3-p1-panel-D"><h3>4. 验收与边界</h3><div class="lesson-body"><div class="am-md"><p>重启后能查询记录并继续同一会话；输入裁剪不删除原始记录。保存历史不等于自动恢复中断任务，也不要求此时实现 Web。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-2">← 阶段 2：约束动作并检查真实效果</a><a href="#stage-4">阶段 4：根据真实失败选择长任务机制 →</a></nav></article><section class="reading-rule" id="mvp-checkpoint"><h3>阶段 3 的未来目标：构建自己的第一版 MVP</h3><p>当前已有独立 Loop、Tools、Model、Policy 与报告验收第一版。随后逐步实现持久记录和输入预算，再按实际需求增加其他机制。</p><p>本教程中的模块方案是设计参考，不表示这些代码已经存在。</p></section><h2 id="after-mvp">阶段 4–6：按需求选择扩展</h2><p class="group-description">阶段 4–6 均未实现，按实际需求选择机制。</p><article class="chapter" id="stage-4"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 4：根据真实失败选择长任务机制</h2></header><div class="am-md"><p>按任务问题选一种机制，不把摘要、检索、记忆全部设为必修前置。</p></div><section class="lesson-section" id="stage-4-p1-panel-A"><h3>1. 建立基线</h3><div class="lesson-body"><div class="am-md"><p>固定任务、资料、模型配置和验收条件，记录遗漏、用量、延迟与失败。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-B"><h3>2. 选择机制</h3><div class="lesson-body"><div class="am-md"><p>结果过大先尝试有限预览与外部引用；历史挤掉约束时考虑任务状态或摘要；材料较多时考虑检索；跨会话复用时再考虑长期记忆。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-C"><h3>3. 实现与比较</h3><div class="lesson-body"><div class="am-md"><p>为输入保留来源、版本、包含与省略清单。只实现一个分支，用相同任务比较收益与新失败。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>能解释模型实际看到了什么，展示错误来源、更正和遗忘路径，并保留未解决的失败。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-3">← 阶段 3：会话、记录与上下文预算</a><a href="#stage-5">阶段 5：中断后怎样安全继续 →</a></nav></article><article class="chapter" id="stage-5"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 5：中断后怎样安全继续</h2></header><div class="am-md"><p>只有在需要跨进程继续时引入恢复协议。</p></div><section class="lesson-section" id="stage-5-p1-panel-A"><h3>1. 区分事实</h3><div class="lesson-body"><div class="am-md"><p>检查点说明停在哪里，回执说明观察到什么；超时或连接断开不能证明外部动作没有发生。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-B"><h3>2. 先做只读恢复</h3><div class="lesson-body"><div class="am-md"><p>保存稳定的运行与动作身份，从已知边界重建状态。对有副作用的动作，先核对结果，再决定重试。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-C"><h3>3. 注入故障</h3><div class="lesson-body"><div class="am-md"><p>分别中断于派发前、派发后未回执、取得结果未提交、提交回执后。检查实际副作用和恢复决策。</p></div></div></section><section class="lesson-section" id="stage-5-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>区分未派发、已完成、仍运行与未知；未知动作不被无条件重试。需要不可信执行时再增加 Worker 或隔离后端。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-4">← 阶段 4：根据真实失败选择长任务机制</a><a href="#stage-6">阶段 6：按需求增加入口、扩展与编排 →</a></nav></article><article class="chapter" id="stage-6"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 6：按需求增加入口、扩展与编排</h2></header><div class="am-md"><p>从稳定的单 Agent 基线选择一个需求分支。</p></div><section class="lesson-section" id="stage-6-p1-panel-A"><h3>1. 应用入口</h3><div class="lesson-body"><div class="am-md"><p>需要 Web 时先让 CLI / HTTP 共用应用用例；执行、查询与观察分开，断开 SSE 不等于取消任务。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-B"><h3>2. 能力扩展</h3><div class="lesson-body"><div class="am-md"><p>方法资料可接 Skills，生命周期可接 Hooks，外部工具可接 MCP；每种扩展仍需权限、预算与回执。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-C"><h3>3. 编排分支</h3><div class="lesson-body"><div class="am-md"><p>固定业务流程可考虑 Graph；独立上下文与分工可考虑子 Agent。先定义输入、权限、预算、取消和结果汇合。</p></div></div></section><section class="lesson-section" id="stage-6-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>与单 Agent 基线比较质量、费用、延迟和协调成本。能说明新增机制解决的真实问题，再保留这项复杂度。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="#stage-5">← 阶段 5：中断后怎样安全继续</a><a href="#module-interfaces">Interfaces：入口共用应用服务，运行独立于展示 →</a></nav></article></section><section class="book-group" id="application"><h2>应用与行为配置</h2><p class="group-description">决定用户从哪里提交任务、使用什么指令和工具，以及如何展示结果。当前入口组装工具、工作区、Policy、LLMService 与 Verifier；供应商凭证与 client 仍由 Model 内部管理。</p>
 <article class="chapter" id="module-interfaces"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Interfaces：入口共用应用服务，运行独立于展示</h2></header><section class="lesson-section" id="module-interfaces-p1-panel-A"><h3>1. 实现原理：提交、执行和观察分开</h3><div class="lesson-body"><div class="am-md"><p><strong>Web 与 CLI 的入口结构</strong></p>
 <p>入口、执行与观察分别组织。</p>
 </div>
@@ -1812,13 +1843,27 @@ receipt_ref        可查询的实际回执
 <section class="lesson-section" id="module-state-p2-panel-B"><h3>8. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>先给只读动作保存稳定身份，在意图保存后、工具返回后和结果提交后分别中断程序。重新启动时检查已确认结果不重复执行、未派发动作可以继续，变化的文件被明确标记为新观察。</p>
 <p>工具仍使用真实文件，任务仍由真实模型发起；故障注入用于进程和存储边界，不替换模型。写动作在完整协议建立前不自动恢复。最后解释同一策略为什么不能直接用于创建订单或发送邮件。</p>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-policy">← Policy：把授权落实到真实动作</a><a href="#module-quality">Quality：观测过程，验收结果，评测改进 →</a></nav></article><article class="chapter" id="module-quality"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Quality：观测过程，验收结果，评测改进</h2></header><section class="lesson-section" id="module-quality-p1-panel-A"><h3>1. 实现原理：三个问题分别回答</h3><div class="lesson-body"><div class="am-md"><p><strong>Quality：观测、验收与版本评测</strong></p>
-<p>三种职责 · 模型说明不推导程序结论。</p>
-</div>
-<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 785 251" width="785" height="251" role="img" aria-label="流程图：真实运行、Observability、Verification、Evaluation、运行状态、程序结论、用户展示、模型说明"><use href="#diagram-module-quality-1-panel-A-1"></use></svg></figure>
-<div class="am-md"><p><strong>观测</strong>记录路径、耗时和错误，<strong>运行验证</strong>检查当前产物，<strong>评测</strong>在任务集上比较系统版本。完整日志可以证明调用发生过，不能单独证明需求满足；单个案例通过也不能证明系统普遍可靠。</p>
-</div></div>
-</section>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-policy">← Policy：把授权落实到真实动作</a><a href="#module-quality">Quality：观测过程，验收结果，评测改进 →</a></nav></article><article class="chapter" id="module-quality">
+<header class="chapter-header"><span class="kind">模块原理与方案 · Verifier 第一版已实现</span><h2>Quality：观测过程，验收结果，评测改进</h2></header>
+<div class="am-md"><p>Quality 包含三项职责：观测记录发生了什么，Verifier 验收当前产物，评测用一组任务比较系统表现。本轮先实现确定性的产物验收。</p></div>
+<section class="lesson-section" id="module-quality-p1-panel-A"><h3 id="module-verifier">1. Verifier：核心问题与抽象</h3><div class="lesson-body"><div class="am-md">
+<h4>是什么？</h4><p><strong>Verifier（产物验收器）读取实际交付物，检查它是否满足事先约定的要求。</strong>要求可以是报告包含正确来源、JSON 满足 Schema，或程序通过指定测试。</p>
+<h4>为什么需要？</h4><p>工具成功只说明动作完成，模型结束回答也只说明循环可以停下。报告可能已经写入，却缺少来源；模型也可能未创建文件便声称完成。系统需要根据实际证据给出验收结论。</p>
+<h4>有什么用？</h4><p>在“新建带标记与来源的报告”任务中，正确的新报告通过；缺来源的报告失败；旧报告即使内容正确，也不能充当本次新建成功。检查项指出具体缺失，方便学习和后续修正。</p>
+<h4>核心抽象</h4><ul>
+<li><strong>VerificationSpec</strong>：应用预先确定的验收规则，说明检查哪个产物、依据什么来源和格式。</li>
+<li><strong>VerificationResult</strong>：检查结论与证据；每个 CheckResult 对应一个具体条件。</li>
+</ul><p>Verifier 负责把规则作用于实际产物。检查范围由应用定义，模型回答与文件正文不能自行更改标准。</p>
+</div></div></section>
+<section class="lesson-section" id="module-verifier-interface"><h3>2. 与应用、Runner 的黑盒交互</h3><div class="lesson-body">
+<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 940 470" width="940" height="470" role="img" aria-label="应用调用 Runner 取得 RunResult，再将验收规则和本次工具回执提交给 Verifier；Verifier 独立读取产物和来源，返回 VerificationResult，应用并列展示模型说明与验收结论"><use href="#diagram-verifier-interface"></use></svg></figure>
+<div class="am-md"><p><code>VerificationRequest</code> 把规则与本次工具回执交给验收器；回执证明本次执行观察，实际文件提供产物证据，两者一起核对。Verifier 不调用模型，不通过工具分发取得文件内容，也不修改产物。</p>
+<p>第一版由应用顺序调用两个黑盒。Runner 只返回 RunResult，不依赖报告检查规则；应用通过 <code>Verifier.verify()</code> 接口选择检查器。后续确实需要自动修复时，再设计检查失败如何反馈给循环。</p>
+<p><code>passed</code> 表示已配置条件通过，<code>failed</code> 保留失败项与证据；没有配置规则则为 <code>not_checked</code>。读取失败也会阻止验收通过；缺少前置材料时，依赖它的检查不运行。配置错误和程序错误直接抛出。</p>
+</div></div></section>
+<section class="lesson-section" id="module-verifier-current"><h3>3. 当前实现与最小实验</h3><div class="lesson-body"><div class="am-md"><p>当前实现是三行报告检查器 ReportVerifier。规则、源码阅读顺序和运行见<a href="#stage-2-verifier">阶段 2</a>；直接用真实临时文件比较正确报告、缺来源报告和已有报告，无需调用模型即可验证检查器。</p><p>创建回执与验收记录保存内容摘要，用来识别被检查的版本。通过只覆盖这些规则及验收时的文件内容，不代表一般写作质量通过，也不保证文件之后不再改变。</p></div></div></section>
+<details class="reference-extra"><summary>按需阅读：观测、评测与其他验收方案</summary>
+<figure class="am-diagram am-flow"><svg class="lesson-svg" viewBox="0 0 785 251" width="785" height="251" role="img" aria-label="职责参考：观测记录运行状态，Verification 给出产物检查结论，Evaluation 比较版本，展示时保留模型说明"><use href="#diagram-module-quality-1-panel-A-1"></use></svg></figure>
 <section class="lesson-section" id="module-quality-p1-panel-C"><h3>2. 观测有哪些方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 结构化本地事件</h4>
 <p>JSONL 或 SQLite 按顺序记录运行边界，保存稳定身份和必要元数据，正文单独存储。它依赖少、便于本地学习；代价是跨进程关联、聚合、查询和可视化需要继续建设。</p>
 <p>注意区分观测日志与执行事实源：可以丢失的采样日志不应承担恢复所需的关键提交。两者的关系见<a href="#module-state">State</a>。</p>
@@ -1874,28 +1919,15 @@ receipt_ref        可查询的实际回执
 <p>这三类可组合：先跑确定性条件，再检查开放式质量，最后在明确交付边界人工确认。<a href="https://developers.openai.com/api/docs/guides/evaluation-best-practices">OpenAI 评测原则</a>强调任务相关标准与人工校准；自动评分不应脱离实际需求。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-quality-p1-panel-F"><h3>5. 任务验收契约可以怎样设计</h3><div class="lesson-body"><div class="am-md"><p>未来可以把每个用户要求对应到检查项，而不是只返回一个总布尔值：</p>
-</div>
-<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">requirement_id -&gt; check_id
-check = {rule_version, target_ref, target_revision, status, evidence}
-status = passed | failed | not_checked | unknown
-</code></pre></figure>
-<div class="am-md"><p>检查范围完整与否由应用定义，不能让模型自行宣称所有要求已覆盖。产物变化后，旧检查要按版本失效；文件创建回执与最终哈希结合，才能更清楚地判断是否检查了本次实际产物。这些机制尚未实现，属于后续质量模块的设计内容。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-G"><h3>6. 测试和评测怎样分层</h3><div class="lesson-body"><div class="am-md"><p><strong>本地组件测试</strong>直接使用真实参数、文件和数据库，检查解析、权限、上下文选择与存储。无需模型的条件就直接检查，不构造替代模型响应。</p>
+<section class="lesson-section" id="module-quality-p1-panel-F"><h3>5. 任务验收契约怎样扩展</h3><div class="lesson-body"><div class="am-md"><p>当前已经按检查项保留结论与证据，并记录产物、来源摘要。进一步增加业务规则时，逐项声明检查范围；没有配置的要求不能由模型自述补成通过。</p><p>后续需要跨版本或持久验收时，再增加规则版本、目标身份和检查失效机制；需要无法判断或人工处理的状态时，再扩展结果契约。</p></div></div></section><section class="lesson-section" id="module-quality-p1-panel-G"><h3>6. 测试和评测怎样分层</h3><div class="lesson-body"><div class="am-md"><p><strong>本地组件测试</strong>直接使用真实参数、文件和数据库，检查解析、权限、上下文选择与存储。无需模型的条件就直接检查，不构造替代模型响应。</p>
 <p><strong>真实协议测试</strong>连接 SDK 和服务端点，检查调用关联、输出不足、拒答和真实错误。无法稳定触发的异常明确列为覆盖限制，未配置的后端明确跳过。</p>
 <p><strong>任务评测</strong>固定任务、工作区、模型与检查器，记录检查结果、工具路径、用量和时间。它衡量整体决策表现，重要结论应重复运行并报告样本数，不能拿一次成功当作长期成功率。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-quality-p2-panel-A"><h3>7. 怎样运行和比较本项目</h3><div class="lesson-body"><div class="am-md"><p>当前运行 <code>uv run pytest</code>，检查临时文件与本机 HTTP 协议。需要真实任务评测时，先定义案例、资料版本、成功条件、用量记录和失败分类，再实现独立评测器。</p><p>本地协议通过不等于真实模型任务通过；不要把固定响应当成模型质量证据。</p></div></div>
-</section>
-<section class="lesson-section" id="module-quality-p2-panel-B"><h3>8. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>当前用本地文件与 HTTP 协议检查循环。任务出现可检查的产物后，再增加独立验收条件；跨任务比较时再建立案例与用量记录。观测平台和模型裁判都按实际需求引入。</p><p>每次只增加当前需求所需的机制，用相同任务和可观察证据检查行为。</p></div></div>
-</section>
-<section class="lesson-section" id="module-quality-p2-panel-C"><h3>9. 动手练习与验收</h3><div class="lesson-body"><div class="am-md"><p>新增“旧报告已经包含标记”“报告缺来源”“资料含恶意指令”“用户中途改格式”四类案例，明确哪些条件已有检查器、哪些仍需人工核对。再比较一次 Context 改动。</p>
-<p>验收报告要能解释失败属于执行、权限、信息选择还是任务质量；每个结论附对应证据。没有配置检查的要求标记未检查，不能由模型自述补成通过。</p>
-</div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="#module-state">← Session / State：保存执行事实，并从明确边界继续</a><a href="#module-memory">Memory：选择跨会话保留的知识 →</a></nav></article></section>
+<section class="lesson-section" id="module-quality-p2-panel-A"><h3>7. 怎样运行和比较本项目</h3><div class="lesson-body"><div class="am-md"><p>当前使用 ReportVerifier 检查一次报告任务，使用 pytest 检查真实文件与本机 HTTP 协议。任务评测另需案例集、固定资料和配置、用量记录与失败分类；本地协议通过不能证明真实模型质量。</p></div></div></section>
+<section class="lesson-section" id="module-quality-p2-panel-B"><h3>8. 本项目的演进顺序</h3><div class="lesson-body"><div class="am-md"><p>已有控制台进度和确定性报告验收。后续按实际需求增加事件、追踪、案例评测或开放式质量检查；需要修复时再引入带预算的反馈循环。</p></div></div></section>
+<section class="lesson-section" id="module-quality-p2-panel-C"><h3>9. 动手练习</h3><div class="lesson-body"><div class="am-md"><p>先解释“旧报告内容正确但本次验收失败”和“工具创建成功但缺来源”两类证据。再尝试修改应用中的标题规则，确认任务提示和验收规格共同更新，普通任务文本不能修改规则。</p><p>加入新要求时说明哪些条件可由程序检查、哪些仍需人工判断。文件中出现恶意指令时，另验证权限边界和真实模型选择，不能用格式检查通过推断已防御全部注入。</p></div></div></section>
+</details><nav class="chapter-nav" aria-label="章节导航"><a href="#module-state">← Session / State：保存执行事实，并从明确边界继续</a><a href="#module-memory">Memory：选择跨会话保留的知识 →</a></nav></article></section>
 <section class="book-group" id="capabilities"><h2>按需求增加的能力</h2><p class="group-description">在核心闭环上按实际问题选择扩展。Memory、恢复、沙箱和多 Agent 都是需求分支，无需提前全部建设。</p>
 <section class="lesson-section" id="capability-long-tasks"><h3>长任务与知识复用</h3><div class="am-md"><p>计划、压缩、检索与长期记忆，用来处理任务变长、资料增多和跨会话复用。入口见<a href="#stage-4">阶段 4</a>；本轮输入组织仍属于 <a href="#module-context">Context Manager</a>，持久事实仍属于 <a href="#module-state">Session / State</a>。</p></div></section>
 <article class="chapter" id="module-memory"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Memory：选择跨会话保留的知识</h2></header><section class="lesson-section" id="module-memory-p1-panel-A"><h3>1. 实现原理：写入和读取是两条管线</h3><div class="lesson-body"><div class="am-md"><p>报告任务结束后，可以复用的知识可能是“这个项目使用 uv”和“用户偏好报告列出来源”。“本次测试失败”则与产物版本和时刻相关，不宜直接保存为永远有效的项目事实。</p>
@@ -2300,9 +2332,9 @@ uv run python scripts/check_docs.py
 <p><a href="https://www.anthropic.com/engineering/building-effective-agents">Anthropic 的基础模式文章</a>区分预定义工作流与由模型动态选择动作的 Agent。本文沿用这一思路，再单独讨论运行时需要补充的权限、状态和预算约束。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="reference-glossary-p1-panel-D"><h3>2. 三个容易混淆的状态</h3><div class="lesson-body"><div class="am-md"><p><strong>未检查（unchecked）</strong>表示没有运行任务检查器，不能据此推断验证通过或失败。它是后续验收结构的状态示例。</p>
+<section class="lesson-section" id="reference-glossary-p1-panel-D"><h3>2. 三个容易混淆的状态</h3><div class="lesson-body"><div class="am-md"><p><strong>未检查（not_checked）</strong>表示没有配置产物验收，不能据此推断验证通过或失败。当前 VerificationRequest 未配置规则时返回这个状态。</p>
 <p><strong>未知（unknown）</strong>表示无法确认外部动作的真实效果。例如连接中断后，不能直接推断动作失败并重试。</p>
-<p><strong>循环已结束（completed）</strong>可以用于后续执行状态，但不等于业务验收通过。增加结果结构后，可用 outcome 单独表达检查结论；当前阶段 0 只返回模型说明或抛出错误。</p>
+<p><strong>循环已结束（completed）</strong>可以用于后续执行状态，但不等于业务验收通过。当前模块化 Runner 返回 RunResult，应用另行取得 VerificationResult；阶段 0 独立脚本仍只返回模型说明或抛出错误。</p>
 </div></div>
 </section>
 <section class="lesson-section" id="reference-glossary-p1-panel-E"><h3>3. 图的阅读方法</h3><div class="lesson-body"><div class="am-md"><p>本教程直接在 HTML 正文中呈现图示、解释、示例与练习。同一张图在文件开头定义一次，相关章节重复引用，不需要维护外部图源。</p>

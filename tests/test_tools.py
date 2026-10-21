@@ -195,7 +195,7 @@ def test_third_tool_integrates_without_loop_changes(tmp_path):
             completion(text="5"),
         ]
     ) as (client, requests):
-        assert run_agent(OpenAIChatModel(client, "local"), "计算 2+3", registry) == "5"
+        assert run_agent(OpenAIChatModel(client, "local"), "计算 2+3", registry).answer == "5"
     assert requests[0]["tools"][0]["function"]["name"] == "add"
     feedback = requests[1]["messages"][-1]
     assert feedback["tool_call_id"] == "call_0"
@@ -216,7 +216,7 @@ def test_search_and_read_results_reach_next_sdk_request(tools, tmp_path):
         ]
     ) as (client, requests):
         assert (
-            run_agent(OpenAIChatModel(client, "local"), "找到验收标记", tools)
+            run_agent(OpenAIChatModel(client, "local"), "找到验收标记", tools).answer
             == "notes.txt:1 LEARN-42"
         )
     messages = requests[2]["messages"]
@@ -237,7 +237,7 @@ def test_failed_tool_result_enters_next_sdk_request(tools):
     with local_api(
         [completion(path="missing.txt", finish="tool_calls"), completion(text="文件不存在")]
     ) as (client, requests):
-        assert run_agent(OpenAIChatModel(client, "local"), "读取文件", tools) == "文件不存在"
+        assert run_agent(OpenAIChatModel(client, "local"), "读取文件", tools).answer == "文件不存在"
     assert json.loads(requests[1]["messages"][-1]["content"])["error"]["code"] == "file_error"
 
 

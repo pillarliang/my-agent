@@ -1,14 +1,24 @@
 """阶段 1：Runner 只控制反馈循环，模型协议和工具执行由各自模块负责。"""
 
 import json
+from dataclasses import dataclass
 
 from .models import Model, ModelError, ModelMessage, ModelRequest, TextMessage
-from .tools import ToolExecutor
+from .tools import ToolExecutor, ToolResult
 
 
-def run_agent(model: Model, question: str, tools: ToolExecutor, *, max_steps: int = 4) -> str:
+@dataclass(frozen=True)
+class RunResult:
+    """循环结束时返回模型说明与本次真实回执；不在这里推断任务是否通过验收。"""
+
+    answer: str
+    tool_results: tuple[ToolResult, ...]
+
+
+def run_agent(model: Model, question: str, tools: ToolExecutor, *, max_steps: int = 4) -> RunResult:
     """每轮提交完整消息历史；模型与工具之间的反馈顺序由 Runner 维护。"""
     specs = tuple(tools.specs)
+    tool_results: list[ToolResult] = []
     messages: list[ModelMessage] = [
         TextMessage(
             "system",
@@ -32,9 +42,10 @@ def run_agent(model: Model, question: str, tools: ToolExecutor, *, max_steps: in
             answer = (reply.text or "").strip()
             if not answer:
                 raise ModelError("empty_reply", "模型返回了空回复。")
-            return answer
+            return RunResult(answer, tuple(tool_results))
         for call in reply.tool_calls:
             result = tools.execute(call)
+            tool_results.append(result)
             print(f"工具 {call.name}: {json.dumps(result.content, ensure_ascii=False)}")
             messages.append(result)
     raise RuntimeError(f"达到 {max_steps} 次模型请求上限，停止循环。")

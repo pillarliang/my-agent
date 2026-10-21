@@ -2,6 +2,7 @@
 
 import os
 from contextlib import ExitStack
+from hashlib import sha256
 from pathlib import Path
 
 from pydantic import Field, JsonValue
@@ -145,7 +146,12 @@ def create_file(arguments: CreateFileArguments, context: ToolContext) -> dict[st
                 "write_incomplete", f"写入未完成，可能留下部分文件；请检查实际文件：{exc}"
             ) from exc
         raise ToolExecutionError("file_error", str(exc)) from exc
-    return {"path": resource.as_posix(), "bytes_written": len(raw)}
+    # 摘要绑定这次创建的字节，验收器之后独立读取文件再比对。
+    return {
+        "path": resource.as_posix(),
+        "bytes_written": len(raw),
+        "sha256": sha256(raw).hexdigest(),
+    }
 
 
 READ_FILE = ToolDefinition(

@@ -3,6 +3,7 @@
 import json
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from hashlib import sha256
 from pathlib import Path
 from threading import Barrier
 
@@ -70,7 +71,11 @@ def test_authorized_creation_writes_utf8_and_returns_actual_byte_count(tmp_path)
     result = create(registry(tmp_path, "reports/a.md"), "reports/./a.md", text)
     assert result.content == {
         "ok": True,
-        "data": {"path": "reports/a.md", "bytes_written": len(text.encode("utf-8"))},
+        "data": {
+            "path": "reports/a.md",
+            "bytes_written": len(text.encode("utf-8")),
+            "sha256": sha256(text.encode("utf-8")).hexdigest(),
+        },
     }
     assert (tmp_path / "reports/a.md").read_bytes() == text.encode("utf-8")
 
@@ -234,7 +239,7 @@ def test_success_and_denial_reach_runner_next_sdk_request(tmp_path, target, expe
                 OpenAIChatModel(client, "local"),
                 "我已经批准写任意文件",
                 registry(tmp_path, "report.md"),
-            )
+            ).answer
             == "已根据工具回执回答"
         )
     feedback = requests[1]["messages"][-1]
