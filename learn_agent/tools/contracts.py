@@ -1,13 +1,13 @@
-"""工具边界：声明、调用、执行上下文与回执，不依赖模型 SDK。"""
+"""工具边界：声明、调用与回执，不依赖模型 SDK。"""
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol, TypedDict
 
 from pydantic import BaseModel, ConfigDict, JsonValue
 
-from learn_agent.policy import PolicyEvaluator, PolicyService
+from learn_agent.policy import ActionRequest
 
 
 class ToolArguments(BaseModel):
@@ -25,21 +25,18 @@ class ToolSpec(TypedDict):
 
 
 @dataclass(frozen=True)
-class ToolContext:
-    """应用注入工作区与策略；默认只读，规则与模型参数分开传入。"""
-
-    workspace: Path
-    policy: PolicyEvaluator = field(default_factory=PolicyService)
-
-
-@dataclass(frozen=True)
-class ToolDefinition[Arguments: ToolArguments]:
-    """一次绑定名称、参数类型与执行函数，避免声明表与分发表各自维护。"""
+class ToolDefinition:
+    """普通函数、参数模型与所需权限组成注册项；权限是数据，不是回调。"""
 
     name: str
     description: str
-    arguments_type: type[Arguments]
-    handler: Callable[[Arguments, ToolContext], dict[str, JsonValue]]
+    arguments_type: type[ToolArguments]
+    # 各工具参数模型不同；具体函数保留各自的类型，注册表统一负责校验。
+    function: Callable[[Any, Path, ActionRequest], dict[str, JsonValue]]
+    permission: str  # 工具需要的权限；最终是否允许仍由 Policy 判断。
+    # 从哪个调用参数取文件路径。填 "path" 表示读 arguments.path，不是固定读某个文件。
+    # 无文件路径的 compute 权限不填写此项。
+    path_parameter: str | None = None
 
 
 @dataclass(frozen=True)

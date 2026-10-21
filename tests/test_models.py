@@ -17,7 +17,7 @@ from learn_agent.models import (
     TokenUsage,
 )
 from learn_agent.runner import run_agent
-from learn_agent.tools import READ_FILE, ToolCall, ToolContext, ToolRegistry, ToolResult
+from learn_agent.tools import READ_FILE, ToolCall, ToolRegistry, ToolResult
 
 
 def test_text_request_configuration_and_usage():
@@ -40,7 +40,7 @@ def test_text_request_configuration_and_usage():
 
 
 def test_tools_are_encoded_without_changing_internal_specs(tmp_path):
-    tools = ToolRegistry([READ_FILE], ToolContext(tmp_path))
+    tools = ToolRegistry([READ_FILE], tmp_path)
     before = tools.specs
     with local_api([completion(text="完成")]) as (client, requests):
         reply = OpenAIChatModel(client, "local").invoke(
@@ -178,7 +178,7 @@ def test_incomplete_reply_never_executes_tool(tmp_path, reason, capsys):
     response = completion(path="notes.txt", text="未完成", finish=reason)
     (tmp_path / "notes.txt").write_text("资料", encoding="utf-8")
     with local_api([response]) as (client, requests):
-        tools = ToolRegistry([READ_FILE], ToolContext(tmp_path))
+        tools = ToolRegistry([READ_FILE], tmp_path)
         with pytest.raises(ModelError, match="未正常完成") as caught:
             run_agent(OpenAIChatModel(client, "local"), "读取", tools)
     assert caught.value.code == reason
@@ -193,7 +193,7 @@ def test_refusal_never_executes_tool(tmp_path, capsys):
             run_agent(
                 OpenAIChatModel(client, "local"),
                 "读取",
-                ToolRegistry([READ_FILE], ToolContext(tmp_path)),
+                ToolRegistry([READ_FILE], tmp_path),
             )
     assert caught.value.code == "refusal"
     assert len(requests) == 1 and "工具 read_file" not in capsys.readouterr().out
@@ -224,6 +224,6 @@ def test_empty_text_reply_is_not_reported_as_success(tmp_path):
             run_agent(
                 OpenAIChatModel(client, "local"),
                 "你好",
-                ToolRegistry([READ_FILE], ToolContext(tmp_path)),
+                ToolRegistry([READ_FILE], tmp_path),
             )
     assert len(requests) == 1

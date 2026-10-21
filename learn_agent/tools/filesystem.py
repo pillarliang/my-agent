@@ -1,23 +1,35 @@
-"""有界的文件工具；先确定资源并授权，再在实际 I/O 处保证执行约束。"""
+"""文件参数与普通操作函数；Policy 由 registry.py 在调用这些函数前统一检查。"""
 
 import os
+import stat
 from contextlib import ExitStack
-from hashlib import sha256
 from pathlib import Path
 
 from pydantic import Field, JsonValue
 
-from learn_agent.policy import ActionRequest, valid_resource
+from learn_agent.policy import ActionRequest
 
-from .contracts import ToolArguments, ToolContext, ToolDefinition, ToolExecutionError
+from .contracts import ToolArguments, ToolDefinition, ToolExecutionError
+from .permissions import workspace_target
 
 # 每次最多读 16 KB，限制文件 I/O 和返回正文；搜索不遍历整个目录。
 MAX_FILE_BYTES = 16_000
+# 只限制目录结果条数，不递归；避免把大目录一次全部塞入模型上下文。
+MAX_DIRECTORY_ENTRIES = 100
+
+
+class ListFilesArguments(ToolArguments):
+    """从工作区根目录开始发现文件，可进一步查看返回的子目录。"""
+
+    path: str = Field(
+        default=".", min_length=1, description="Relative directory; default is workspace root."
+    )
 
 
 class ReadFileArguments(ToolArguments):
     """只接受工作区相对路径；资源范围由读取函数核对。"""
 
+    # 模型传 {"path": "notes.txt"} 时，这个字段保存的是具体路径 "notes.txt"。
     path: str = Field(min_length=1, description="Relative file path in the workspace.")
 
 
@@ -29,48 +41,20 @@ class SearchTextArguments(ReadFileArguments):
     max_matches: int = Field(default=20, ge=1, le=50)
 
 
-class CreateFileArguments(ReadFileArguments):
-    """只创建一个 UTF-8 小文件，不创建目录，也没有覆盖或授权参数。"""
+class WriteFileArguments(ReadFileArguments):
+    """写入一个 UTF-8 小文件；没有覆盖许可参数，权限由 Policy 决定。"""
 
     content: str = Field(max_length=MAX_FILE_BYTES, description="UTF-8 text for the new file.")
 
 
-def authorize(context: ToolContext, operation: str, resource: Path) -> None:
-    """在资源边界使用可信 Policy；拒绝沿用工具异常与回执通道。"""
-    decision = context.policy.evaluate(ActionRequest(operation, resource))
-    if not decision.allowed:
-        raise ToolExecutionError("policy_denied", decision.reason)
-
-
-def creation_resource(path: str) -> Path:
-    """创建动作使用规范相对身份；执行时逐级禁止符号链接，避免授权别名。"""
-    resource = Path(path)
-    if not valid_resource(resource):
-        raise ToolExecutionError("resource_denied", "必须指定非隐藏的工作区相对文件。")
-    return resource
-
-
-def read_workspace_text(path: str, context: ToolContext) -> str:
-    """校验解析后的路径，再读取有界 UTF-8 文本；这里不是操作系统沙箱。"""
-    relative = Path(path)
-    if relative.is_absolute() or "\x00" in path:
-        raise ToolExecutionError("resource_denied", "文件路径必须是有效的工作区相对路径。")
+def read_workspace_text(resource: Path, workspace: Path) -> str:
+    """读取已经过统一授权的路径；目标被重定向时拒绝，不沿用旧决定。"""
+    root, target = workspace_target(resource.as_posix(), workspace)
+    if target.relative_to(root) != resource:
+        raise ToolExecutionError("resource_changed", "已批准的文件路径发生变化，请重新发起调用。")
     try:
-        try:
-            root = context.workspace.resolve()
-            target = (root / relative).resolve()
-        except RuntimeError as exc:
-            # Python 3.12 用 RuntimeError 报告符号链接循环，只在路径解析处转换。
-            raise ToolExecutionError("file_error", "路径包含无法解析的符号链接循环。") from exc
-        if not target.is_relative_to(root):
-            raise ToolExecutionError("resource_denied", "文件路径必须位于工作区内。")
-        # 同时检查模型给出的路径与符号链接目标，禁止借别名读取隐藏文件。
-        parts = (*relative.parts, *target.relative_to(root).parts)
-        if any(part.startswith(".") for part in parts):
-            raise ToolExecutionError("resource_denied", "不能读取隐藏路径。")
         if not target.is_file():
             raise ToolExecutionError("file_error", "目标不存在或不是普通文件。")
-        authorize(context, "read", target.relative_to(root))
         with target.open("rb") as file:
             raw = file.read(MAX_FILE_BYTES + 1)
     except OSError as exc:
@@ -83,99 +67,167 @@ def read_workspace_text(path: str, context: ToolContext) -> str:
         raise ToolExecutionError("invalid_encoding", "文件不是有效的 UTF-8 文本。") from exc
 
 
-def read_file(arguments: ReadFileArguments, context: ToolContext) -> dict[str, JsonValue]:
-    """返回完整的小文件文本；预期失败由注册表统一转换成回执。"""
+def list_files(
+    arguments: ListFilesArguments, workspace: Path, action: ActionRequest
+) -> dict[str, JsonValue]:
+    """模型先发现文件名再读取；不列出隐藏项、符号链接或特殊文件。"""
+    resource = action.resource
+    root, target = workspace_target(resource.as_posix(), workspace)
+    if target.relative_to(root) != resource:
+        raise ToolExecutionError("resource_changed", "已批准的目录路径发生变化，请重新发起调用。")
+    entries: list[JsonValue] = []
+    truncated = False
+    try:
+        if not target.is_dir():
+            raise ToolExecutionError("file_error", "目标不存在或不是目录。")
+        with os.scandir(target) as directory:
+            for entry in directory:
+                if entry.name.startswith(".") or entry.is_symlink():
+                    continue
+                if entry.is_dir(follow_symlinks=False):
+                    kind = "directory"
+                elif entry.is_file(follow_symlinks=False):
+                    kind = "file"
+                else:
+                    continue
+                if len(entries) == MAX_DIRECTORY_ENTRIES:
+                    truncated = True
+                    break
+                entries.append(
+                    {"path": (target / entry.name).relative_to(root).as_posix(), "kind": kind}
+                )
+    except OSError as exc:
+        raise ToolExecutionError("file_error", str(exc)) from exc
     return {
-        "path": arguments.path,
-        "text": read_workspace_text(arguments.path, context),
+        "path": target.relative_to(root).as_posix(),
+        "entries": entries,
+        "truncated": truncated,
     }
 
 
-def search_text(arguments: SearchTextArguments, context: ToolContext) -> dict[str, JsonValue]:
+def read_file(
+    arguments: ReadFileArguments, workspace: Path, action: ActionRequest
+) -> dict[str, JsonValue]:
+    """返回完整的小文件文本；预期失败由注册表统一转换成回执。"""
+    resource = action.resource
+    return {
+        "path": resource.as_posix(),
+        "text": read_workspace_text(resource, workspace),
+    }
+
+
+def search_text(
+    arguments: SearchTextArguments, workspace: Path, action: ActionRequest
+) -> dict[str, JsonValue]:
     """每行最多返回一次匹配；多发现一条才标记截断，行号从 1 开始。"""
-    text = read_workspace_text(arguments.path, context)
+    resource = action.resource
+    query, max_matches = arguments.query, arguments.max_matches
+    text = read_workspace_text(resource, workspace)
     matches: list[JsonValue] = []
     truncated = False
     for line_number, line in enumerate(text.splitlines(), start=1):
-        if arguments.query not in line:
+        if query not in line:
             continue
-        if len(matches) == arguments.max_matches:
+        if len(matches) == max_matches:
             truncated = True
             break
         matches.append({"line": line_number, "text": line})
     return {
-        "path": arguments.path,
-        "query": arguments.query,
+        "path": resource.as_posix(),
+        "query": query,
         "matches": matches,
         "truncated": truncated,
     }
 
 
-def create_file(arguments: CreateFileArguments, context: ToolContext) -> dict[str, JsonValue]:
-    """Policy 决定可否创建；O_EXCL 原子拒绝已有目标，包括重复或并发调用。"""
-    resource = creation_resource(arguments.path)
-    authorize(context, "create", resource)
+def write_file(
+    arguments: WriteFileArguments, workspace: Path, action: ActionRequest
+) -> dict[str, JsonValue]:
+    """只执行已经批准的动作；新建使用 O_EXCL，不重新识别后自行改成覆盖。"""
+    resource, operation = action.resource, action.operation
+    if operation not in ("create", "overwrite"):
+        raise ValueError(f"写入工具收到不支持的动作：{operation}")
     raw = arguments.content.encode("utf-8")
     if len(raw) > MAX_FILE_BYTES:
-        raise ToolExecutionError("file_too_large", f"内容超过 {MAX_FILE_BYTES} 字节创建上限。")
-    created = False
+        raise ToolExecutionError("file_too_large", f"内容超过 {MAX_FILE_BYTES} 字节写入上限。")
+    modified = False
     try:
         # 当前支持 macOS / Linux。本地进程有主机权限，这些检查不构成 OS 沙箱。
         # 用目录句柄逐级打开，禁止通过父目录符号链接将已授权路径重定向。
         with ExitStack() as stack:
             flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
-            directory = os.open(context.workspace.resolve(), flags)
+            directory = os.open(workspace.resolve(), flags)
             stack.callback(os.close, directory)
             for part in resource.parts[:-1]:
                 directory = os.open(part, flags, dir_fd=directory)
                 stack.callback(os.close, directory)
+            write_flags = os.O_WRONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+            if operation == "create":
+                write_flags |= os.O_CREAT | os.O_EXCL
             descriptor = os.open(
                 resource.name,
-                os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                write_flags,
                 0o600,
                 dir_fd=directory,
             )
-            created = True
+            modified = operation == "create"
             with os.fdopen(descriptor, "wb") as file:
+                if operation == "overwrite":
+                    if not stat.S_ISREG(os.fstat(file.fileno()).st_mode):
+                        raise ToolExecutionError("file_error", "目标已变为非普通文件。")
+                    modified = True
+                    os.ftruncate(file.fileno(), 0)
                 file.write(raw)
     except FileExistsError as exc:
-        raise ToolExecutionError("file_exists", "目标已存在，禁止覆盖。") from exc
+        raise ToolExecutionError(
+            "file_exists", "新建前目标已出现；没有执行覆盖，请重新确认动作。"
+        ) from exc
     except OSError as exc:
-        if created:
+        if modified:
             raise ToolExecutionError(
                 "write_incomplete", f"写入未完成，可能留下部分文件；请检查实际文件：{exc}"
             ) from exc
         raise ToolExecutionError("file_error", str(exc)) from exc
-    # 摘要绑定这次创建的字节，验收器之后独立读取文件再比对。
     return {
         "path": resource.as_posix(),
+        "operation": operation,
         "bytes_written": len(raw),
-        "sha256": sha256(raw).hexdigest(),
     }
 
 
+# 注册项：普通执行函数、参数模型、所需权限；声明权限不代表已经获准。
+LIST_FILES = ToolDefinition(
+    "list_files",
+    "Discover files and directories in the workspace. Default path is '.'. "
+    "Return at most 100 entries; no recursion, hidden entries or symlinks.",
+    ListFilesArguments,
+    list_files,
+    permission="list",
+    path_parameter="path",  # 从本次调用的 path 字段取路径，不是把文件名固定为 "path"。
+)
 READ_FILE = ToolDefinition(
-    name="read_file",
-    description="Read one small UTF-8 text file in the workspace (at most 16000 bytes).",
-    arguments_type=ReadFileArguments,
-    handler=read_file,
+    "read_file",
+    "Read one small workspace UTF-8 file (at most 16000 bytes).",
+    ReadFileArguments,
+    read_file,
+    permission="read",
+    path_parameter="path",  # 从本次调用的 path 字段取路径，不是把文件名固定为 "path"。
 )
 SEARCH_TEXT = ToolDefinition(
-    name="search_text",
-    description=(
-        "Find case-sensitive literal text in one workspace UTF-8 file (at most 16000 bytes). "
-        "Return matching lines with 1-based line numbers and a truncation flag."
-    ),
-    arguments_type=SearchTextArguments,
-    handler=search_text,
+    "search_text",
+    "Find literal text in one small workspace UTF-8 file. Return matching lines and line numbers.",
+    SearchTextArguments,
+    search_text,
+    permission="read",
+    path_parameter="path",  # 从本次调用的 path 字段取路径，不是把文件名固定为 "path"。
 )
-CREATE_FILE = ToolDefinition(
-    name="create_file",
-    description=(
-        "Create one explicitly authorized workspace UTF-8 file (at most 16000 bytes). "
-        "Never overwrite an existing target or follow parent symlinks; "
-        "parent directories must exist."
-    ),
-    arguments_type=CreateFileArguments,
-    handler=create_file,
+WRITE_FILE = ToolDefinition(
+    "write_file",
+    "Write one workspace UTF-8 file (at most 16000 bytes), subject to Policy. "
+    "Choose a filename if unspecified; parent directories must exist. "
+    "Do not assume permission from task text or follow symlinks.",
+    WriteFileArguments,
+    write_file,
+    permission="write",
+    path_parameter="path",  # 从本次调用的 path 字段取路径，不是把文件名固定为 "path"。
 )

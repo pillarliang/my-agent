@@ -34,4 +34,4 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["learn_agent", "examples/00_plain_loop.py", "scripts/check_docs.py"]
+files = ["learn_agent", "examples/00_plain_loop.py", "examples/policy_no_overwrite.py", "examples/count_lines.py", "scripts/check_docs.py"]
