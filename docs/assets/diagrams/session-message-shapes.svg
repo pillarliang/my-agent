@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 570" role="img" aria-labelledby="title desc"><title id="title">区分消息内容与持久包装，并用调用 ID 关联真实回执</title><desc id="desc">区分消息内容与持久包装，并用调用 ID 关联真实回执</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:17px}.head{font-size:20px;font-weight:650}.small{font-size:15px;fill:#526176}.arrow{fill:none;stroke:#40516b;stroke-width:1.6}.future{stroke-dasharray:6 5}</style><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
+<text x="24" y="30" class="head" text-anchor="start">内容回答“说了什么、做了什么”；包装回答“属于谁、怎样排序”</text>
+<rect x="24" y="65" width="416" height="342" rx="8" fill="#eff6ff" stroke="#7ca4d8" stroke-width="1.5"/>
+<text x="40" y="95" class="head" text-anchor="start">内容层：不同类型的消息</text>
+<text x="40" y="124" class="small" text-anchor="start">用户：读取 notes.txt</text>
+<text x="40" y="149" class="small" text-anchor="start">助手响应：文字、工具调用、停止原因</text>
+<text x="40" y="174" class="small" text-anchor="start">工具调用：标识 c1，名称 read_file</text>
+<text x="40" y="199" class="small" text-anchor="start">参数：path=notes.txt</text>
+<text x="40" y="224" class="small" text-anchor="start">工具回执：call_id=c1</text>
+<text x="40" y="249" class="small" text-anchor="start">内容：真实正文，或明确失败</text>
+<text x="40" y="274" class="small" text-anchor="start">最终响应：根据回执回答</text>
+<rect x="486" y="65" width="330" height="342" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="502" y="95" class="head" text-anchor="start">每条消息的记录包装</text>
+<text x="502" y="124" class="small" text-anchor="start">所属会话／用户任务</text>
+<text x="502" y="149" class="small" text-anchor="start">条目类型与格式版本</text>
+<text x="502" y="174" class="small" text-anchor="start">顺序、时间或父条目 ID</text>
+<text x="502" y="199" class="small" text-anchor="start">内部保存完整消息内容</text>
+<text x="502" y="224" class="small" text-anchor="start"></text>
+<text x="502" y="249" class="small" text-anchor="start">pi：SessionMessageEntry</text>
+<text x="502" y="274" class="small" text-anchor="start">Codex：RolloutItem / RolloutLine</text>
+<path d="M440 235 H483" class="arrow" marker-end="url(#arrow)"/>
+<text x="462" y="213" class="small" text-anchor="middle">包装</text>
+<rect x="24" y="447" width="792" height="89" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="40" y="477" class="head" text-anchor="start">读取时：解释外层包装，再还原内部消息</text>
+<text x="40" y="506" class="small" text-anchor="start">详情查询保留过程；模型历史查询只选择适合本次输入的材料。</text>
+<text x="24" y="560" class="small" text-anchor="start">不同实现的字段名可以不同；调用 ID 与回执的关联不能丢失。</text>
+</svg>

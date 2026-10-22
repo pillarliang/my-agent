@@ -52,7 +52,7 @@
 <li>Runner 检查响应，逐个把 <code>ToolCall</code> 交给 <code>ToolRegistry.execute()</code>。注册表解析和校验参数，生成动作、询问 Policy，获准后才调用注册项中的 <code>read_file()</code>，并将返回值包装为 <code>ToolResult</code>。</li>
 <li>完整模型回复与工具回执进入下一轮消息。最终无工具调用且有非空回答时返回 <code>RunResult</code>；应用在 <code>finally</code> 中关闭模型连接。模型错误、注册错误和未声明的程序异常向外抛出。</li></ol>
 <h4 id="stage-1-data">3.3 当前入口已有的记录功能怎样理解</h4>
-<p>Tools 与 Model 没有各自的数据库表，工具注册项、参数对象和连接都在内存中。<strong>本页链接的是当前源码：</strong>当前 CLI 已接入 3A，会由 SessionStore 保存请求、消息和结果；不能把运行当前入口理解为回到一个不保存记录的旧版本。具体保存顺序、五张表及 JSON 内容见 <a href="stage-3a.html#stage-3a-call-flow">3A 调用流程</a>与 <a href="stage-3a.html#stage-3a-database">表结构</a>。</p>
+<p>Tools 与 Model 没有各自的数据库表，工具注册项、参数对象和连接都在内存中。当前 CLI 只运行一个独立任务，messages 保存本次交互；持久记录与历史读取见<a href="stage-3a.html#stage-3a">阶段 3A 的待实现设计</a>。</p>
 </div></div></section>
 <section class="lesson-section" id="stage-1-run"><h3 id="stage-1-tools-run">4. 运行与验收</h3><div class="lesson-body">
 <div class="am-code"><div class="am-code-head">项目根目录执行 · 沿用 .env 配置，会请求真实模型</div><pre><code>uv sync --locked

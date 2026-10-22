@@ -100,7 +100,7 @@
 <p>时效由知识类型决定：当前构建状态很快失效，稳定偏好可以长期保留但允许覆盖。记忆中的“用户曾经批准发送”不能代替本次动作授权，权限始终由 <a href="policy.html#module-policy">Policy</a> 判断。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-memory-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 3A：尚未选择或实现长期记忆方案。</strong>已有 SQLite 会话记录，同一会话的新任务可使用已完成历史；这属于 State 与 Runner，不是跨会话的偏好库或知识检索。当前没有记忆条目、候选确认、关键词／向量检索、自动提炼或遗忘接口。</p><p>阶段 3 先验证“完整记录与本次输入分开”，见<a href="../stages/stage-3.html#stage-3">阶段实践</a>。长期记忆作为<a href="../stages/stage-4.html#stage-4">后续阶段的可选方向</a>，应先确定具体复用任务、访问范围、更正和删除要求，再选文件、结构化条目或检索方式；没有承诺必须实施某一种数据库。</p></div></div></section>
+<section class="lesson-section" id="module-memory-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 2：尚未选择或实现长期记忆方案。</strong>当前只有单次任务的内存消息，持久会话记录也待实现。State 的对话历史与 Memory 的跨会话知识各有用途；当前没有记忆提炼、检索或遗忘接口。</p><p>阶段 3 先验证“完整记录与本次输入分开”，见<a href="../stages/stage-3.html#stage-3">阶段实践</a>。长期记忆作为<a href="../stages/stage-4.html#stage-4">后续阶段的可选方向</a>，应先确定具体复用任务、访问范围、更正和删除要求，再选文件、结构化条目或检索方式；没有承诺必须实施某一种数据库。</p></div></div></section>
 <section class="lesson-section" id="module-memory-p2-panel-B"><h3>9. 后续练习：跨会话复用与遗忘</h3><div class="lesson-body"><div class="am-md"><p>在两个新会话中检验用户明确要求保存的同一项目的记忆，再用另一个项目验证范围隔离。更正后检查新版本生效，遗忘后检查条目、索引和后续提取均不再复用它；记忆内容也不能开启写权限。</p>
 <p>引入自动化后，再统计候选准确率、错误内容写入正式记忆的比例、检索到过期内容的比例和遗忘后重新出现的比例。检索命中和实际任务检查结果一起报告，才能判断记忆是否帮助了系统。</p>
 </div></div>

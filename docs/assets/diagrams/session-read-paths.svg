@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 610" role="img" aria-labelledby="title desc"><title id="title">查询分别服务于找会话、看过程和构造模型历史</title><desc id="desc">查询分别服务于找会话、看过程和构造模型历史</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:17px}.head{font-size:20px;font-weight:650}.small{font-size:15px;fill:#526176}.arrow{fill:none;stroke:#40516b;stroke-width:1.6}.future{stroke-dasharray:6 5}</style><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
+<text x="24" y="30" class="head" text-anchor="start">同一份材料可以产生不同查询结果</text>
+<rect x="24" y="60" width="792" height="86" rx="8" fill="#eff6ff" stroke="#7ca4d8" stroke-width="1.5"/>
+<text x="40" y="90" class="head" text-anchor="start">持久材料：会话记录文件 + 按需要建立的索引</text>
+<text x="40" y="119" class="small" text-anchor="start">文件按格式与顺序解释；数据库可帮助筛选和分页。</text>
+<path d="M148 146 V220" class="arrow" marker-end="url(#arrow)"/>
+<path d="M420 146 V220" class="arrow" marker-end="url(#arrow)"/>
+<path d="M692 146 V220" class="arrow" marker-end="url(#arrow)"/>
+<rect x="24" y="224" width="248" height="155" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="40" y="254" class="head" text-anchor="start">列表查询</text>
+<text x="40" y="283" class="small" text-anchor="start">读取 ID、目录、标题、时间</text>
+<text x="40" y="308" class="small" text-anchor="start">定位要查看的会话</text>
+<text x="40" y="333" class="small" text-anchor="start">不必读取全部正文</text>
+<rect x="296" y="224" width="248" height="155" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="312" y="254" class="head" text-anchor="start">详情查询</text>
+<text x="312" y="283" class="small" text-anchor="start">读取记录或指定历史页</text>
+<text x="312" y="308" class="small" text-anchor="start">解释顺序、分支与任务状态</text>
+<text x="312" y="333" class="small" text-anchor="start">展示错误和未完成片段</text>
+<rect x="568" y="224" width="248" height="155" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="584" y="254" class="head" text-anchor="start">模型历史读取</text>
+<text x="584" y="283" class="small" text-anchor="start">选择可用消息与上下文</text>
+<text x="584" y="308" class="small" text-anchor="start">解释压缩和任务边界</text>
+<text x="584" y="333" class="small" text-anchor="start">保留工具调用与回执配对</text>
+<path d="M148 379 V425" class="arrow" marker-end="url(#arrow)"/>
+<path d="M420 379 V425" class="arrow" marker-end="url(#arrow)"/>
+<path d="M692 379 V425" class="arrow" marker-end="url(#arrow)"/>
+<rect x="24" y="429" width="248" height="84" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="40" y="459" class="head" text-anchor="start">会话选择界面</text>
+<text x="40" y="488" class="small" text-anchor="start">用户选择已有会话</text>
+<rect x="296" y="429" width="248" height="84" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="312" y="459" class="head" text-anchor="start">历史查看界面</text>
+<text x="312" y="488" class="small" text-anchor="start">不请求模型、不执行工具</text>
+<rect x="568" y="429" width="248" height="84" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="584" y="459" class="head" text-anchor="start">本次模型请求</text>
+<text x="584" y="488" class="small" text-anchor="start">加当前指令和新问题后编码</text>
+<text x="24" y="562" class="head" text-anchor="start">看历史 ≠ 发送整个日志；还原工具回执 ≠ 再次执行工具。</text>
+<text x="24" y="590" class="small" text-anchor="start">这些是职责与数据方向，不要求为三条路径分别创建服务或数据库。</text>
+</svg>

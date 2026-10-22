@@ -2,18 +2,18 @@
 <style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:14px}.box{fill:#f4f7fb;stroke:#9dacc2;stroke-width:1.4}.planned{fill:#fffaf0;stroke:#b28a43;stroke-dasharray:6 4}.head{font-size:16px;font-weight:650}.note{fill:#52637b;font-size:13px}.edge{fill:none;stroke:#40516b;stroke-width:1.5}.future{stroke:#9a722c;stroke-dasharray:6 4}</style>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
 <rect class="box" x="20" y="20" width="960" height="110" rx="8"/>
-<text x="36" y="49" class="head">当前代码 · start_run() 拒绝在有 running 任务的会话中启动新任务</text>
-<text x="36" y="77" class="">inspect_session() 可以查询未结束运行；当前没有 resume()、checkpoint 或自动恢复执行接口。</text>
+<text x="36" y="49" class="head">当前代码 · 仅保留单次任务的内存消息</text>
+<text x="36" y="77" class="">会话保存、历史查询、checkpoint 与自动恢复执行均未实现。</text>
 <text x="36" y="103" class="">下面的恢复流程仍是设计，不会由现有入口自动触发。</text>
 <rect class="box planned" x="350" y="210" width="300" height="110" rx="8"/>
 <text x="366" y="239" class="head">恢复协调 · 拟新增职责</text>
 <text x="366" y="267" class="">读取检查点与动作记录</text>
 <text x="366" y="293" class="">重建暂停状态，核对执行结果</text>
-<rect class="box" x="20" y="430" width="280" height="140" rx="8"/>
-<text x="36" y="459" class="head">SessionStore · 已有类</text>
-<text x="36" y="487" class="">现有：请求、消息、进度事件</text>
-<text x="36" y="513" class="">后续：恢复记录的结构待设计</text>
-<text x="36" y="539" class="">不能仅凭 running 判断动作结果</text>
+<rect class="box planned" x="20" y="430" width="280" height="140" rx="8"/>
+<text x="36" y="459" class="head">记录读取 · 待实现职责</text>
+<text x="36" y="487" class="">先设计消息与任务边界的保存</text>
+<text x="36" y="513" class="">再设计外部动作与恢复记录</text>
+<text x="36" y="539" class="">不能仅凭任务标记判断动作结果</text>
 <rect class="box planned" x="350" y="430" width="300" height="140" rx="8"/>
 <text x="366" y="459" class="head">结果核对 · 拟新增职责</text>
 <text x="366" y="487" class="">查询文件或外部操作状态</text>

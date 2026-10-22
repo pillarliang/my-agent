@@ -100,6 +100,20 @@ def list_directory(workspace, path=".", *, allow_read=True):
     )
 
 
+def test_separate_tasks_start_with_fresh_messages(tmp_path, monkeypatch):
+    with local_api([completion(text="第一轮回答"), completion(text="第二轮回答")]) as (
+        client,
+        requests,
+    ):
+        configure_local_model(monkeypatch, client)
+        first = run_task("第一项任务", tmp_path, Policy(), definitions=())
+        second = run_task("第二项任务", tmp_path, Policy(), definitions=())
+    assert first.answer == "第一轮回答"
+    assert second.answer == "第二轮回答"
+    assert [message["role"] for message in requests[1]["messages"]] == ["system", "user"]
+    assert requests[1]["messages"][1]["content"] == "第二项任务"
+
+
 def test_directory_discovery_excludes_hidden_files_links_and_allows_subdirectories(tmp_path):
     (tmp_path / "notes.txt").write_text("资料")
     (tmp_path / ".env").write_text("private")

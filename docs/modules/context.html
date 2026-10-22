@@ -65,10 +65,10 @@
 </svg><figcaption>通用协作示例：由 Runner 协调。记录的保存时点和具体接口由实现约定；不要求 Context Manager 直接依赖数据库或工具执行器。</figcaption></figure>
 <p><strong>无法构建满足要求的输入时：</strong>Context Manager 返回明确原因，Runner 决定停止或采用预先定义的其他策略，不能悄悄丢掉必需材料后继续请求。模型请求失败由 Model 报告；动作被拒绝由工具系统形成回执。三种失败分别由不同模块报告。</p>
 <p><strong>依赖可以怎样接：</strong>可以由 Runner 先取材料再传给构建器，也可以让构建器通过只读来源接口加载材料。前者依赖少、容易单独测试；后者适合来源很多的系统，但需要处理来源访问权限和读取失败。需要摘要时可另外调用模型服务，需要检索时可连接检索服务；这些是选用相应策略后才增加的协作，不是 Context Manager 的必需依赖。</p>
-<p><strong>当前尚未接入 Context Manager。</strong>阶段 3A 的 Runner 直接发送已完成任务的全部历史，并保存实际 ModelRequest。下图与方案比较属于通用设计；后续接入方式见<a href="../stages/stage-3b.html#stage-3b">阶段 3B</a>。</p>
+<p><strong>当前尚未接入 Context Manager。</strong>Runner 只使用本次任务消息，不跨调用读取历史。下图与方案比较属于通用设计；未来接入见<a href="../stages/stage-3b.html#stage-3b">阶段 3B</a>。</p>
 </div></div></section>
 <section class="lesson-section" id="module-context-p1-panel-B"><h3>3. 内部怎样构建一次输入</h3><div class="lesson-body"><div class="am-md"><p><strong>Context：本次输入与策略组合</strong></p>
-<p>通用处理流程，当前尚未实现；阶段 3A 只保存会话与执行记录。</p>
+<p>通用处理流程，当前尚未实现；当前运行代码到阶段 2，会话保存与历史读取也尚未接入。</p>
 </div>
 <figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-module-context-1-panel-B-1.svg" width="363" height="669" alt="流程图：当前要求与执行过程、收集候选内容、历史与资料及工具定义、核对来源与访问范围、选择必需与相关片段、预算不足时选择策略、编码与预算复核、能够发送?" loading="lazy"></figure>
 <div class="am-md"><p>这里有三个实现要点。第一，每次调用模型前重新整理输入，但不同来源可以有不同刷新周期。第二，原始记录和本次选出的输入应分开保存；压缩成功不应让审计记录一起消失。第三，预算必须覆盖工具 Schema、协议材料和输出预留，不能只数用户文字。</p>
@@ -185,7 +185,7 @@
 <p><strong>官方文档。</strong> <a href="https://learn.chatgpt.com/docs/config-file/config-reference">Codex 配置参考</a>公开了自动压缩阈值与模型窗口配置。<a href="https://developers.openai.com/api/docs/guides/compaction">Responses 压缩文档</a>另外说明服务端阈值压缩和独立压缩调用，返回供后续请求使用、应用无法直接解读的压缩数据。</p>
 <p>可借鉴的是把供应商的 continuation 数据留在适配器中，并给应用保留明确的预算和停止策略。这里没有证明所有 Codex 入口使用完全相同的路径，也没有把 API 能力视为当前 Learn Agent 已实现的能力。</p>
 <h4>Learn Agent：保留便于观察的最小版本</h4>
-<p>阶段 0 保留单次任务的内存循环；阶段 3A 加入持久会话并发送全部已完成历史。当前没有输入预算或裁剪，摘要和检索也尚未实现。</p>
+<p>当前运行代码只保留单次任务的内存循环。阶段 3A 设计会话与历史重建，阶段 3B 设计输入选择；目前没有输入预算、裁剪、摘要或检索。</p>
 </div></div>
 </section>
 <section class="lesson-section" id="module-context-p1-panel-G"><h3>7. 同一个长任务会有什么差异</h3><div class="lesson-body"><div class="am-md"><p>假设用户在第 1 轮要求报告使用 UTC 时间，第 10 轮读取大量日志，第 20 轮修改报告格式，然后在第 30 轮要求继续：</p>

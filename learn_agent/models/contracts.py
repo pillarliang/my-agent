@@ -49,7 +49,7 @@ type ModelMessage = TextMessage | ModelResponse | ToolResult
 
 @dataclass(frozen=True)
 class ModelRequest:
-    """完整历史包含旧回复与工具回执；工具声明和输出额度属于本次请求。"""
+    """本次任务消息包含已有回复与工具回执；工具声明和输出额度属于本次请求。"""
 
     messages: tuple[ModelMessage, ...]
     tools: tuple[ToolSpec, ...] = ()

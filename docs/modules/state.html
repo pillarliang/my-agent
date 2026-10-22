@@ -6,141 +6,69 @@
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
 <div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="../stages/stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
-<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-state"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Session / State：管理会话与执行记录</h2></header><section class="lesson-section" id="module-state-p1-panel-A"><h3>1. 实现原理：区分执行进度、保存的记录和实际操作结果</h3><div class="lesson-body"><div class="am-md"><p>生成报告时，程序可能已保存模型的写入调用，却还没执行工具；也可能文件已经创建，但回执尚未提交。两种情况看起来都“停在写入附近”，恢复动作却不同。</p>
-<p>需要分别记录：<strong>下一步从哪里继续、哪些执行记录已保存、文件或外部系统实际发生了什么变化。</strong> 数据库事务通常只保证自身记录的原子性，不能顺带把本地文件或远程 API 也纳入同一事务。</p>
-<p><strong>State：中断后的记录查询与任务恢复</strong></p>
-<p>未来恢复协议示例；当前已有持久记录，但尚未实现图中的自动恢复与操作结果核对。</p>
-</div>
-<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-stage-5-1-panel-B-1.svg" width="509" height="434" alt="时序图：Harness、状态库、执行器、外部资源" loading="lazy"></figure></div>
-</section>
-<section class="lesson-section" id="module-state-interaction"><h3>2. 与相关模块怎样交互</h3><div class="lesson-body"><div class="am-md"><p><strong>Runner 提交执行记录，记录层负责可靠保存和查询。</strong>一次运行需要带有固定 ID，消息还要关联到步骤和工具调用。写入成功的返回表示记录已提交；读取返回已保存的记录，存储错误必须返回调用方，不能以空历史替代失败。</p><p>例如读取 notes.txt 后退出程序：新的 Runner 取得同一会话已完成的历史；未来接入上下文管理后，再交给 <a href="context.html#module-context">Context Manager</a> 选择本次输入。Context 的省略清单不应删除原始回执。用户也可以经入口查询全部记录；这条路径不触发模型请求或工具重放。</p><h4 id="module-state-event-purpose">进度事件：记录执行走到了哪里</h4>
-<p>消息记录“说了什么、工具返回了什么”，请求记录“准备发给模型什么”，进度事件记录“何时走到了哪个节点”。把事件按顺序排列，就能查看任务从开始到结束的过程，定位缺少响应或回执的位置；通常再按任务 ID 和步号查具体请求与消息。</p>
-<p>单独保存事件是一种实现选择：便于统一查询时间线，代价是多存一些重复信息；也可以从消息、请求和状态记录中整理执行过程。事件必须说明它确认的是哪个节点，不能把“准备请求”当成“远端已收到”，也不能把“工具返回”当成“工具执行成功”。下面第 8 节列出<a href="#module-state-events">当前实现的事件种类</a>。</p>
-<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-state-collaboration.svg" width="760" height="686" alt="通用记录协作：执行记录的保存、历史选择与界面查询各有职责；普通查询不会重放动作。" loading="lazy"><figcaption>通用记录协作：执行记录的保存、历史选择与界面查询各有职责；普通查询不会重放动作。</figcaption></figure><p><strong>对照当前代码：</strong>阶段 3A 详细展示了 <a href="../stages/stage-3a.html#stage-3a-code-structure">函数与类的关系</a>、<a href="../stages/stage-3a.html#stage-3a-call-flow">请求前后的保存顺序</a>和 <a href="../stages/stage-3a.html#stage-3a-database">SQLite 五张表的结构与关联</a>。可以沿一次任务核对 Runner 何时调用记录层、何时请求模型。</p><p><strong>记录层不能替 Tools 或 Policy 作保证。</strong>文件修改发生在执行器，授权发生在 Policy；SQLite 中的一次提交不能同时保证授权和文件操作成功。自动恢复还需核对动作是否派发、是否已生效、当前授权是否有效；仅有消息表不能回答所有问题。</p></div></div></section>
-
-<section class="lesson-section" id="module-state-p1-panel-C"><h3>3. 记录方案与恢复方案怎样分别选择</h3><div class="lesson-body"><div class="am-md"><p>先分开两个问题：<strong>执行记录怎样组织和保存</strong>，以及<strong>中断后怎样继续执行</strong>。JSONL 文件、SQLite 或服务端数据库是存储载体；持久消息、检查点与事件重放是记录和恢复方式。选用 SQLite 并不自动实现下面的恢复机制。</p><h4>本轮的基础方案：持久消息与运行状态</h4><p>按会话和运行保存消息、本次请求的内容、结果与状态，便于查询和为新任务提供历史；进度事件用于定位执行边界。这比完整恢复协议更容易验证，代价是不能判断结果未知的操作是否应该重做。当前采用这一方案，用 SQLite 事务确保相关记录一起保存。</p><p>内存方案适合单次练习；持久文件容易检查但需处理部分写入与并发；SQLite 方便本地事务和关联查询；服务端数据库适合多进程或远程部署但增加运维。本项目阶段 0 保留内存基线，阶段 3 选择 SQLite。下列 B–D 是另需建设的恢复方向，尚未实现。</p><h4>A. 仅内存状态</h4>
-<p>将消息、当前步骤和预算保存在进程对象中。它实现直接，适合一次性任务或可随时重做的只读操作；进程结束后无法继续，也不适合操作成本高、难以撤销的任务。</p>
-<h4>B. 状态快照加动作记录</h4>
-<p>快照保存当前工作状态；动作记录使用固定的逻辑调用 ID，保存待执行内容、每次执行尝试和实际结果。启动时读取最新快照，再判断动作是尚未派发、已确认，还是操作结果未知。</p>
-<p>它适合从简单循环逐步增加恢复。代价是必须明确何时保存快照，以及动作如何记录、执行和确认结果；仅保存 <code>step_index</code> 然后执行后续步骤，无法判断中断前动作是否已经发生。</p>
-<h4>C. 事件日志加 Projection（根据事件重建状态）</h4>
-<p>实际执行记录按顺序追加，根据事件生成查询结果和本次输入；可用检查点减少每次重放的成本。它适合多个组件读取记录、详细审计和复杂的恢复需求。</p>
-<p>代价是事件版本、重放规则、状态重建逻辑的升级和事件顺序管理。<strong>普通观测日志不一定包含恢复执行所需的完整记录。</strong> 只有明确保存时机、完整事件和重放规则，日志才足以支持执行恢复；阶段 0 的独立脚本只打印进度；阶段 3 保存运行事件与完整消息，但尚未实现事件重放或恢复协议。</p>
-<h4>D. 持久工作流运行时</h4>
-<p>由运行时保存节点、等待和重试状态，应用将动作放入明确任务或节点。它适合长时间等待、审批和跨服务协调，也会引入运行时约束与工作流版本兼容。</p>
-<p>这种运行时减少部分调度代码，却不能自动确认任意外部 API 的效果。依然需要幂等键、查询回执或人工对账。</p>
-<div class="am-table-wrap"><table>
-<thead>
-<tr>
-<th>方案</th>
-<th>恢复依赖什么</th>
-<th>收益</th>
-<th>主要代价</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>内存</td>
-<td>原进程仍在</td>
-<td>最少代码</td>
-<td>退出即丢失</td>
-</tr>
-<tr>
-<td>快照 + 动作记录</td>
-<td>快照和动作状态</td>
-<td>容易对应到已执行的步骤</td>
-<td>提交和回执协议</td>
-</tr>
-<tr>
-<td>事件 + 状态重建</td>
-<td>完整事实和重放规则</td>
-<td>审计、分支与多消费者</td>
-<td>事件版本与状态重建逻辑维护</td>
-</tr>
-<tr>
-<td>持久工作流</td>
-<td>运行时节点与任务记录</td>
-<td>等待、重试与调度</td>
-<td>平台约束和工作流演进</td>
-</tr>
-</tbody></table></div>
-</div></div>
-</section>
-<section class="lesson-section" id="module-state-p1-panel-D"><h3>4. 真实系统怎样保存与继续</h3><div class="lesson-body"><div class="am-md"><p><strong>pi，指定版本的源码与文档。</strong> <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/docs/session-format.md">会话格式</a>使用 JSONL 保存条目，通过记录 ID 和父记录 ID 表达分支关系。<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/session/context.ts">会话处理代码</a>根据条目生成发给模型的消息，压缩记录可以改变发给模型的内容，同时保留原始记录结构。它说明“持久记录”和“本轮输入”可以独立，不说明分支切换能回滚对外部资源的实际修改。</p>
-<p><strong>LangGraph，官方文档。</strong> <a href="https://docs.langchain.com/oss/python/langgraph/persistence">持久化</a>和<a href="https://docs.langchain.com/oss/python/langchain/short-term-memory">短期状态</a>以线程与检查点维护工作状态。<a href="https://docs.langchain.com/oss/python/langgraph/interrupts">中断说明</a>特别提醒节点可能重新执行：中断之前的副作用可能再次运行。可借鉴的是明确记录等待状态，以及哪些操作可能被重复执行；恢复任务不等于还原原来的 Python 调用栈。</p>
-<p><strong>AgentScope Java，指定版本的官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/session-log.md">Session Log</a> 区分实际执行记录、checkpoint 和会话调度，操作结果未知的调用需先核对再续做。文档明确恢复不会恢复原线程、网络请求或工具内部进度。这里记录其公开设计，本次没有运行 Java 故障恢复实验。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-state-p1-panel-E"><h3>5. 怎样给运行、动作和执行尝试分配 ID</h3><div class="lesson-body"><div class="am-md"><p>建议在现有模型 <code>call_id</code> 之外增加逻辑动作 ID 和执行尝试 ID：</p>
-</div>
-<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">invocation_id      一个逻辑动作，重试时稳定
-attempt_id         一次实际派发，每次尝试不同
-run_id / step_id   所属执行位置
-call_id            模型协议中的调用身份
-tool_version       实际工具版本
-arguments_hash     规范化参数摘要
-status             prepared / dispatched / succeeded / failed / unknown
-receipt_ref        可查询的实际回执
-</code></pre></figure>
-<div class="am-md"><p>幂等键绑定逻辑动作，而不是单次网络请求。模型再次提出相同参数，不一定是同一逻辑动作；参数哈希用于核对，不能单靠它判断两次请求是否属于同一操作。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-state-p1-panel-F"><h3>6. 恢复怎样作决定</h3><div class="lesson-body"><div class="am-md"><div class="am-table-wrap"><table>
-<thead>
-<tr>
-<th>持久保存的执行记录</th>
-<th>可以怎样继续</th>
-<th>还要检查什么</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>已确认成功且保存结果</td>
-<td>复用结果，不再次执行</td>
-<td>结果是否仍适用于当前任务</td>
-</tr>
-<tr>
-<td>尚未派发</td>
-<td>重新检查后执行</td>
-<td>权限、资源版本与工具版本</td>
-</tr>
-<tr>
-<td>只读结果缺失</td>
-<td>允许重新读取或重新观察</td>
-<td>数据随时间变化是否影响当前任务</td>
-</tr>
-<tr>
-<td>写动作已派发但无结果</td>
-<td>标记 unknown，先核对实际结果</td>
-<td>幂等键和外部回执</td>
-</tr>
-<tr>
-<td>无幂等也无查询能力</td>
-<td>保留未知，交给明确的核对流程</td>
-<td>不能猜测成功或失败</td>
-</tr>
-</tbody></table></div>
-<p>恢复时也要检查旧记录是否适用于当前模型协议和 Context 策略。旧的授权可能已撤销，旧的产物可能已被修改，旧摘要可能对应另一个任务版本；恢复不是无条件信任快照中的所有内容。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-state-p1-panel-G"><h3>7. 并发与版本为什么不能省略</h3><div class="lesson-body"><div class="am-md"><p>同一会话多执行者竞争时，需要租约或锁和条件更新，避免两个 Worker 都认为自己有权继续。租约过期本身也不足以让旧 Worker 停止写入，重要后端还需要检查执行版本，或使用 fencing token（让存储端拒绝旧执行者写入的递增编号）。</p>
-<p>事件和快照必须带 Schema 版本。升级后应验证旧记录能否读取并重建状态；无法解释的状态应拒绝自动执行。重放事件只用于重建状态，不应在普通查询时再次发送外部动作。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-state-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 3A：SQLite 持久消息与运行状态，附带进度事件。</strong>会话绑定工作目录，一个用户任务对应一个 Run，一次模型请求及其回执对应一个 Step；消息与相应事件一起提交，最终状态与结果一起提交。当前事件不是可以重建全部状态的独立事件源，也没有执行检查点。</p><p>正常完成 Run 的全部消息会成为新任务的历史；失败记录可查询，未结束的 Run 会阻止同一会话再开运行。单会话活动 Run 的检查和唯一索引用于拒绝同一会话的并发运行，没有实现租约接管或后台恢复。选择理由、保存时机和实验见<a href="../stages/stage-3.html#stage-3">阶段 3</a>。</p><h4 id="module-state-events">当前阶段 3A 的六种事件</h4>
-<p>Runner 在执行节点调用 SessionStore，由存储层把事件与相关记录一起提交到 events 表。一行包含 <code>run_id</code>（任务）、<code>step</code>（步号）、<code>kind</code>（类型）、<code>data</code>（补充信息），以及顺序号和记录时间。当前写入的种类如下：</p>
-<div class="am-table-wrap"><table><thead><tr><th>kind</th><th>何时记录，表示什么</th><th>step</th><th>data</th></tr></thead><tbody>
-<tr><td><code>run_started</code></td><td>新建任务，与 Run 和最初用户消息一起保存。</td><td>0</td><td><code>{}</code></td></tr>
-<tr><td><code>model_requested</code></td><td>调用模型前，与完整请求一起保存；表示准备请求。</td><td>本次请求步号</td><td><code>{}</code></td></tr>
-<tr><td><code>model_responded</code></td><td>模型返回后，与完整响应一起保存；拒答、截断响应也会记录。</td><td>本次请求步号</td><td><code>{}</code></td></tr>
-<tr><td><code>tool_returned</code></td><td>工具执行器返回后，与回执一起保存；回执可以是成功、权限拒绝或预期工具失败。</td><td>提出调用的步号</td><td><code>{}</code></td></tr>
-<tr><td><code>run_completed</code></td><td>取得最终回答，与 completed 状态、结果和结束时间一起保存。</td><td>0</td><td><code>{}</code></td></tr>
-<tr><td><code>run_failed</code></td><td>Runner 捕获循环中的异常，与 failed 状态、错误和结束时间一起保存。</td><td>0</td><td>错误对象，含 <code>code</code> 和 <code>message</code></td></tr>
-</tbody></table></div>
-<p><strong>为什么 data 通常是空的？</strong>kind、run_id、step 已经说明发生了什么；请求、响应和工具回执分别保存在 steps、messages 中，最终结果在 runs 中。data 只补充信息，当前只有失败结束事件写入错误。比如请求超时会留下 <code>run_started → model_requested → run_failed</code>；强制结束进程则可能来不及保存结束事件。</p>
-<p>当前通过 <code>--show-session</code> 的 <code>runs[].events</code> 查看事件；它们不进入模型上下文，也不触发重放。事件类型和含义是本项目的当前约定，不是所有 Agent 必须采用的标准。完整表结构和“读取 notes.txt → 追问”的事件记录见 <a href="../stages/stage-3a.html#stage-3a-final-events">阶段 3A 的 events 示例</a>。</p>
-<p><strong>未实现：</strong>自动恢复、动作幂等协议、事件重放、检查点迁移和分布式调度。下列故障恢复练习属于<a href="../stages/stage-5.html#stage-5">阶段 5</a>，不是持久存储自然附带的能力。</p></div></div></section>
-<section class="lesson-section" id="module-state-p2-panel-B"><h3>9. 后续练习：恢复前先核对操作结果</h3><div class="lesson-body"><div class="am-md"><p>先给只读动作保存固定 ID，在待执行动作保存后、工具返回后和结果提交后分别中断程序。重新启动时检查已确认结果不重复执行、未派发动作可以继续，变化的文件明确记录为一次新的读取结果。</p>
-<p>工具仍使用真实文件，任务仍由真实模型发起；在进程退出和记录保存等时刻人为中断程序，不替换模型。写动作在完整协议建立前不自动恢复。最后解释同一策略为什么不能直接用于创建订单或发送邮件。</p>
-</div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="policy.html#module-policy">← Policy：在执行前检查操作权限</a><a href="quality.html#module-quality">Quality：观测与评测 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-state"><header class="chapter-header"><span class="kind">模块原理与方案 · 依据 pi / Codex 源码</span><h2>Session / State：管理会话与执行记录</h2></header><span id="module-state-p1-panel-A"></span><span id="module-state-session-scope"></span><span id="module-state-p1-panel-C"></span><span id="module-state-p1-panel-E"></span><span id="module-state-p1-panel-F"></span><span id="module-state-p1-panel-G"></span><span id="module-state-p2-panel-A"></span><span id="module-state-p2-panel-B"></span><section class="lesson-section" id="session-purpose"><h3>1. 要解决什么问题，为什么需要记录</h3><div class="lesson-body"><div class="am-md">
+<p>已有 Agent Loop 能读 notes.txt 并回答，但函数返回后，本次消息只剩在已经结束的调用里。重新启动后问“刚才的验收标记是什么”，程序没有材料告诉模型“刚才”指什么；只留下最终回答，也无法核对读取的是哪个文件、工具是否失败。</p>
+<p>本模块要补上三件事：<strong>将相关交互归入同一段对话；保留足够的消息与真实回执；在查看历史或再次提问时读取正确的材料。</strong>它不负责调用模型、执行工具或判断权限。保存一段对话也不自动具备任务恢复能力。</p>
+<p>讲解顺序采用“目的 → 从交互推导数据 → 数据内容与保存 → 查询 → 接入 Loop”。其中有两点要先澄清：数据层次不预设为 Session / Run / Step；追加历史、修改内存状态和更新查询索引也是不同操作。</p>
+<p>本页讲原理与参考实现；<a href="../stages/stage-3a.html#stage-3a">阶段 3A</a>给出待实现的练习设计。当前运行代码到阶段 2，只保留单次任务的内存循环。</p></div></div></section>
+<section class="lesson-section" id="session-granularity"><h3>2. 先看一次交互，再决定怎样分层</h3><div class="lesson-body"><div class="am-md">
+<p>用户先说“读取 notes.txt，告诉我验收标记”，Agent 请求模型、执行读取，再请求模型得到回答；用户随后追问“再说一次标记”。从这个过程可以分出三个尺度：</p>
+<ol><li><strong>整段对话：</strong>关联两次提问、配置和历史，生命周期可以跨进程。</li><li><strong>一次用户任务：</strong>从接受一个问题到回答、失败或中断；它可能请求模型多次。</li><li><strong>具体内容与动作：</strong>用户输入、助手文字、工具调用、工具回执。每次模型请求是一次执行动作，不天然要求成为持久表中的一个层级。</li></ol>
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/session-data-map.svg" width="840" height="640" alt="从对话、用户任务到内容条目；一次用户任务可以包含多次模型请求。" loading="lazy"><figcaption>从对话、用户任务到内容条目；一次用户任务可以包含多次模型请求。</figcaption></figure>
+<h4>pi 与 Codex 怎样命名这些尺度</h4>
+<div class="am-table-wrap"><table><thead><tr><th>尺度</th><th>pi 的实现</th><th>Codex 的实现</th></tr></thead><tbody><tr><td>整段持续交互</td><td>SessionManager 管理 SessionHeader 与条目树。</td><td>对外使用 Thread；内部还存在运行时 Session 与 session_id，不能把几个名称直接当作同一类对象。</td></tr><tr><td>一次用户提问引发的执行</td><td>Agent 的一次 prompt / loop run 产生 agent_start 到 agent_end；会话文件不要求一张 Run 表。</td><td>对外用 Turn 表示一次工作过程，带 id、items、status 与可选错误、时间。</td></tr><tr><td>一轮模型响应与工具结果</td><td>pi 的 turn 指一次助手响应及其工具调用／结果。一次 prompt 可有多个这样的 turn。</td><td>一次 Turn 内可以请求模型和执行工具多次；不能把 Codex Turn 对应为一次模型请求。</td></tr><tr><td>具体数据</td><td>AgentMessage 是内容；SessionEntry 是持久记录的外层包装。</td><td>ThreadItem 是对外展示项；ResponseItem 是模型交互条目；RolloutItem 是持久记录。三者用途不同。</td></tr></tbody></table></div>
+<p>依据：<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/types.ts">pi AgentEvent 的 turn 定义</a>、<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">pi runLoop</a>、<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/app-server-protocol/src/protocol/v2/thread_data.rs">Codex Thread / Turn</a>与<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/app-server-protocol/src/protocol/v2/item.rs">ThreadItem</a>。本教程下面用“会话／用户任务／记录条目”解释含义，实践中再明确选定名称。</p></div></div></section>
+<span id="module-state-state-event-records"></span><section class="lesson-section" id="session-data"><h3>3. 每个尺度要保留什么</h3><div class="lesson-body"><div class="am-md">
+<p><strong>会话元数据</strong>用于找到和解释整段对话：稳定 ID、记录格式版本、创建时间、工作目录；需要复现配置时再保留模型与指令信息。ID 用来关联，版本用来解释结构，工作目录用来确认历史观察属于哪个资源范围。</p>
+<p><strong>一次用户任务的数据</strong>用于分清“哪次问题产生了哪些结果”：任务标识、起止位置、完成／失败／中断结论及必要错误。可以用开始、结束条目表达，也可以更新数据库中的任务行；有这个概念不等于必须建表。</p>
+<p><strong>内容条目</strong>保留问题、模型响应、工具调用参数与真实回执。它们按确定顺序排列，并保留调用 ID，保证回执能找到对应调用。时间戳便于观察，单靠时间戳不足以保证顺序。</p>
+<p><strong>本次模型请求</strong>还包含系统指令、工具声明和输出限制。它是从当前材料组装出的输入；是否额外保存每次完整请求是调试选择，会重复占用历史空间。请求日志与会话消息不必使用同一种结构。</p>
+<p>设计时逐项问：这份数据属于哪段对话或哪次任务？是谁产生的？重启后还需要吗？是原始材料还是根据原始材料计算出的视图？这些问题先于数据库表名。</p></div></div></section>
+<section class="lesson-section" id="session-messages"><h3>4. Message 里面有什么：文本、调用与回执</h3><div class="lesson-body"><div class="am-md">
+<p>Message（消息）表示交互内容，不能只存展示给人的一句话。以读取 notes.txt 为例，至少要区分用户输入、助手响应与工具回执；助手响应又可能包含文字、思考材料和工具调用。</p>
+<h4>pi：三类基础消息，内容由多个块组成</h4>
+<div class="am-table-wrap"><table><thead><tr><th>基础类型</th><th>主要构成</th><th>在读取例子中的意义</th></tr></thead><tbody><tr><td>UserMessage</td><td>role=user；content 是文字或文本／图片块数组；timestamp。</td><td>用户要求读取 notes.txt。</td></tr><tr><td>AssistantMessage</td><td>role=assistant；content 包含 TextContent、ThinkingContent、ToolCall；另有 api、provider、model、usage、stopReason、timestamp，失败时可有 errorMessage。</td><td>一次响应可同时有解释文字和读取调用；不要只保存文字。</td></tr><tr><td>ToolResultMessage</td><td>role=toolResult；toolCallId、toolName、content、isError、timestamp，可带 details 与用量。</td><td>程序读取文件后的真实结果，通过 toolCallId 对应助手调用。</td></tr></tbody></table></div>
+<p>ToolCall 内容块带 type=toolCall、id、name 和结构化 arguments；文本块带 type=text 与 text。系统指令单独在 AgentState.systemPrompt 中，不是这三类基础消息之一。这里列出文本与工具主线的字段，完整可选字段与扩展类型见<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/ai/src/types.ts">pi 消息定义</a>、<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/types.ts">AgentState / AgentMessage</a>。</p>
+<h4>Codex：模型交互统一为 ResponseItem</h4>
+<div class="am-table-wrap"><table><thead><tr><th>与本例有关的分支</th><th>主要内容</th><th>应保留的关联</th></tr></thead><tbody><tr><td>Message</td><td>role、content 内容块，可带 id、status、phase。</td><td>区分用户、助手及其他角色；phase 可表达输出阶段。</td></tr><tr><td>FunctionCall</td><td>name、arguments、call_id，可带 namespace、id 与状态。</td><td>arguments 是模型提供的调用参数；call_id 关联结果。</td></tr><tr><td>FunctionCallOutput</td><td>call_id 与 output，可带 id、状态。</td><td>工具输出与原调用配对，不能只剩一段无来源文字。</td></tr><tr><td>Reasoning</td><td>推理摘要、内容或加密续接材料，视供应商与响应而定。</td><td>原生续接材料不一定能完整显示给用户，也不应被任意改写。</td></tr></tbody></table></div>
+<p>依据：<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/protocol/src/models.rs">Codex ResponseItem 与 ContentItem</a>。这些是本例相关分支，源码还有自定义工具、搜索、图像等类型。对外的 ThreadItem 则整理为 UserMessage、AgentMessage、CommandExecution 等展示项，不能拿展示文本代替模型交互原始材料。</p>
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/session-message-shapes.svg" width="840" height="570" alt="消息是内容，记录包装负责顺序与归属；同一工具调用 ID 连接调用与回执。" loading="lazy"><figcaption>消息是内容，记录包装负责顺序与归属；同一工具调用 ID 连接调用与回执。</figcaption></figure>
+<p><strong>消息与记录包装分开。</strong>pi 的 SessionMessageEntry 在 message 外再放 type、id、parentId、timestamp；Codex 的 RolloutLine 包装 RolloutItem。它们解决保存与重建问题，不要求模型 API 接收同样的外层字段。</p></div></div></section>
+<section class="lesson-section" id="session-storage"><h3>5. 怎么存，存在哪里：内存、原始记录与查询数据</h3><div class="lesson-body"><div class="am-md">
+<p><strong>内存保存“正在使用的状态”。</strong>当前消息、流式文本、正在执行的调用和临时错误会更新或清空；模型连接、取消信号等运行资源通常不能直接序列化。要持久保存什么，应由重启后的使用需求决定。</p>
+<p><strong>原始记录保存“以后仍需解释的材料”。</strong>JSONL 是一行一个 JSON 对象，适合按顺序追加和手工检查；SQLite 适合关联查询、事务与并发控制。还可以组合：正文在文件，索引在数据库。存储介质不决定消息类型，也不决定是否有实时事件。</p>
+<h4>pi：内存索引与一份会话 JSONL</h4>
+<p><a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/session-manager.ts">SessionManager</a>维护内存中的 fileEntries、byId 和当前 leafId；appendMessage 生成带 id、parentId 的条目。持久模式下会话文件位于用户的 pi sessions 目录。正常追加使用 JSONL；首次落盘有缓冲策略，不能把调用 appendMessage 简化成“立刻保证磁盘已有这一行”。</p>
+<p>条目之间的 parentId 表达分支；当前叶子决定本轮采用哪条路径。会话文件头记录版本、ID、时间与 cwd。分支关系与消息内容可以放在同一个文件，不要求建立 Session、Run、Step 三张关系表。</p>
+<h4>Codex：rollout 正文、SQLite 元数据与分页查询</h4>
+<p><a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/rollout/src/recorder.rs">RolloutRecorder</a>通过写入队列处理 JSONL 记录，提供 record_canonical_items、persist 与 flush。提交到队列和等待写入完成是不同节点；实现还支持缓冲与压缩，不能把每次函数返回都解释为断电后一定可恢复。</p>
+<p><a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/history/src/lib.rs">RolloutItem</a>区分 SessionMeta、ResponseItem、TurnContext、Compacted、EventMsg 等记录。<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/state/src/runtime/threads.rs">SQLite 线程数据</a>保存可查询的元数据；<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/thread_history/read.rs">历史查询代码</a>还提供 Turn / Item 分页视图。因此“用了 JSONL”不等于“没有数据库”，“用了数据库”也不等于“所有材料都只存在一张消息表”。</p>
+<p><strong>起步选择看需求。</strong>单进程练习可先用内存加 JSONL；需要按工作区、标题、时间筛选大量会话时再加索引；需要多个执行者协调时另行设计写入协议。不要为了名字看起来完整，提前复制参考项目的全部存储设施。</p></div></div></section>
+<section class="lesson-section" id="session-operations"><h3>6. 是否只有新增和查询：区分三种变化</h3><div class="lesson-body"><div class="am-md">
+<p>你说的“增、查”很适合作为<strong>首版持久历史接口</strong>，但不适合概括整个系统。</p>
+<ul><li><strong>内存状态会改。</strong>追加完整消息、替换流式消息、增加或移除待执行工具 ID、设置或清空错误，都属于更新。</li><li><strong>持久历史可以主要追加。</strong>任务完成时再追加结束条目，已有内容保持可追溯；也可以选用更新任务状态行的数据库方案。</li><li><strong>查询索引与管理信息会变。</strong>改名、归档、分支选择与删除策略另有接口，不能从“正文追加”推断“系统永远没有修改”。</li></ul>
+<p>pi 的<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/session-manager.ts">getEntries / branch / appendSessionInfo</a>将会话条目定义为追加式记录；branch 改变叶子选择，改名可追加会话信息条目。Codex 的<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/update_thread_metadata.rs">元数据更新</a>与<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/archive_thread.rs">归档</a>是独立管理操作；回退或分支也需要明确的历史选择规则。</p>
+<p>本轮学习先约定“新增完整记录、读取已有记录”，暂不实现编辑、删除、分支和恢复。以后增加这些操作时，再定义哪些原始材料保留、哪些视图重新计算。</p></div></div></section>
+<section class="lesson-section" id="session-reading"><h3>7. 查询其实有三条路径</h3><div class="lesson-body"><div class="am-md">
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/session-read-paths.svg" width="840" height="610" alt="列表查询、详情查询与模型历史重建，各自选择不同材料；读取记录不会重新执行工具。" loading="lazy"><figcaption>列表查询、详情查询与模型历史重建，各自选择不同材料；读取记录不会重新执行工具。</figcaption></figure>
+<ol><li><strong>找会话：</strong>根据 ID、目录、更新时间或标题找元数据，不必读取所有正文。pi 可扫描会话文件；Codex 的列表查询可结合 SQLite 与 rollout 元数据。</li><li><strong>看过程：</strong>按会话定位记录，再按条目顺序或所选分支还原展示；保留错误与未完成片段，供人核对。读取不调用模型，也不重放工具。</li><li><strong>为下一次模型请求构造历史：</strong>解释记录类型和分支，选取可用消息，处理压缩标记，再编码成模型协议。它不是“把整个日志文件发送给模型”。</li></ol>
+<p>pi 的<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/session-manager.ts">getBranch / buildSessionContext</a>从叶子沿 parentId 找到路径，再生成模型消息；自定义状态条目不一定进入上下文。随后<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">Agent Loop</a>执行上下文处理与模型协议转换。</p>
+<p>Codex 分别提供<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/list_threads.rs">list_threads</a>、<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/read_thread.rs">read_thread</a>与<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/model_context.rs">load_latest_model_context</a>。后者按历史模式加载所需 rollout 区段；<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/core/src/session/rollout_reconstruction.rs">重建代码</a>解释消息、压缩及相关上下文材料。分页展示的结果不等于本次模型请求的全部输入。</p>
+<p>首版可以先选择“只把正常结束的完整用户任务用于追问”。失败与未结束部分仍供详情查询。工具调用和回执要配对；遇到无法解释的版本或残缺结构，应报告问题，不能静默当作空历史。</p></div></div></section>
+<span id="module-state-interaction"></span><span id="module-state-event-purpose"></span><span id="module-state-events"></span><section class="lesson-section" id="session-loop"><h3>8. 如何与 Agent Loop 配合，State 与 Event 在哪里</h3><div class="lesson-body"><div class="am-md">
+<p><strong>初始化时</strong>，入口确定会话与保存位置；Loop 仍使用已经配置好的模型和工具。<strong>运行时</strong>，入口提交新问题，Loop 加载可用历史组成工作消息，在模型或工具返回后保存内容，在本次任务结束时保存结论。存储失败返回调用方；存储层不替 Loop 决定下一步，也不执行工具。</p>
+<p><strong>State 是当前数据的视图。</strong>例如当前模型输入、活动任务状态、待执行调用。可以直接更新，也可以根据收到的事件更新；不要求名为 State 的模块、类或表。</p>
+<p><strong>Event 描述一次发生的变化，具体用途由实现决定。</strong>pi 的<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent.ts">processEvents</a>先用消息与工具事件更新内存状态，再通知订阅者；<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/agent-session.ts">AgentSession</a>在 message_end 等位置处理会话保存。Codex 的持久记录中也有 EventMsg，事件还可参与历史解释。因此不能把 event 一概理解成“只给外部系统通知”，也不能认为所有事件都要保存或都能送给模型。</p>
+<p>为了学会保存与追问，首版可以直接调用保存函数，暂不增加事件总线或独立事件表。保存任务边界也不要求实现一个完整的事件驱动架构。</p>
+<p><strong>保留历史与恢复执行分开。</strong>重启后用历史开始新任务，属于对话续接；从中断处恢复旧任务，还需核对外部动作是否生效、结果是否已确认、当前权限是否仍允许。重建消息不能恢复原网络请求或撤销已修改的文件。后续再读<a href="../stages/stage-5.html#stage-5">阶段 5</a>。</p></div></div></section>
+<section class="lesson-section" id="session-practice"><h3>9. 本项目当前范围与下一步</h3><div class="lesson-body"><div class="am-md">
+<p><strong>当前运行代码停在阶段 2：</strong><a href="../../learn_agent/runner.py">run_agent()</a> 维护单次任务的内存消息；<a href="../../learn_agent/models/contracts.py">模型契约</a>保留用户输入、完整响应与工具回执；尚未实现会话持久保存、跨任务历史读取或事件订阅。</p>
+<p><a href="../stages/stage-3a.html#stage-3a">阶段 3A</a>将从这些现有数据出发，设计“Session + 用户任务 Turn + 有序记录”的首版 JSONL 方案。它是练习选法，不是 pi 或 Codex 的完整复制，也不是已经实现的能力。输入预算与裁剪仍属于<a href="../stages/stage-3b.html#stage-3b">阶段 3B</a>。</p>
+<p>理解检查：读完后应能指出会话 ID 关联什么、一次用户任务为什么可能调用模型多次、一次工具回执对应哪个调用、详情查询与模型历史查询有什么区别，以及哪些运行资源没有被保存。</p></div></div></section>
+<span id="module-state-p1-panel-D"></span><span id="module-state-pi"></span><section class="lesson-section" id="session-sources"><h3>10. 源码依据与阅读范围</h3><div class="lesson-body"><div class="am-md">
+<p>pi 固定核对提交 <code>9d2ec7ffabe927bfad2214c1cee25b6632a78dcf</code>；Codex 固定核对提交 <code>9a8a85bc539325f2819dd0717f88b6ba6286495e</code>。下面描述的是这些版本的源码，不推断桌面产品或其他版本有相同的内部结构。本次没有运行两套参考项目。</p>
+<ul><li>pi：<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/ai/src/types.ts">消息类型</a> → <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">循环与 turn</a> → <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent.ts">运行状态与事件</a> → <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/agent-session.ts">会话接入</a> → <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/session-manager.ts">记录、分支、保存与查询</a>。</li>
+<li>Codex：<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/app-server-protocol/src/protocol/v2/thread_data.rs">Thread / Turn</a> → <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/protocol/src/models.rs">ResponseItem</a> → <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/history/src/lib.rs">持久条目</a> → <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/rollout/src/recorder.rs">JSONL 写入</a> → <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/model_context.rs">模型历史读取</a> → <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/core/src/session/mod.rs">record_conversation_items 接入循环</a>。</li></ul></div></div></section>
+<nav class="chapter-nav" aria-label="章节导航"><a href="policy.html#module-policy">← Policy：在执行前检查操作权限</a><a href="quality.html#module-quality">Quality：观测与评测 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 </body></html>

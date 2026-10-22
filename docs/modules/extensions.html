@@ -91,7 +91,7 @@
 <div class="am-md"><p>安装时检查路径是否越界、包的哈希值是否匹配、版本是否兼容以及依赖是否齐全；依赖安装与脚本启动可能执行代码，应有独立的受控动作。运行中固定包版本，更新后由新 Run 采用；否则同一调用前后可能对应不同实现，回执也难以解释。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-extensions-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 3A：仅有代码中显式注册的本地工具。</strong>应用选择工具注册项，ToolRegistry 注册普通函数，新增 count_lines 可沿用相同调用与权限流程，见<a href="../stages/stage-1.html#stage-1">阶段 1</a>。这验证了新增工具的接入方式，但不是动态插件加载系统。</p><p><strong>未实现：</strong>Skill 目录发现、方法正文按需注入、Hook、中间件、MCP 客户端和 Plugin 安装管理。当前也没有选定它们的加载方案；本章图示和练习都是未来设计。编写本项目时使用的外部开发助手能力，不代表本项目运行时已经具备同名功能。</p><p>后续先用一个真实方法或外部工具验证需求，再按<a href="../stages/stage-6.html#stage-6">阶段 6 的扩展方向</a>决定是否建设发现、版本与生命周期管理。</p></div></div></section>
+<section class="lesson-section" id="module-extensions-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 2：仅有代码中显式注册的本地工具。</strong>应用选择工具注册项，ToolRegistry 注册普通函数，新增 count_lines 可沿用相同调用与权限流程，见<a href="../stages/stage-1.html#stage-1">阶段 1</a>。这验证了新增工具的接入方式，但不是动态插件加载系统。</p><p><strong>未实现：</strong>Skill 目录发现、方法正文按需注入、Hook、中间件、MCP 客户端和 Plugin 安装管理。当前也没有选定它们的加载方案；本章图示和练习都是未来设计。编写本项目时使用的外部开发助手能力，不代表本项目运行时已经具备同名功能。</p><p>后续先用一个真实方法或外部工具验证需求，再按<a href="../stages/stage-6.html#stage-6">阶段 6 的扩展方向</a>决定是否建设发现、版本与生命周期管理。</p></div></div></section>
 <section class="lesson-section" id="module-extensions-p2-panel-B"><h3>9. 后续练习：按需加载与外部工具接入</h3><div class="lesson-body"><div class="am-md"><p>读取真实方法文件的元数据，由用户选择后才在长度限制内加载正文，不自动执行正文中引用的脚本。检查未激活正文不进入模型输入、版本可追溯、路径逃逸和超大正文被拒绝。</p>
 <p>随后接一个真正只读的本地 MCP 服务，检查断连、工具定义变化和超大结果；不模拟模型返回。最后核对扩展没有获得未授予的写能力，观测日志也没有被当作授权来源。</p>
 </div></div>

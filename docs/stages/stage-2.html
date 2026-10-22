@@ -38,8 +38,8 @@
 <p>当前接口约定是 <code>evaluate(ActionRequest) → PolicyDecision</code>。执行函数收到已校验的参数、工作目录和获准动作，不接收 Policy。替换权限判断的实现，不必改变这条交互。</p>
 </div><div class="am-md">
 <h4 id="stage-2-data">3.3 规则与拒绝结果存在哪里</h4>
-<p><code>Policy</code> 的权限开关和文件名单是应用创建的内存配置，当前没有权限规则表、审批表或独立的授权日志表。实验入口 <a href="../../examples/policy_no_overwrite.py">examples.policy_no_overwrite.main()</a> 在临时目录中直接创建注册表并两次调用 <code>execute()</code>，不请求模型、不创建 SessionStore。</p>
-<p>通用 CLI 则通过 <code>run_task()</code> 执行 Agent：模型若请求覆盖，<code>policy_denied</code> 作为 <code>ToolResult</code> 保存到 3A 的 <code>messages.message</code>，同时记录 <code>tool_returned</code> 事件；没有额外的 Policy 专用事件。关联的 <code>run_id</code>、<code>step</code> 和 JSON 中的 <code>call_id</code> 可用来定位这次拒绝，字段见 <a href="stage-3a.html#stage-3a-database">数据库表结构</a>。</p>
+<p><code>Policy</code> 的权限开关和文件名单是应用创建的内存配置，当前没有权限规则表、审批表或独立的授权日志表。实验入口 <a href="../../examples/policy_no_overwrite.py">examples.policy_no_overwrite.main()</a> 在临时目录中直接创建注册表并两次调用 <code>execute()</code>，不请求模型、不写会话记录。</p>
+<p>通用 CLI 通过 run_task() 执行 Agent。模型若请求覆盖，policy_denied 作为 ToolResult 加入本次内存 messages，供下一次模型请求使用；当前不保存到数据库或记录独立事件。call_id 仍将拒绝回执与原调用对应。</p>
 </div></div></section>
 <section class="lesson-section" id="stage-2-p1-panel-C"><h3>4. 运行禁止覆盖实验</h3><div class="lesson-body">
 <div class="am-code"><div class="am-code-head">通过真实工具先新建、再请求覆盖；不调用模型</div><pre><code>uv run python -m examples.policy_no_overwrite

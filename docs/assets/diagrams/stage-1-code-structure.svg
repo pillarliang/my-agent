@@ -50,5 +50,5 @@
 <path class="edge" d="M840 630 V700" marker-end="url(#arrow)"/>
 <text x="350" y="740" class="note">注册表统一处理参数、权限与回执</text>
 <text x="350" y="766" class="note">异常与真实结果再交回 Runner</text>
-<text x="500" y="812" class="note" text-anchor="middle">箭头：调用、创建或持有关系；不是继承。当前入口的 SessionStore 与五张记录表详见阶段 3A。</text>
+<text x="500" y="812" class="note" text-anchor="middle">箭头：调用、创建或持有关系；不是继承。当前只保留任务内存消息；会话记录见阶段 3A 的后续设计。</text>
 </svg>

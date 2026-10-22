@@ -99,7 +99,7 @@ result = {status, findings, evidence_refs, artifact_refs, checks, uncertainties}
 <p>长时间等待时保存外部任务 ID、条件和截止时间，再释放 Worker；事件到达后去重、检查任务版本并唤醒。调度器还应处理重叠、并发和重试。没有变化的事件不必不断调用模型，真正的状态变化才需要进入决策。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-orchestration-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 3A：单 Agent、单 Runner，没有选择多 Agent 编排方案。</strong>同一会话可有多个先后执行的 Run，但这些是用户连续提交的任务，不是父子 Agent。当前没有子任务工具、Handoff、Graph、邮箱、共享任务队列或主任务与子任务的预算分配机制。</p><p>选择单循环是为了先验证工具、权限、记录与上下文的职责，见<a href="../stages/stage-3.html#stage-3">阶段 3</a>。如果后续遇到明确的独立子任务，可按<a href="../stages/stage-6.html#stage-6">阶段 6 的编排方向</a>约定输入、预算、证据与汇合，再和单 Agent 比较收益；下方练习只是一个可选的起步方案。</p></div></div></section>
+<section class="lesson-section" id="module-orchestration-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 2：单 Agent、单 Runner。</strong>每次调用独立处理一个用户任务，没有跨任务会话，也没有子任务工具、Handoff、Graph、邮箱、共享队列或父子任务预算机制。</p><p>选择单循环是为了先验证工具、权限、记录与上下文的职责，见<a href="../stages/stage-3.html#stage-3">阶段 3</a>。如果后续遇到明确的独立子任务，可按<a href="../stages/stage-6.html#stage-6">阶段 6 的编排方向</a>约定输入、预算、证据与汇合，再和单 Agent 比较收益；下方练习只是一个可选的起步方案。</p></div></div></section>
 <section class="lesson-section" id="module-orchestration-p2-panel-B"><h3>9. 后续练习：委派一次范围明确的只读任务</h3><div class="lesson-body"><div class="am-md"><p>增加一个只读 <code>review_document</code> 子 Agent 工具，使用真实模型检查固定文档快照，返回问题、证据位置和不确定项。主 Agent 检查引用再整合，子任务不再创建子任务，也没有写权限。</p>
 <p>分别检查输入缺少必要信息、子任务超时、结果重复和父任务取消；最后对同一任务集比较单 Agent 与委派版本。只有收益和新增成本都可解释，才继续增加异步通信和共享任务调度。</p>
 </div></div>
