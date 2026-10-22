@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Policy：在执行前检查操作权限 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="../stages/stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-policy">
+<header class="chapter-header"><span class="kind">通用设计原则与可选方案 · 当前实现见阶段 2</span><h2>Policy：在执行前检查操作权限</h2></header>
+<section class="lesson-section" id="module-policy-p1-panel-A"><h3>1. 解决什么问题，必须保证什么</h3><div class="lesson-body"><div class="am-md">
+<p>用户让 Agent 保存摘要，同时希望保留已有资料。模型可能选中一个已有文件，工具也有能力改写它。程序需要在操作发生前，判断这次覆盖是否允许。这就是 <strong>Policy：按规则作权限判断</strong>。</p>
+<p>核心是<strong>规则</strong>与<strong>决定</strong>：规则说明允许哪些动作，决定回答本次动作是否允许及原因。Policy 判断权限，不执行写入，也不评价摘要内容是否正确。</p>
+<ul>
+<li><strong>根据实际动作判断：</strong>明确要做什么、操作哪个目标；“保存摘要”可能实际造成覆盖。</li>
+<li><strong>权限来源可信：</strong>程序依据应用配置或经确认的授权作判断，模型文字和读到的资料不能自行授予权限。</li>
+<li><strong>拒绝必须阻止执行：</strong>被拒绝的操作不能发生，也不能通过另一个调用入口绕过检查；没有获得许可时不能默认为允许。</li>
+<li><strong>执行符合许可：</strong>获准新建不能变成覆盖；允许尝试也不代表操作已经成功。</li>
+</ul>
+<p>这些是设计原则。权限声明、某个类名、某个函数签名，以及检查放在哪个文件里，都是实现选择。</p>
+</div></div></section>
+<section class="lesson-section" id="module-policy-interface"><h3>2. 黑盒交互：动作与目标，决定与原因</h3><div class="lesson-body"><div class="am-md">
+<p>仍以保存摘要为例：工具系统识别到本次准备覆盖 summary.txt，向 Policy 提交动作与目标。Policy 回答“拒绝：禁止覆盖”；工具系统据此停止写入，并把失败交回 Runner。</p>
+<ul><li><strong>输入：</strong>本次要做的动作与目标，例如“覆盖 summary.txt”。</li><li><strong>输出：</strong>允许或拒绝及原因，例如“拒绝：禁止覆盖”。</li></ul>
+</div>
+<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-policy-principles.svg" width="940" height="380" alt="通用职责：Runner 请求保存文件，Tools 向 Policy 提交覆盖动作，Policy 拒绝，Tools 不执行并返回失败；不限定具体类或函数" loading="lazy"><figcaption>通用交互图只说明职责和数据流向，不限定注册方式或规则实现。</figcaption></figure>
+<div class="am-md"><p>Policy 负责作决定，调用与执行部分负责落实决定。检查可以接在统一执行入口或资源访问接口，但必须覆盖真实操作路径。具体 Python 契约和初始化配置见<a href="../stages/stage-2.html#stage-2-policy-code">阶段 2</a>。</p><p><strong>配置来自应用，动作来自真实调用。</strong>应用初始化工具系统时提供规则与工作目录；运行时 Tools 根据已校验参数和资源状态提交本次动作。模型或资料中的“已经批准”只是内容，不能修改规则。Policy 返回决定后，执行器还须保证实际操作与获准动作一致。</p><p><a href="context.html#module-context">Context</a> 控制模型看见什么，不给工具授权；<a href="state.html#module-state">State</a> 保存回执，之前调用成功，也不代表下一次调用自动获准。当前 Policy 不直接调用 Model、Context 或数据库，Runner 通过工具回执获知拒绝原因。未来审批服务失败或结果未知时，也不能自行补成允许。</p></div>
+</div></section>
+<section class="lesson-section" id="module-policy-p1-panel-C"><h3>3. 可选实现方案：两个不同的选择</h3><div class="lesson-body"><div class="am-md">
+<p>“规则怎样判断”和“本次动作怎样取得”可以分别选择。以下是设计参考，不表示项目已经实现了所有方案。</p>
+<h4>规则怎样判断</h4>
+<ul>
+<li><strong>条件分支：</strong>在代码中判断动作、目标与权限开关。规则少时容易阅读；规则增多后，修改与维护成本会上升。</li>
+<li><strong>配置规则匹配：</strong>把允许、拒绝条件写成配置，按明确顺序匹配。适合经常调整的规则；需要处理冲突、默认行为和规则版本。</li>
+<li><strong>独立策略服务：</strong>统一服务接收动作并返回决定。适合多个入口共用组织规则；会增加服务维护、调用失败和权限数据管理的成本。</li>
+</ul>
+<h4>本次动作怎样取得</h4>
+<ul>
+<li><strong>工具或适配器提供动作描述：</strong>用函数整理实际动作与目标，适合每种工具差异较大的场景；需要维护描述逻辑，并保证与实际执行一致。</li>
+<li><strong>注册时声明所需权限：</strong>由共享代码结合声明与调用参数生成动作。适合多个工具复用相同权限类型；新增权限类型时，需要扩展共享解析逻辑。</li>
+</ul>
+<p>两种接法都可以在统一入口调用 Policy。采用哪种方式，都需要先取得准确动作，并在执行前落实拒绝决定。</p>
+</div></div></section>
+<section class="lesson-section" id="module-policy-p2-panel-A"><h3>4. 本项目当前选择</h3><div class="lesson-body"><div class="am-md">
+<p>本项目选用<strong>注册时声明权限、共享代码生成动作、统一执行入口检查、条件分支判断规则</strong>。它便于复用当前文件工具的权限，也便于从一次调用读懂整个过程。</p>
+<p>这是当前版本的实现，不是 Policy 的唯一设计。选择理由、源码顺序和运行命令集中在<a href="../stages/stage-2.html#stage-2">阶段 2</a>。</p>
+<p><strong>截至阶段 3 仍采用这一组合：</strong>每次调用重新生成动作并检查权限，在同一会话提交后续任务时，不会沿用历史授权。CLI 默认允许读取与新建，禁止覆盖；这是入口选择的配置，Policy 对象自身默认不允许新建。阶段 3A 的会话记录没有改变这一权限边界。</p><p><strong>未实现：</strong>独立规则服务、人工审批等待、受限授权凭据和执行沙箱。下方分别介绍这些可选扩展；配置规则、改变执行环境和增加审批协议是不同决策，不必一起引入。</p></div></div></section>
+<section class="lesson-section" id="module-policy-p2-panel-B"><h3>5. 如何验证原则成立</h3><div class="lesson-body"><div class="am-md">
+<p>既检查允许的动作能执行，也检查被拒绝的动作没有发生。验证禁止覆盖时，要确认权限判断返回拒绝、写入函数没有运行、原文件内容未变。</p>
+<p>还需检查实际执行是否符合获准动作。例如获准新建后，目标突然出现，也不能改成覆盖。具体实验与检查见<a href="../stages/stage-2.html#stage-2-p1-panel-C">阶段 2 的禁止覆盖实验</a>。</p>
+</div></div></section>
+<details class="reference-extra"><summary>按需了解：审批、受限授权与执行隔离（当前未实现）</summary>
+<section class="lesson-section" id="module-policy-p1-panel-D"><h3>6. 人工审批</h3><div class="lesson-body"><div class="am-md"><p>需要人作决定时，可以暂停并展示具体动作、目标和参数。审批后执行前仍须确认动作未变、授权仍有效。它适合需要人工判断的操作，代价是等待状态、身份校验和恢复流程。</p></div></div></section>
+<figure class="am-diagram am-flow"><figcaption>扩展方案参考：当前代码没有等待审批状态。</figcaption><img class="lesson-svg" src="../assets/diagrams/diagram-module-policy-1-panel-A-1.svg" width="500" height="426" alt="可选扩展：规范化动作后拒绝、等待审批或交给受限执行后端；当前未实现" loading="lazy"></figure>
+<section class="lesson-section" id="module-policy-p1-panel-E"><h3>7. 执行隔离</h3><div class="lesson-body"><div class="am-md"><p>Policy 判断是否批准动作；沙箱限制执行代码实际能访问什么。它们是不同职责。子进程本身不保证文件或网络隔离，操作系统限制、容器或虚拟机也需要按授权范围配置，不能替代业务权限判断。</p></div></div></section>
+<section class="lesson-section" id="module-policy-p1-panel-F"><h3>8. 受限授权凭据</h3><div class="lesson-body"><div class="am-md"><p>也可以由可信程序签发仅允许特定主体、动作、目标和有效期的凭据。它适合短期委托，代价是撤销、过期、并发使用和重试管理；不是给工具加一个“已批准”参数就能实现。</p></div></div></section>
+<section class="lesson-section" id="module-policy-p1-panel-G"><h3>9. 不可信资料与进一步阅读</h3><div class="lesson-body"><div class="am-md"><p>资料可能诱导模型提出越权动作。提示模型忽略恶意指令有帮助，但权限仍须由程序执行检查，不能让资料自行修改规则。更多源码与设计资料见<a href="../reference/research.html#reference-research">方案依据</a>；等待与恢复涉及的状态问题见 <a href="state.html#module-state">Session / State</a>。</p></div></div></section>
+</details>
+<nav class="chapter-nav" aria-label="章节导航"><a href="tools.html#module-tools">← Tools：执行模型提出的工具调用</a><a href="state.html#module-state">Session / State：管理会话与执行记录 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

@@ -1,6 +1,18 @@
 # Learn Agent：从独立 Loop 到受控工具执行
 
-教程入口：[系统职责地图](docs/tutorial.html#system-map)。[阶段 1：Tools 与 Model](docs/tutorial.html#stage-1) 和[阶段 2：Policy 与禁止覆盖](docs/tutorial.html#stage-2) 第一版已完成。
+教程入口：[模块职责图](docs/tutorial.html#system-map)。阶段 0–3A 已实现，当前实践是[阶段 3A：会话与记录](docs/stages/stage-3a.html#stage-3a)；[阶段 3B：上下文管理与预算](docs/stages/stage-3b.html#stage-3b) 保留为后续设计。
+
+## 启动教程网页
+
+在项目根目录运行独立静态服务，仅需 Python 3.12 或更新版本：
+
+```sh
+python3 scripts/serve_tutorial.py --port 8080
+```
+
+打开 <http://localhost:8080/>；远程访问时将 localhost 替换为服务器地址。默认监听 `0.0.0.0`，可用 `--host 127.0.0.1` 限制为本机访问；按 Ctrl+C 停止。
+
+服务提供教程、共享资源和源码阅读链接，修改文档后刷新即可。脚本独立于 Agent，不需要安装项目依赖或配置 API Key。
 
 ## 安装与运行
 
@@ -23,6 +35,19 @@ uv run python -m learn_agent
 ```sh
 uv run python -m learn_agent "看看有哪些资料，整理成一份摘要并保存"
 ```
+
+每次默认创建新会话，终端显示会话 ID。复制 ID，即可重启程序后提交同一会话的新任务，或查询完整记录：
+
+```sh
+uv run python -m learn_agent --session 会话ID "接着说明刚才的主要结论"
+uv run python -m learn_agent --show-session 会话ID
+```
+
+记录统一保存在项目根目录的 `.learn-agent/sessions.sqlite3`。查询不请求模型，也不需要 API Key。会话绑定工作目录，历史中的文件内容代表当时的观察。
+
+Runner 直接发送系统指令、已完成任务的全部历史、当前任务消息和工具定义。每个 Step 在请求前保存实际 `ModelRequest`，查询时可查看 `steps[].request`。当前没有 Context 模块、输入预算或历史裁剪；输出仍默认最多 512 Token，模型服务报告输入超限时会记录失败并停止。
+
+只将正常完成的旧任务送入后续上下文。失败记录可以查询；强制退出留下的未结束 Run 会阻止同一会话继续运行，需先核对记录与工作区，再用新会话提交新任务。阶段 3 不自动恢复或重放中断动作。
 
 工作目录和权限在 [入口](learn_agent/__main__.py) 设置，工具清单写在 [application.py](learn_agent/application.py) 的 DEFAULT_TOOLS 中，不随问题变化。默认工作目录是 `examples/workspace`，启动时会显示；启用 `list_files`、`read_file`、`search_text`、`write_file`，由模型选择调用。通用入口允许在工作目录内读取、新建文件，禁止隐藏路径、越界和覆盖已有文件。写入仅支持 macOS / Linux，父目录须存在，正文最多 16,000 个 UTF-8 字节。
 
@@ -53,7 +78,9 @@ uv run python examples/00_plain_loop.py
 5. [模型服务](learn_agent/models/service.py)、[模型契约](learn_agent/models/contracts.py)与[协议适配器](learn_agent/models/openai_chat.py)：配置与鉴权、连接生命周期、请求与回复均由模型模块管理。
 6. [Loop 接入](learn_agent/runner.py)：请求模型、保存回复、执行工具并追加结果；返回含模型说明与本次回执的 `RunResult`。
 
-阶段 2 先读 [Tools ↔ Policy 协议](docs/tutorial.html#module-policy-interface)：工具识别动作，注册表以 `ActionRequest(operation, resource)` 统一询问 `Policy.evaluate()`，取得 `PolicyDecision(allowed, reason)`。拒绝返回 `policy_denied`；允许后才执行。[禁止覆盖实验](examples/policy_no_overwrite.py) 和 [Policy 测试](tests/test_policy.py) 验证权限是否生效，不涉及成果验收。
+阶段 2 先读 [Tools ↔ Policy 协议](docs/modules/policy.html#module-policy-interface)：工具识别动作，注册表以 `ActionRequest(operation, resource)` 统一询问 `Policy.evaluate()`，取得 `PolicyDecision(allowed, reason)`。拒绝返回 `policy_denied`；允许后才执行。[禁止覆盖实验](examples/policy_no_overwrite.py) 和 [Policy 测试](tests/test_policy.py) 验证权限是否生效，不涉及成果验收。
+
+当前只实现 [3A：会话与记录](docs/stages/stage-3a.html#stage-3a)。阅读时沿 [入口](learn_agent/__main__.py)、[Runner](learn_agent/runner.py) 和 [SessionStore](learn_agent/state.py) 查看关键注释：入口创建或复用会话，一个用户任务对应一个 Run，每次模型请求及其工具结果对应一个 Step；请求先保存，模型响应在判断停止原因前保存，工具实际返回后再保存结果，最终状态与结果在同一事务中提交。[3B](docs/stages/stage-3b.html#stage-3b) 尚未接入运行代码。
 
 普通函数注册时直接声明所需权限，例如 `tools.register(count_lines, ReadFileArguments, permission="read", path_parameter="path")`。路径来自本次调用的 path 参数；不再传动作说明函数。注册表统一生成动作、调用 Policy，允许才执行。声明需求不代表获得授权；write 会根据目标是否存在区分新建与覆盖。新增工具复用已有权限即可，不改 registry.py 或 Runner。
 
@@ -77,8 +104,8 @@ uv run pytest
 uv run python scripts/check_docs.py
 ```
 
-测试操作真实临时文件，并让实际 SDK 请求本机 HTTP 服务；覆盖不提供文件名的自然语言任务、按配置注册工具、目录发现、授权与拒绝、禁止覆盖、并发与符号链接，以及工具注册、资源边界、消息关联和模型协议。固定协议响应不证明真实模型的任务能力。
+测试操作真实临时文件和 SQLite，并让实际 SDK 请求本机 HTTP 服务；覆盖不提供文件名的自然语言任务、按配置注册工具、目录发现、授权与拒绝、禁止覆盖、并发与符号链接，以及工具注册、资源边界、消息关联和模型协议。阶段 3A 另验证跨进程会话续接、协议数据与用量保存、完整历史发送、实际请求记录、失败记录和事务回滚。固定协议响应不证明真实模型的任务能力；真实模型在连续任务中的表现需单独运行观察。
 
-教程直接维护 `docs/tutorial.html` 中的正文与 SVG，不添加文档生成流水线。
+教程以 `docs/tutorial.html` 为总目录，阶段与模块分别在 `docs/stages/`、`docs/modules/` 中直接维护 HTML；共享样式、交互与复用 SVG 在 `docs/assets/`。浏览器可直接打开，不需要文档构建。编辑时按章节读取，避免把全书及图源一起带入上下文。
 
-参考：[早期架构资料](file:///Users/drew/Documents/Codex/2026-10-19/qing/outputs/agent-system-architecture.html)
+参考：[当前骨架与架构蓝图](docs/reference/architecture-agent-harness.html#architecture-agent-harness)

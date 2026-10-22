@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loop / Runner：控制一次任务怎样继续和停止 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="../stages/stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-loop"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Loop / Runner：控制一次任务怎样继续和停止</h2></header><section class="lesson-section" id="module-loop-p1-panel-A"><h3>1. 实现原理：一个有停止条件的状态机</h3><div class="lesson-body"><div class="am-md"><p>以生成报告为例：程序记录用户请求，Builder 构建输入，Model 返回读取调用，执行器读取文件，Runner 保存结果并再次调用模型。模型也可能返回不含工具调用的文字，此时返回模型说明与执行记录。</p>
+<p><strong>Loop：继续、停止与限制次数的修复</strong></p>
+<p>通用控制模式 · 当前没有自动验收修复。</p>
+</div>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-module-loop-1-panel-A-1.svg" width="570" height="444" alt="流程图：构建 Context 与预算检查、请求模型并校验响应、停止并保留原因、有工具调用?、执行工具并保存回执、返回模型说明与执行记录、程序结论与证据" loading="lazy"></figure>
+<div class="am-md"><p>基础状态包含当前输入、模型和工具记录、已用预算与停止原因；只有配置了成果检查时，才增加检查结果。程序在调用模型和工具等步骤检查预算与取消请求；Prompt 中的“最多执行五步”可以指导行为，程序仍需自己计数。</p>
+<p>不要把三个结束条件混在一起：模型服务完成一次响应、Runner 结束一次运行、任务结果通过验收，是三件不同的事，不能用其中一个替代另外两个。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-loop-interaction"><h3>2. 与相关模块怎样交互</h3><div class="lesson-body"><div class="am-md"><p>应用发起任务，Runner 决定继续还是停止。当前 3A 从记录层读取全部已完成历史，直接组成模型请求；如果后续引入 Context Manager，再由它选择本次输入。下图展示包含该扩展的通用协作方式，当前尚未接入 Context 步骤。</p><p>Model 返回完整回复或访问错误。模型提出动作时，Runner 向 <a href="tools.html#module-tools">Tools</a> 提交调用；Tools 向 Policy 询问权限并真正执行。Runner 记录真实回执，工具失败可以进入下一轮供模型解释，程序异常则应明确向上报告。一个工具被拒绝，不必等同于整个运行立即结束。</p><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-loop-collaboration.svg" width="1240" height="750" alt="通用循环协作：Runner 串联各模块；Context 选输入，Model 生成响应，Tools 执行动作，Policy 检查权限，记录层保存实际调用和结果。" loading="lazy"><figcaption>通用循环协作：Runner 串联各模块；Context 选输入，Model 生成响应，Tools 执行动作，Policy 检查权限，记录层保存实际调用和结果。</figcaption></figure><p>记录写入失败时，程序不能报告已成功保存。反过来，记录中只有“已请求工具”时，也不能据此判断工具没有改变文件或外部系统；恢复属于 <a href="state.html#module-state">State 的另一个协议问题</a>。检查器或编排层可以在未来给 Runner 提供反馈，但不应混同模型自己生成的“已完成”。</p></div></div></section>
+
+<section class="lesson-section" id="module-loop-p1-panel-C"><h3>3. 控制流有哪些方案</h3><div class="lesson-body"><div class="am-md"><p>这里比较<strong>下一步由谁决定</strong>。当前采用 A 的自主工具循环；B 的计划、C 的分层执行和 D 的显式业务图尚未实现。持久记录、上下文预算和权限判断可以与这些控制流分别组合。</p><h4>A. 自主工具循环</h4>
+<p>程序只固定“模型 → 工具 → 模型”的骨架，模型根据实际反馈选择下一步。实现简单，适合路径未知、需要搜索和试错的任务。</p>
+<p>它的代价是路径不稳定，可能重复探索或提前结束。需要限制 Step、工具次数、时间和费用，并在外部设置验收条件。阶段 0 的单循环采用这一基本控制方式；其他预算与验收按需求再增加。</p>
+<h4>B. 单循环内的可更新计划</h4>
+<p>增加结构化计划或 <code>update_plan</code> 工具，让模型维护目标、步骤和当前进度，实际动作仍在同一个循环中选择。它主要改善长任务状态和用户可见进度，不要求每个步骤单独调用一个 Agent。</p>
+<p>收益是可以明确展示依赖和未完成工作；代价是计划可能过时，模型也可能错误勾选完成。计划状态应与实际工具回执、检查结果分开，不能用“所有 Todo 已完成”代替验收。</p>
+<h4>C. 独立规划器与执行器</h4>
+<p>规划器先生成带依赖的任务，执行器领取当前任务，根据执行反馈调整计划。实现需要计划版本、步骤状态、结果格式和调整计划的条件。</p>
+<p>它适合步骤较稳定、执行者能力不同的任务，也方便分别优化规划与执行。代价是额外调用、交接时遗漏信息，以及计划未及时更新；若每个小改动都重做全计划，成本可能高于自主循环。可以先尝试 B，再根据真实失败判断是否需要独立角色。</p>
+<h4>D. 显式 Graph 或业务状态机</h4>
+<p>程序定义必要节点和转移条件，例如“读资料 → Agent 生成候选 → 检查 → 用户批准 → 发布”。节点内部仍可运行自主 Loop。Graph 决定业务步骤的先后和转移条件，Loop 在节点内部根据模型反馈选择具体操作。</p>
+<p>它适合固定审批、条件路由和保存状态后等待；代价是状态 Schema、节点版本和恢复时的处理规则。Graph 不要求多个 Agent，也不会自动提供沙箱隔离，或保证重复执行不会产生额外修改。控制流与持久执行的关系见 <a href="state.html#module-state">State</a>。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>决策主要在哪里</th>
+<th>适合的问题</th>
+<th>主要代价</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>自主循环</td>
+<td>模型逐步决定</td>
+<td>路径未知的短任务</td>
+<td>难预测动作数量</td>
+</tr>
+<tr>
+<td>循环内计划</td>
+<td>模型决策加结构化进度</td>
+<td>同一目标的较长任务</td>
+<td>计划更新与事实核验</td>
+</tr>
+<tr>
+<td>规划器和执行器</td>
+<td>分层决策与反馈</td>
+<td>可分解、依赖明确的任务</td>
+<td>额外调用和交接</td>
+</tr>
+<tr>
+<td>Graph</td>
+<td>程序控制关键步骤之间的转移</td>
+<td>固定业务流程和审批</td>
+<td>状态、节点与恢复维护</td>
+</tr>
+</tbody></table></div>
+<p>这些方案可以嵌套，不是从“低级”到“高级”的产品排名。<a href="https://www.anthropic.com/engineering/building-effective-agents">Anthropic 控制模式</a>也区分工作流与动态 Agent；选择依据应是任务的可预测部分和实际失败。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-loop-p1-panel-D"><h3>4. 真实实现怎样组织循环</h3><div class="lesson-body"><div class="am-md"><p><strong>OpenAI Agents SDK，官方文档。</strong> <a href="https://developers.openai.com/api/docs/guides/agents/running-agents">运行说明</a>公开的骨架是请求当前 Agent 的模型、执行工具、按 Handoff 切换执行者，直到得到最终回答。流式运行改变接收和处理事件的方式，不改变这个基本循环。这里的“最终”仍是 SDK 的停止条件，应用可以另外检查业务结果。</p>
+<p><strong>LangChain / LangGraph，官方文档。</strong> <a href="https://docs.langchain.com/oss/python/langchain/middleware/overview"><code>create_agent</code> 的中间件</a>运行在其编译后的 Graph 中，可在模型请求前后和工具调用前后加入控制逻辑；整个 Agent 还可以放入外层业务图。它展示了“内部由模型选择动作、外层由程序决定步骤顺序”的组合。</p>
+<p><strong>AgentScope Java，指定版本的官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/plan-mode.md">Plan Mode</a> 将计划阶段与执行阶段显式区分，并保存模式状态。可以借鉴的是让模式影响实际工具授权，而不是只在 Prompt 中要求模型“现在只读”。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-loop-p1-panel-E"><h3>5. 验证循环放在哪里</h3><div class="lesson-body"><div class="am-md"><p><strong>终止后检查</strong>最容易理解：模型给出最终说明，检查器读取产物，程序报告指定检查通过或失败。可以先实现这种终止后检查，再考虑循环内修复。</p>
+<p><strong>检查后自动修复</strong>在失败时生成结构化反馈，再进入执行循环。反馈应包含检查名、目标版本、实际错误和允许修复范围。修复必须继续消耗原任务的总预算，另设次数上限，禁止通过新建无限 Run 绕过限制。</p>
+<p><strong>过程内检查</strong>让某些动作完成后立即检查当前步骤必须满足的条件，例如写入配置后解析 Schema。它可以更早发现问题，但局部通过不等于最终目标通过。三种检查可以组合，检查对象和时刻要记录清楚。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-loop-p1-panel-F"><h3>6. 停止与无进展检测怎样实现</h3><div class="lesson-body"><div class="am-md"><p>建议区分普通工具失败、模型错误、预算耗尽、取消、状态损坏和验收失败。普通工具失败可以作为结果交回模型纠正；状态损坏则应由程序停止，而不是让模型猜测下一条数据库操作。</p>
+<p>重复调用不总是错误：轮询外部任务可能连续读取同一资源。无进展判断应综合工具、规范化参数、结果摘要、外部版本和重复次数，配合等待间隔；只比较参数容易误伤正常等待。对长期等待，更合适的做法是保存等待条件并释放执行者，参见<a href="orchestration.html#module-orchestration">编排</a>。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-loop-p1-panel-G"><h3>7. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 3A：单 Runner 的自主工具循环。</strong>程序限制每个 Run 最多四次模型请求；Runner 直接把全部已完成历史与当前消息放入 ModelRequest，通过 SessionStore 逐步记录请求、响应和工具结果。当前没有 Context Manager 或输入预算裁剪。</p><p>当前以非空最终回答结束；拒答、截断、空回答、模型请求错误和次数耗尽都会停止。completed 只表示循环正常返回，不是成果验收。选择这一方式是为了直接观察模型、工具和反馈之间的关系；具体接法见<a href="../stages/stage-3a.html#stage-3a">阶段 3A</a>。</p><p><strong>未实现：</strong>可更新计划、规划器／执行器、Graph、无进展检测、自动修复和用户取消协议。下一节是后续设计练习，不能作为当前程序已具备这些功能的说明。</p></div></div></section>
+<section class="lesson-section" id="module-loop-p2-panel-A"><h3>8. 后续练习：检查反馈与限制次数的修复</h3><div class="lesson-body"><div class="am-md"><p>在检查失败时，允许真实模型进行一次修复，沿用原任务的步骤数上限、时间限制和权限范围。记录初次结果、检查证据、修复动作和最终结论，保留原来的失败记录。</p>
+<p>验收时分别观察：检查通过、检查失败后修复、预算不足、工具拒绝和用户取消。未稳定触发的分支明确标为未验证。模型说“已经修好”不能覆盖检查失败；未配置检查时也不能自动报告任务通过。</p>
+</div></div>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="interfaces.html#module-interfaces">← Interfaces：让不同用户入口共用执行流程</a><a href="model.html#module-model">Model：适配模型服务与通信协议 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

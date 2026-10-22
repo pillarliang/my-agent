@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tools：执行模型提出的工具调用 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="../stages/stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-tools"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Tools：执行模型提出的工具调用</h2></header><div class="am-md"><p>本章讲工具系统的核心抽象、与 Loop 的接口和内部机制；注册与调用见<a href="../stages/stage-1.html#stage-1">阶段 1</a>，文件新建权限的检查见<a href="../stages/stage-2.html#stage-2">阶段 2</a>。</p></div><section class="lesson-section" id="module-tools-p1-panel-A"><h3>1. Tools 是什么，怎样和 Runner 配合</h3><div class="lesson-body"><div class="am-md"><p><strong>工具是程序实际做事的代码。</strong>例如模型想知道 notes.txt 的内容，只能提出“读取这个文件”的要求；工具才会真正打开文件，把内容或失败原因交回来。</p><p>用户不知道文件名时，模型可以先调用 list_files 查看工作目录，再决定读取哪个文件。工具系统保存每个工具的说明和实现，收到调用后按名称找到对应工具。</p>
+<h4>两个核心抽象</h4><ul><li><strong>工具定义（ToolDefinition）</strong>：把普通执行函数与名称、用途、参数模型、权限声明对应起来。模型只看到工具说明，不会取得 Python 函数。</li><li><strong>工具注册表（ToolRegistry）</strong>：保存这些定义，收到调用后按名字找到工具，检查参数、识别动作、询问 Policy，允许才执行。</li></ul>
+<h4 id="module-tools-loop-interface">工具系统与 Runner 的黑盒交互</h4><p>仍然看读取文件：工具系统先告诉 Runner“有 read_file，可以传入文件路径”；模型提出读取 notes.txt 后，Runner 把这次调用交给工具系统，工具系统实际读取并交回结果。</p></div><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-tools-loop-interface.svg" width="700" height="365" alt="Runner 与 Tool 系统的黑盒交互：读取 specs 返回 ToolSpec 列表；每次提交 ToolCall，返回带原调用 ID 的 ToolResult" loading="lazy"></figure>
+<div class="am-md"><ul><li><strong>工具说明（ToolSpec）</strong>：告诉模型工具能做什么、需要哪些参数。Schema 是程序可读取的参数格式要求。</li><li><strong>调用要求（ToolCall）</strong>：例如调用 read_file，参数是路径 notes.txt。</li><li><strong>执行结果（ToolResult）</strong>：例如实际文件内容，或“文件不存在”。结果保留调用编号，Runner 才知道它对应哪次要求。</li></ul><p>在代码中，Runner 读取 <code>specs</code> 取得说明，通过 <code>execute(call)</code> 提交调用。它不需要逐个了解工具内部的写法。增加写文件工具后，执行前的权限检查见 <a href="policy.html#module-policy">Policy</a>。</p></div></div></section>
+<section class="lesson-section" id="module-tools-interaction"><h3>2. 与相关模块怎样交互</h3><div class="lesson-body"><div class="am-md"><p><strong>初始化时注册能力，运行时提交动作。</strong>应用把工具实现、工作目录与 Policy 交给工具系统；Runner 取得公开工具定义，交给 <a href="context.html#module-context">Context Manager</a> 计入输入，再由 <a href="model.html#module-model">Model</a> 编码给模型。实现函数、连接和权限规则并不因此发送给模型。</p><p>以保存 summary.txt 为例：模型提出调用，Runner 转交原始参数；Tools 解析参数、确认实际操作的文件和新建／覆盖动作，再向 <a href="policy.html#module-policy">Policy</a> 请求决定。获准后才执行文件操作。参数错误、权限拒绝和预期执行失败返回带原调用 ID 的回执；程序错误明确上报，不能伪装成一次普通工具失败。</p><p>执行后，Runner 把真实回执交给 <a href="state.html#module-state">State</a> 保存，再进入下一轮 Context。裁剪只影响下次发送的输入，不改写原始回执；记录写入失败也不能证明文件操作未发生。工具成功说明操作完成，成果是否满足任务仍需另行检查。</p><p><strong>方案分三项选择：</strong>工具粒度（专用／通用／业务）、执行位置（进程内／Worker／远程）与调度方式（串行／并行／后台任务）。当前选择专用文件工具、进程内函数、串行调用；其他组合的成本见下方展开说明。</p></div></div></section>
+
+<details class="reference-extra"><summary>按需阅读：工具粒度、执行环境、并发与恢复</summary><p>下面是按需求扩展时的参考方案，第一轮阅读可直接跳到当前实现。</p><figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-stage-2-1-panel-B-1.svg" width="173" height="567" alt="流程图：ToolCall、按名称和版本查找工具、解析与参数校验、资源与权限检查、执行后端、回执与产物引用、Runner" loading="lazy"></figure><section class="lesson-section" id="module-tools-p1-panel-C"><h3>3. 工具应负责多大范围的操作</h3><div class="lesson-body"><div class="am-md"><h4>A. 专用结构化工具</h4>
+<p>例如 <code>read_file(path, offset, limit)</code> 和 <code>write_file(path, content)</code>，每个工具有少量明确参数。实现可以准确限制路径、大小和作用，模型也更容易理解返回值。</p>
+<p>它适合学习和操作范围明确的业务。代价是需要维护较多工具，组合能力取决于提供的操作；工具数量增大后还要处理 Schema 占用和发现问题。</p>
+<h4>B. 通用能力工具</h4>
+<p>例如 Shell、SQL 或代码执行，一个接口可以表达很多操作。它灵活、工具表短，也方便复用现有 CLI；代价是难以从任意字符串识别真实资源和副作用，超时、进程清理和隔离也更复杂。</p>
+<p>通用工具适合已有执行环境和资源访问限制的场景。不能仅通过检查命令前缀就认为执行环境已足够安全，子进程和间接调用也会产生效果。执行隔离见 <a href="policy.html#module-policy">Policy</a>。</p>
+<h4>C. 完整业务操作工具</h4>
+<p>例如 <code>generate_monthly_report(source_ids, template_version)</code>，内部完成取数、生成和登记。它减少模型需要协调的步骤，并用程序直接检查业务中必须满足的条件。</p>
+<p>代价是复用范围窄、接口版本与业务耦合。内部如果继续调用模型或外部服务，也必须把用量、错误、部分效果和检查范围返回给上层，不能只返回一句“已完成”。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>粒度</th>
+<th>模型承担什么</th>
+<th>便于控制什么</th>
+<th>主要限制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>专用结构化工具</td>
+<td>组合小动作</td>
+<td>参数、路径和结果范围</td>
+<td>工具与 Schema 增长</td>
+</tr>
+<tr>
+<td>通用工具</td>
+<td>生成命令或程序</td>
+<td>灵活表达复杂操作</td>
+<td>难以判断命令会修改什么，也难以隔离执行</td>
+</tr>
+<tr>
+<td>完整业务操作工具</td>
+<td>选择业务动作</td>
+<td>业务要求和事务范围</td>
+<td>灵活性与业务耦合</td>
+</tr>
+</tbody></table></div>
+<p><a href="https://www.anthropic.com/engineering/writing-tools-for-agents">Anthropic 工具设计实践</a>讨论名称、说明和返回内容对决策的影响。它们应作为任务评测变量；“工具越少越好”和“越专用越好”都需要具体任务证据。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p1-panel-D"><h3>4. 执行放在哪里</h3><div class="lesson-body"><div class="am-md"><p><strong>进程内函数</strong>依赖少、延迟低，适合可信、耗时和输出大小可控的小工具；但阻塞、崩溃和主进程共享权限是明显限制。</p>
+<p><strong>独立 Worker 进程</strong>通过结构化协议执行，方便限制输出和强制终止。它需要进程监督和资源清理；单独启动进程并没有自动隔离主机文件和网络。</p>
+<p><strong>远程服务或沙箱后端</strong>通过 RPC 提交动作，返回任务 ID 和回执，适合更强隔离与独立扩容。它引入认证、网络故障、版本兼容和无法确认结果等问题，需要与状态记录和恢复机制一起设计。</p>
+<p>工具 API 与执行后端可以分开。例如同一个 <code>read_file</code> 访问本地工作区、受限容器或远程逻辑文件系统；Runner 继续使用同一 <code>ToolCall</code>，后端负责真实资源映射。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p1-panel-E"><h3>5. 真实实现怎样做</h3><div class="lesson-body"><div class="am-md"><p><strong>Deep Agents，源码核对。</strong> <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/filesystem.py">FilesystemMiddleware</a> 提供模型可调用的文件工具，并通过后端协议访问存储；<code>wrap_tool_call</code> 在工具返回结果时处理超大内容。<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/backends/protocol.py">BackendProtocol</a> 区分文件能力与执行能力。可借鉴的是分别处理工具定义、工具结果和实际执行后端。</p>
+<p><strong>pi，源码核对。</strong> <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">agent-loop.ts</a> 根据执行设置和工具的串行要求选择串行或并行批次。可借鉴的是让执行策略由程序决定，不能因为模型一次返回多个调用就自动并行执行所有会修改外部资源的操作。</p>
+<p><strong>MCP，协议文档。</strong> <a href="https://modelcontextprotocol.io/specification/2025-11-25/architecture">架构规范</a>把外部能力放在服务器、连接放在客户端、授权和聚合放在宿主。MCP 可以统一发现与调用，但业务幂等、核对操作结果和访问范围仍需应用定义，详见<a href="extensions.html#module-extensions">扩展教程</a>。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p1-panel-F"><h3>6. 串行、并行和长任务怎样选择</h3><div class="lesson-body"><div class="am-md"><p>互不依赖的只读操作适合受限并发；同一文件的“读 → 改 → 检查”有依赖，应保持顺序。并行写入不同路径也可能共享索引或全局状态，因此仅比较文件名不足以判断独立性。</p>
+<p>工具元数据可以增加 <code>effect_class</code>、并发分组、超时和是否可查询回执。调度器据此限制并发；这些元数据必须由可信实现提供，不能直接把外部服务器自报的“只读”当成授权证明。</p>
+<p>长任务宜返回 <code>job_id</code>，再通过事件或间隔查询获取后续进度。返回任务 ID 只表示已受理，不能视为产物已完成。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p1-panel-G"><h3>7. 执行结果、幂等与结果未知时的处理</h3><div class="lesson-body"><div class="am-md"><p>考虑外部创建报告的调用：服务已经创建资源，但返回前网络断开。程序只知道结果未知，不能简单按失败重试。正确设计需要先保存逻辑调用 ID，执行时使用稳定幂等键，随后查询回执或真实资源。</p>
+<p>后续接入远程工具时，再增加逻辑调用 ID、每次尝试的 ID、操作成功或结果未知的状态，以及外部系统的记录。当前没有实现这套远程协议。</p>
+</div>
+
+<div class="am-md"><p>同一逻辑调用的重试复用幂等键；用户有意再次执行的新动作应分配新的 ID。只按参数哈希对所有调用去重，会误拦用户有意重复执行的操作。更完整的恢复设计见 <a href="state.html#module-state">State</a>。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-tools-p2-panel-A"><h3>8. 大段结果与精确编辑</h3><div class="lesson-body"><div class="am-md"><p>大结果应带总量、预览范围、截断标记和补读引用。Context 可以选择少发一些内容，但完整回执仍应有位置可查；模型不应把预览当成全量结果。</p>
+<p>下一阶段的编辑工具可要求 <code>expected_sha256</code> 和必须匹配的原文片段，写入前重读并比较版本，发现外部修改就拒绝。它能减少因原始内容过时而覆盖他人新改动的情况，却不自动解决所有跨进程竞态；需要结合原子替换、锁或隔离工作区。</p>
+</div></div>
+</section>
+</details><section class="lesson-section" id="module-tools-p2-panel-B"><h3>9. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 3A：专用结构化文件工具＋进程内普通函数＋串行执行。</strong>默认注册列目录、读取、搜索和写入，注册项提供参数模型和权限声明。这样可以直接检查参数、真实文件和回执，而无需先建设 Worker 或远程协议。</p><p>阶段 3A 增加会话与执行记录，步骤中保存实际请求；工具执行契约延续<a href="../stages/stage-1.html#stage-1">阶段 1</a> 和<a href="../stages/stage-2.html#stage-2">阶段 2</a>。尚无 Shell／SQL 通用执行、MCP、独立 Worker、沙箱、并发工具调度、后台任务、幂等重试或版本化精确编辑；未来方案不代表当前文件工具具备这些能力。</p><h4 id="module-tools-policy-interface">Tools 怎样询问 Policy</h4><p>注册时用数据声明需要 read、write 或 list 权限，不传权限判断函数。比如 read + path_parameter="path" 表示“读取本次调用中 path 指定的文件”。</p><p>注册表先根据权限声明和本次参数生成动作与目标（ActionRequest），再统一调用 Policy.evaluate()。读取与搜索对应 read；写入先识别 create 或 overwrite。</p><p>Policy 返回允许或拒绝及原因（PolicyDecision）。允许才调用注册的执行函数；拒绝直接返回 policy_denied，执行函数不会运行。完整协议与黑盒图见 <a href="policy.html#module-policy-interface">Policy 教程</a>。</p><p>所有注册的工具共用这一处权限检查，执行函数不需要手动调用授权。注册与回执见<a href="../stages/stage-1.html#stage-1">阶段 1</a>；统一权限检查见<a href="../stages/stage-2.html#stage-2">阶段 2</a>。</p></div></div></section>
+<section class="lesson-section" id="module-tools-p2-panel-C"><h3>10. 动手练习</h3><div class="lesson-body"><div class="am-md"><p>count_lines 需要读取文件，因此注册时直接声明 read，并说明路径来自调用参数 path：</p><pre><code>tools.register(
+    count_lines, ReadFileArguments,
+    permission="read", path_parameter="path",
+)</code></pre><p>permission 表示工具需要什么权限；path_parameter 是参数名，不是固定文件名。声明需求不等于获得授权，Policy 仍可拒绝。</p><p>完整例子见 <a href="../../examples/count_lines.py">count_lines.py</a>。运行后先得到 3 行，再看到禁止读取的回执；不请求模型：</p><pre><code>uv run python -m examples.count_lines</code></pre><p><a href="../../tests/test_tools.py">接入测试</a>还验证它能通过 Runner 完成模型请求、工具执行与结果反馈，无需修改注册表。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="context.html#module-context">← Context Manager：组织本次发给模型的内容</a><a href="policy.html#module-policy">Policy：在执行前检查操作权限 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

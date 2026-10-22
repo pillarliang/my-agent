@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 790" role="img" aria-labelledby="title desc">
+<title id="title">阶段 3A 当前实现：函数与类的关系</title>
+<desc id="desc">main 管理 SessionStore，调用 run_task。run_task 创建模型和工具注册表，调用 run_agent 函数。run_agent 通过存储方法记录执行，通过 Model 和 ToolExecutor 协议调用模型和工具。SessionStore 负责访问 SQLite。</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:14px}.box{fill:#f4f7fb;stroke:#9dacc2;stroke-width:1.4}.label{font-weight:650;font-size:17px}.note{fill:#52637b;font-size:13px}.arrow{fill:none;stroke:#40516b;stroke-width:1.5}.setup{stroke-dasharray:6 4}</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
+<rect class="box" x="400" y="20" width="320" height="100" rx="8"/>
+<text class="label" x="420" y="50">main() · 函数</text><text x="420" y="78">__main__.py</text><text x="420" y="102">解析参数，管理存储连接</text>
+<rect class="box" x="400" y="200" width="320" height="110" rx="8"/>
+<text class="label" x="420" y="230">run_task() · 函数</text><text x="420" y="258">application.py</text><text x="420" y="286">核对工作目录，管理模型连接</text>
+<rect class="box" x="400" y="440" width="320" height="140" rx="8"/>
+<text class="label" x="420" y="470">run_agent() · 函数</text><text x="420" y="498">runner.py</text><text x="420" y="526">推进循环，逐步保存执行记录</text><text x="420" y="554">返回 RunResult 数据对象</text>
+<rect class="box" x="20" y="200" width="310" height="340" rx="8"/>
+<text class="label" x="40" y="230">SessionStore · 类</text><text x="40" y="258">state.py</text><path d="M20 274 H330" stroke="#9dacc2"/>
+<text x="40" y="304">create_session() / check_workspace()</text><text x="40" y="334">start_run() / history()</text><text x="40" y="364">start_step()</text><text x="40" y="394">append_message()</text><text x="40" y="424">finish_run()</text><text x="40" y="454">inspect_session()</text><text class="note" x="40" y="500">持有 sqlite3.Connection</text><text class="note" x="40" y="524">入口退出 with 时关闭连接</text>
+<rect class="box" x="790" y="200" width="310" height="130" rx="8"/>
+<text class="label" x="810" y="230">LLMService · 类</text><text x="810" y="258">models/service.py</text><text x="810" y="286">invoke(ModelRequest)</text><text x="810" y="314">→ ModelResponse，失败则抛异常</text>
+<rect class="box" x="790" y="440" width="310" height="140" rx="8"/>
+<text class="label" x="810" y="470">ToolRegistry · 类</text><text x="810" y="498">tools/registry.py</text><text x="810" y="526">specs / execute(ToolCall)</text><text x="810" y="554">参数校验 → Policy → 工具函数</text>
+<rect class="box" x="20" y="650" width="310" height="80" rx="8"/>
+<text class="label" x="40" y="680">SQLite · 数据库文件</text><text x="40" y="710">.learn-agent/sessions.sqlite3</text>
+<g class="arrow" marker-end="url(#arrow)">
+<path class="setup" d="M400 70 H175 V200"/><path class="setup" d="M560 120 V200"/>
+<path class="setup" d="M400 255 H330"/><path class="setup" d="M720 235 H790"/><path class="setup" d="M720 280 H755 V510 H790"/>
+<path d="M560 310 V440"/><path d="M400 480 H330"/><path d="M720 470 H740 V360 H945 V330"/>
+<path d="M720 550 H790"/><path d="M175 540 V650"/>
+</g>
+<text x="185" y="58">打开存储，创建或复用会话</text><text x="575" y="165">传入 store、session_id</text>
+<text class="note" x="800" y="185">应用创建并关闭模型</text><text class="note" x="800" y="422">应用创建并注册工具</text>
+<text class="note" x="340" y="244">核对目录</text>
+<text x="575" y="350">传入 model、tools</text><text x="575" y="377">以及 store、session_id</text><text x="575" y="404">返回 RunResult</text>
+<text class="note" x="798" y="387">Runner 依赖 Model 协议</text><text class="note" x="798" y="608">Runner 依赖 ToolExecutor 协议</text>
+<text x="190" y="598">读写五张表，提交事务</text>
+<text class="note" x="560" y="770" text-anchor="middle">虚线：入口与应用的初始化；实线：运行时调用。函数、类与协议均按当前源码标注。</text>
+</svg>

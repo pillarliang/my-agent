@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>术语与图例 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="../stages/stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="../modules/interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="../modules/loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="../modules/model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="../modules/context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="../modules/tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="../modules/policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="../modules/state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="../modules/quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="../modules/memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="../modules/extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="../modules/orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="reference-glossary"><header class="chapter-header"><span class="kind">当前实现与参考</span><h2>术语与图例</h2></header><section class="lesson-section" id="reference-glossary-p1-panel-C"><h3>1. 核心术语</h3><div class="lesson-body"><div class="am-md"><p>术语描述职责与数据含义，不表示阶段 0 已定义同名 Python 类。阶段 0 使用 SDK 字典消息；阶段 1 的 Runner 使用项目内部统一的消息格式、ModelRequest 与 ModelResponse，工具调用使用 ToolCall、ToolResult 与 ToolExecutor。阶段 2 已实现 Policy；阶段 3A 已实现 Session、Run 与 Step；Context 管理尚未实现。Checkpoint（检查点）与 outcome（任务结果的验收结论）属于后续设计概念。</p></div><div class="am-md"><ul>
+<li><strong>Agent</strong>：使用模型选择动作，并根据真实反馈继续执行的系统。</li>
+<li><strong>Harness</strong>：管理模型输入、工具、状态、权限与生命周期的运行系统。</li>
+<li><strong>Framework</strong>：用于构建系统的一组抽象和组件。</li>
+<li><strong>Agent Loop</strong>：一次 Run 中反复请求模型与执行工具的控制流。</li>
+<li><strong>外层任务循环</strong>：反复启动、唤醒或评估 Run 的机制。</li>
+<li><strong>Graph</strong>：用节点、边与状态表达的控制流。</li>
+<li><strong>Session</strong>：把同一段对话中的连续任务组织在一起的会话；本项目中一个 Session 绑定一个工作目录。</li>
+<li><strong>Run</strong>：处理一个用户请求的过程。</li>
+<li><strong>Step</strong>：一次模型请求，以及根据该响应执行的工具调用与返回结果。</li>
+<li><strong>ToolCall</strong>：模型提出的工具名称、参数和调用 ID。</li>
+<li><strong>Invocation</strong>：一次逻辑工具调用。恢复或重试时用固定 ID 识别它，避免把同一动作当成新的动作重复执行。</li>
+<li><strong>Attempt</strong>：对一次 Invocation 的某次实际执行尝试；重试会产生新的 Attempt。</li>
+<li><strong>ToolResult</strong>：工具实际返回的内容、状态或错误，并带有对应调用的 ID。</li>
+<li><strong>Transcript</strong>：按顺序保存的完整消息与工具交互。</li>
+<li><strong>Context</strong>：本次实际发给模型的指令、消息、材料和工具定义。</li>
+<li><strong>Continuation data</strong>：模型服务要求在后续请求中继续携带的协议数据，例如响应中的推理项或加密内容。适配器负责解释，Runner 负责保存与传递。</li>
+<li><strong>Projection</strong>：从原始记录中生成某种用途的数据，例如供界面查询的状态或本次发给模型的消息；它不改变原始记录。</li>
+<li><strong>Idempotency（幂等）</strong>：对同一逻辑操作重复请求，不会产生额外结果。例如重试创建报告时，仍返回首次创建的报告，而不再创建一份。</li>
+<li><strong>Memory</strong>：经选择保存、供以后复用的知识。</li>
+<li><strong>Artifact</strong>：任务生成或使用的文件、报告、日志等结果。</li>
+<li><strong>Event</strong>：对关键执行步骤的记录，例如开始请求模型、工具返回结果或运行结束。</li>
+<li><strong>Checkpoint（检查点）</strong>：保存某个执行时刻的状态，以便之后从已确认的步骤继续。</li>
+<li><strong>Receipt</strong>：执行端保存的操作结果，可用于核对动作是否成功。</li>
+<li><strong>Policy</strong>：根据调用者、动作、资源和授权作出决策的规则。</li>
+<li><strong>Sandbox</strong>：限制实际执行环境可访问资源的隔离机制。</li>
+<li><strong>Eval</strong>：用一组任务比较系统行为与质量的过程。</li>
+</ul>
+</div></div>
+<div class="lesson-body"><div class="am-md"><p>下面是本项目采用的工作定义，用于讨论职责与实现。它们不代表行业已经形成统一、互斥的分层标准。</p>
+<p><strong>Harness</strong> 是包围模型的运行系统，负责输入组织、动作权限、状态记录、停止条件和错误处理。<strong>Agent Loop</strong> 则是其中的一段控制流，重复执行“构建输入 → 调用模型 → 执行工具 → 接收结果”。</p>
+<p><strong>外层任务循环</strong>负责重复启动或唤醒 Agent，例如在 CI 失败后启动诊断。它与一个 Run 内的模型循环处在不同范围，设计调度器时需要说明触发、等待和停止分别由谁负责。</p>
+<p><strong>Graph</strong> 用节点、边和状态转移表达控制流。节点既可以是普通函数或人工审批，也可以运行完整 Agent Loop；一个 Graph 可以只包含一个 Agent，也可以组织多个 Agent，因此 Graph 和 Loop 可以组合使用。</p>
+<p><strong>Framework</strong> 提供构建系统所需的组件和抽象，同一个产品也可以同时提供 Harness。理解产品时，可以分别问它提供了哪些开发组件、哪些运行约束，而不必强行把它归入单一类别。</p>
+<p><a href="https://www.anthropic.com/engineering/building-effective-agents">Anthropic 的基础模式文章</a>区分预定义工作流与由模型动态选择动作的 Agent。本文沿用这一思路，再单独讨论运行时需要补充的权限、状态和预算约束。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="reference-glossary-p1-panel-D"><h3>2. 动作被拒绝与循环结束</h3><div class="lesson-body"><div class="am-md">
+<p><strong>动作被拒绝：</strong>Policy 返回不允许，工具不执行这次操作，Runner 收到 policy_denied 回执后交给模型。</p>
+<p><strong>循环结束：</strong>Runner 返回 RunResult，包含模型回答与本次工具记录。模型的回答不能代替工具实际执行的回执。</p>
+</div></div></section>
+<section class="lesson-section" id="reference-glossary-p1-panel-E"><h3>3. 图的阅读方法</h3><div class="lesson-body"><div class="am-md"><p>本教程直接在 HTML 正文中呈现图示、解释、示例与练习。复用图示在 assets/diagrams/ 中各自维护一个 SVG，相关章节引用同一文件；专属于章节的简图也可以直接写在正文中。</p>
+<p>箭头含义以每张图的图例和标签为准：流程图的实线表示标注的调用或数据传递，虚线可能表示可选扩展或约束；时序图的虚线通常表示返回。依赖图中的箭头表示依赖方向，不能直接当作运行时调用顺序。每张图必须说明阶段 0 实现、通用机制或未来方案，不能从目标蓝图推断仓库已有对应实现。</p>
+</div></div>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="validation.html#reference-validation">← 本地检查与验证范围</a><a href="../tutorial.html#system-map">模块职责图 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

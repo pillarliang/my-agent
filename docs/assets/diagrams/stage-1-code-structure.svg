@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 830" role="img" aria-labelledby="title"><title id="title">阶段 1 当前源码：Runner、模型服务、适配器与工具注册表</title>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:14px}.box{fill:#f4f7fb;stroke:#9dacc2;stroke-width:1.4}.planned{fill:#fffaf0;stroke:#b28a43;stroke-dasharray:6 4}.head{font-size:16px;font-weight:650}.note{fill:#52637b;font-size:13px}.edge{fill:none;stroke:#40516b;stroke-width:1.5}.future{stroke:#9a722c;stroke-dasharray:6 4}</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
+<rect class="box" x="350" y="20" width="300" height="85" rx="8"/>
+<text x="366" y="49" class="head">main() · 函数</text>
+<text x="366" y="77" class="">任务入口；会话部分见阶段 3A</text>
+<rect class="box" x="350" y="170" width="300" height="85" rx="8"/>
+<text x="366" y="199" class="head">run_task() · 函数</text>
+<text x="366" y="227" class="">创建工具和模型，调用循环</text>
+<rect class="box" x="350" y="340" width="300" height="110" rx="8"/>
+<text x="366" y="369" class="head">run_agent() · 函数</text>
+<text x="366" y="397" class="">model.invoke / tools.execute</text>
+<text x="366" y="423" class="">返回 RunResult 数据对象</text>
+<rect class="box" x="20" y="340" width="280" height="110" rx="8"/>
+<text x="36" y="369" class="head">LLMService · 类</text>
+<text x="36" y="397" class="">invoke(ModelRequest)</text>
+<text x="36" y="423" class="">实现 Model 协议，管理连接</text>
+<rect class="box" x="700" y="340" width="280" height="110" rx="8"/>
+<text x="716" y="369" class="head">ToolRegistry · 类</text>
+<text x="716" y="397" class="">specs / execute(ToolCall)</text>
+<text x="716" y="423" class="">实现 ToolExecutor 协议</text>
+<rect class="box" x="20" y="520" width="280" height="110" rx="8"/>
+<text x="36" y="549" class="head">OpenAIChatModel · 类</text>
+<text x="36" y="577" class="">编码消息 → SDK 请求 → 解码</text>
+<text x="36" y="603" class="">返回 ModelResponse 或抛异常</text>
+<rect class="box" x="700" y="520" width="280" height="110" rx="8"/>
+<text x="716" y="549" class="head">ToolDefinition · 数据类</text>
+<text x="716" y="577" class="">保存函数、参数类、权限声明</text>
+<text x="716" y="603" class="">注册表按工具名查找注册项</text>
+<rect class="box" x="20" y="700" width="280" height="85" rx="8"/>
+<text x="36" y="729" class="head">OpenAI · SDK 类</text>
+<text x="36" y="757" class="">client.chat.completions.create()</text>
+<rect class="box" x="700" y="700" width="280" height="85" rx="8"/>
+<text x="716" y="729" class="head">文件工具 · 普通函数</text>
+<text x="716" y="757" class="">read_file / write_file 等</text>
+<rect class="box" x="350" y="540" width="300" height="135" rx="8"/>
+<text x="366" y="569" class="head">接口交换的数据对象</text>
+<text x="366" y="597" class="">ModelRequest / ModelResponse</text>
+<text x="366" y="623" class="">ToolCall / ToolResult</text>
+<text x="366" y="649" class="">工具声明 ToolSpec 是字典结构</text>
+<path class="edge" d="M500 105 V170" marker-end="url(#arrow)"/>
+<path class="edge" d="M500 255 V340" marker-end="url(#arrow)"/>
+<path class="edge" d="M350 210 H160 V340" marker-end="url(#arrow)"/>
+<path class="edge" d="M650 210 H840 V340" marker-end="url(#arrow)"/>
+<path class="edge" d="M350 395 H300" marker-end="url(#arrow)"/>
+<path class="edge" d="M650 395 H700" marker-end="url(#arrow)"/>
+<path class="edge" d="M160 450 V520" marker-end="url(#arrow)"/>
+<path class="edge" d="M160 630 V700" marker-end="url(#arrow)"/>
+<path class="edge" d="M840 450 V520" marker-end="url(#arrow)"/>
+<path class="edge" d="M840 630 V700" marker-end="url(#arrow)"/>
+<text x="350" y="740" class="note">注册表统一处理参数、权限与回执</text>
+<text x="350" y="766" class="note">异常与真实结果再交回 Runner</text>
+<text x="500" y="812" class="note" text-anchor="middle">箭头：调用、创建或持有关系；不是继承。当前入口的 SessionStore 与五张记录表详见阶段 3A。</text>
+</svg>

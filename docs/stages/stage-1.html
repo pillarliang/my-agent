@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>阶段 1：拆分单文件，定义模块接口 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="../modules/interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="../modules/loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="../modules/model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="../modules/context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="../modules/tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="../modules/policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="../modules/state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="../modules/quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="../modules/memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="../modules/extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="../modules/orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="stage-1">
+<header class="chapter-header"><span class="kind">已实现 · Tools 与 Model 第一版</span><h2>阶段 1：拆分单文件，定义模块接口</h2></header>
+<div class="am-md"><p>把单文件循环拆成三个职责：<strong>Tools 执行工具，Model 请求模型，Runner 控制循环。</strong>本阶段已将 Tools 和 Model 拆成独立模块，下面按当前代码说明它们如何接入 Runner。</p></div>
+<section class="lesson-section" id="stage-1-p1-panel-A"><h3>1. Tools：定义工具，统一注册与执行</h3><div class="lesson-body"><div class="am-md">
+<p>原理与接口见 <a href="../modules/tools.html#module-tools">Tools 通用教程</a>。<code>ToolDefinition</code> 保存工具名、用途、参数模型、执行函数和权限声明；<code>ToolRegistry</code> 按名称找到注册项，统一校验、询问 Policy、执行并返回回执。当前注册 <code>list_files</code>、<code>read_file</code>、<code>search_text</code> 和 <code>write_file</code>。</p>
+<ol id="stage-1-tools-reading">
+<li><a href="../../learn_agent/tools/contracts.py">工具接口定义</a>：先读 ToolDefinition、ToolSpec、ToolCall、ToolResult 与 ToolExecutor。</li>
+<li id="stage-1-p1-panel-B"><a href="../../learn_agent/tools/registry.py">注册表</a>：看注册、声明生成、参数校验与异常转换；其中统一权限检查见阶段 2。</li>
+<li><a href="../../learn_agent/tools/filesystem.py">文件工具</a>：各工具使用相同定义方式，共用资源访问检查。</li>
+</ol>
+<p id="stage-1-tools-errors">执行在当前进程内。非法参数和预期执行失败返回回执，注册错误和程序错误向外抛出。</p>
+</div>
+<details><summary>展开当前工具执行流程</summary><figure class="am-diagram am-flow" id="stage-1-p1-panel-C"><img class="lesson-svg" src="../assets/diagrams/diagram-stage-1-tools.svg" width="700" height="510" alt="当前工具执行流程：查找、校验、识别动作、统一授权、获准执行、返回回执" loading="lazy"></figure></details>
+<div class="am-md"><p id="stage-1-p1-panel-D">增加工具：编写普通函数，指定参数模型、所需权限和路径参数名，再调用 register()。不修改 registry.py 或 Runner。</p></div>
+</div></section>
+<section class="lesson-section" id="stage-1-model"><h3>2. Model：统一请求与回复，隔离 SDK 协议</h3><div class="lesson-body"><div class="am-md">
+<p>原理与接口见 <a href="../modules/model.html#module-model">Model 通用教程</a>。当前由 <code>LLMService.invoke()</code> 接收 <code>ModelRequest</code>，返回 <code>ModelResponse</code> 或抛出 <code>ModelError</code>。服务内部管理 API Key、Base URL 和 SDK client，并使用 <code>OpenAIChatModel</code> 适配现有 DashScope 调用。</p>
+<ol>
+<li><a href="../../learn_agent/models/contracts.py">模型接口定义</a>：先读 Model 接口、请求、回复与消息类型。</li>
+<li><a href="../../learn_agent/models/service.py">模型服务</a>：LLMService 在构造时读取配置并创建 client，invoke() 发起请求，close() 释放连接。</li>
+<li><a href="../../learn_agent/models/openai_chat.py">协议适配器</a>：看消息编码、SDK 请求、响应解码与错误转换。</li>
+<li>跟着一次工具调用，观察回复中的文字、调用 ID、停止原因和 continuation 数据如何被保存，再用于下一轮请求。</li>
+</ol>
+<p>第一版支持一次性返回文本和函数工具调用，记录供应商报告的用量。每次请求只有一次网络尝试；截断、拒绝、协议错误与连接错误都明确停止。路由、熔断与降级后续迭代。</p><p>这里的 <a href="../reference/glossary.html#reference-glossary">continuation data</a> 指模型服务要求在后续请求中继续携带的协议数据，例如响应中的推理项；需要按该服务的协议保存和传递。</p>
+</div></div></section>
+<section class="lesson-section" id="stage-1-tools-loop-interface"><h3>3. Runner：通过接口连接两个系统</h3><div class="lesson-body"><div class="am-md">
+<p>从 <a href="../../learn_agent/__main__.py">main()</a> 顺着读：接收任务 → 设置工作区和权限 → 调用 run_task() → 展示结果。工作目录 workspace 与权限 policy 作为两个参数传入。</p>
+<p><a href="../../learn_agent/application.py">run_task()</a> 用提前写好的 DEFAULT_TOOLS、工作目录 workspace 和权限 policy 创建 ToolRegistry，再创建 LLMService、调用 Runner，运行后关闭模型连接。它只返回 Runner 的运行结果。Key、Base URL、鉴权和 SDK client 都由模型服务内部管理。进入 <a href="../../learn_agent/runner.py">run_agent()</a> 后，Runner 只做：</p>
+<ol>
+<li>读取工具的 <code>specs</code>，连同消息历史提交给 <code>model.invoke()</code>。</li>
+<li>保存整份 ModelResponse，检查是否正常完成。</li>
+<li>有工具调用时提交给 <code>tools.execute()</code>，将 ToolResult 追加到历史，再请求模型。</li>
+<li>没有工具调用时返回 RunResult，包含模型说明与本次回执；请求次数耗尽则停止。</li>
+</ol>
+<p>模块间的交互分别见 <a href="../modules/tools.html#module-tools-loop-interface">Runner ↔ Tools</a> 与 <a href="../modules/model.html#module-model-loop-interface">Runner ↔ Model</a>。SDK 消息编码由 Model 适配器负责，Runner 不解释 continuation 数据。</p>
+</div><div class="am-md">
+<h4 id="stage-1-code-structure">3.1 对照源码看函数、类与数据对象</h4>
+<p><code>main()</code>、<code>run_task()</code> 和 <code>run_agent()</code> 是函数。<code>LLMService</code> 持有 SDK 客户端和 <code>OpenAIChatModel</code> 适配器；<code>ToolRegistry</code> 持有按名称组织的 <code>ToolDefinition</code>，每个注册项保存普通函数及参数类。<code>Model</code> 与 <code>ToolExecutor</code> 是 Runner 使用的协议，表示需要哪些方法，不要求具体实现继承某个共同父类。</p>
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/stage-1-code-structure.svg" width="1000" height="830" alt="当前函数和类关系：main 调用 run_task 和 run_agent，模型服务持有适配器，工具注册表持有函数注册项" loading="lazy"><figcaption>当前源码中模型与工具的连接方式。这里只展开本阶段关心的部分，会话连接在阶段 3A 单独说明。</figcaption></figure>
+<h4 id="stage-1-call-flow">3.2 沿一次 read_file 调用追踪</h4>
+<ol><li><a href="../../learn_agent/application.py">run_task()</a> 创建 <code>ToolRegistry(DEFAULT_TOOLS, workspace, policy)</code>。注册表保存注册项，<code>specs</code> 根据参数类生成模型可见的工具声明；此时不读取资料。</li>
+<li>应用创建 <a href="../../learn_agent/models/service.py">LLMService</a>，服务内部创建 SDK 客户端和适配器，再把服务和注册表交给 <code>run_agent()</code>。</li>
+<li>Runner 生成 <code>ModelRequest</code>。<code>LLMService.invoke()</code> 转给 <a href="../../learn_agent/models/openai_chat.py">OpenAIChatModel.invoke()</a>；适配器通过 <code>_encode_message()</code> 编码消息，调用 SDK，再通过 <code>_decode()</code> 得到 <code>ModelResponse</code>。</li>
+<li>Runner 检查响应，逐个把 <code>ToolCall</code> 交给 <code>ToolRegistry.execute()</code>。注册表解析和校验参数，生成动作、询问 Policy，获准后才调用注册项中的 <code>read_file()</code>，并将返回值包装为 <code>ToolResult</code>。</li>
+<li>完整模型回复与工具回执进入下一轮消息。最终无工具调用且有非空回答时返回 <code>RunResult</code>；应用在 <code>finally</code> 中关闭模型连接。模型错误、注册错误和未声明的程序异常向外抛出。</li></ol>
+<h4 id="stage-1-data">3.3 当前入口已有的记录功能怎样理解</h4>
+<p>Tools 与 Model 没有各自的数据库表，工具注册项、参数对象和连接都在内存中。<strong>本页链接的是当前源码：</strong>当前 CLI 已接入 3A，会由 SessionStore 保存请求、消息和结果；不能把运行当前入口理解为回到一个不保存记录的旧版本。具体保存顺序、五张表及 JSON 内容见 <a href="stage-3a.html#stage-3a-call-flow">3A 调用流程</a>与 <a href="stage-3a.html#stage-3a-database">表结构</a>。</p>
+</div></div></section>
+<section class="lesson-section" id="stage-1-run"><h3 id="stage-1-tools-run">4. 运行与验收</h3><div class="lesson-body">
+<div class="am-code"><div class="am-code-head">项目根目录执行 · 沿用 .env 配置，会请求真实模型</div><pre><code>uv sync --locked
+uv run python -m learn_agent "在资料中找到验收标记，告诉我来源和行号"
+</code></pre></div>
+<div class="am-md"><h4 id="stage-1-p1-panel-E">验收</h4>
+<ul>
+<li id="stage-1-tools-extension">新增普通函数只需注册，registry.py 和 Runner 都无需修改；替换模型适配器无需修改工具实现。</li>
+<li>工具结果通过调用 ID 关联，完整回复和后续请求所需的协议数据一起进入下一轮。</li>
+<li>预期工具失败可反馈；模型截断、拒绝或请求失败不会触发工具。</li>
+</ul>
+<p>本地执行 <code>uv run pytest</code>，检查见 <a href="../../tests/test_tools.py">test_tools.py</a> 与 <a href="../../tests/test_models.py">test_models.py</a>。固定协议响应验证工具与消息如何连接；真实模型会选择哪些工具，需要运行后观察。</p>
+</div></div></section>
+<nav class="chapter-nav" aria-label="章节导航"><a href="stage-0.html#stage-0">← 阶段 0：跑通独立的最小 Agent Loop</a><a href="stage-2.html#stage-2">阶段 2：用 Policy 控制动作权限 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

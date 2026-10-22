@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 690" role="img" aria-labelledby="title"><title id="title">阶段 2 当前源码：注册表统一识别动作、询问 Policy 并执行工具</title>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:14px}.box{fill:#f4f7fb;stroke:#9dacc2;stroke-width:1.4}.planned{fill:#fffaf0;stroke:#b28a43;stroke-dasharray:6 4}.head{font-size:16px;font-weight:650}.note{fill:#52637b;font-size:13px}.edge{fill:none;stroke:#40516b;stroke-width:1.5}.future{stroke:#9a722c;stroke-dasharray:6 4}</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
+<rect class="box" x="350" y="20" width="300" height="110" rx="8"/>
+<text x="366" y="49" class="head">入口 main() · 函数</text>
+<text x="366" y="77" class="">创建 Policy(allow_create=True)</text>
+<text x="366" y="103" class="">通用入口经 run_task 传入注册表</text>
+<rect class="box" x="350" y="220" width="300" height="110" rx="8"/>
+<text x="366" y="249" class="head">ToolRegistry · 类</text>
+<text x="366" y="277" class="">保存 workspace 与 policy</text>
+<text x="366" y="303" class="">execute(ToolCall) 统一控制执行</text>
+<rect class="box" x="20" y="220" width="280" height="110" rx="8"/>
+<text x="36" y="249" class="head">ToolDefinition · 数据类</text>
+<text x="36" y="277" class="">permission=&quot;write&quot;</text>
+<text x="36" y="303" class="">path_parameter=&quot;path&quot;</text>
+<rect class="box" x="700" y="220" width="280" height="110" rx="8"/>
+<text x="716" y="249" class="head">参数模型 · 类</text>
+<text x="716" y="277" class="">WriteFileArguments</text>
+<text x="716" y="303" class="">model_validate() 校验参数</text>
+<rect class="box" x="20" y="440" width="280" height="140" rx="8"/>
+<text x="36" y="469" class="head">prepare_action() · 函数</text>
+<text x="36" y="497" class="">读取参数，检查目标是否存在</text>
+<text x="36" y="523" class="">返回 ActionRequest 数据对象</text>
+<text x="36" y="549" class="">未写文件，也未作授权决定</text>
+<rect class="box" x="350" y="440" width="300" height="140" rx="8"/>
+<text x="366" y="469" class="head">Policy · 类</text>
+<text x="366" y="497" class="">evaluate(ActionRequest)</text>
+<text x="366" y="523" class="">返回 PolicyDecision 数据对象</text>
+<text x="366" y="549" class="">规则判断，不读写文件正文</text>
+<rect class="box" x="700" y="440" width="280" height="140" rx="8"/>
+<text x="716" y="469" class="head">write_file() · 函数</text>
+<text x="716" y="497" class="">仅在允许后调用</text>
+<text x="716" y="523" class="">收到参数、workspace、action</text>
+<text x="716" y="549" class="">返回数据字典或抛出异常</text>
+<path class="edge" d="M500 130 V220" marker-end="url(#arrow)"/>
+<path class="edge" d="M350 275 H300" marker-end="url(#arrow)"/>
+<path class="edge" d="M650 275 H700" marker-end="url(#arrow)"/>
+<path class="edge" d="M390 330 V380 H160 V440" marker-end="url(#arrow)"/>
+<path class="edge" d="M500 330 V440" marker-end="url(#arrow)"/>
+<path class="edge" d="M610 330 V380 H840 V440" marker-end="url(#arrow)"/>
+<text x="175" y="414" class="note">① 生成本次动作</text>
+<text x="515" y="400" class="note">② 判断权限</text>
+<text x="855" y="414" class="note">③ 获准才执行</text>
+<text x="500" y="625" class="" text-anchor="middle">注册表生成 ToolResult：保留 call_id；拒绝返回 policy_denied，工具函数不会运行。</text>
+<text x="500" y="672" class="note" text-anchor="middle">PolicyEvaluator 是协议，Policy 是当前实现；初始化与运行时步骤见正文。本阶段不新增数据库表。</text>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 800" role="img" aria-labelledby="title desc">
+<title id="title">阶段 3A 当前实现：SQLite 五张表与外键关系</title>
+<desc id="desc">sessions 一对多关联 runs。runs 的 id 分别被 steps、messages 和 events 的 run_id 外键引用。steps 使用 run_id 与 number 作为联合主键。messages.step 和 events.step 没有指向 steps 的外键。</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:14px}.box{fill:#f4f7fb;stroke:#9dacc2;stroke-width:1.4}.label{font-size:18px;font-weight:650}.note{fill:#52637b;font-size:13px}.arrow{fill:none;stroke:#40516b;stroke-width:1.5}</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
+<rect class="box" x="380" y="15" width="360" height="145" rx="8"/>
+<text class="label" x="400" y="46">sessions · 会话</text><path d="M380 60 H740" stroke="#9dacc2"/>
+<text x="400" y="86">id TEXT · PK</text><text x="400" y="114">workspace TEXT</text><text x="400" y="142">created_at TEXT</text>
+<rect class="box" x="335" y="235" width="450" height="220" rx="8"/>
+<text class="label" x="355" y="266">runs · 用户任务</text><path d="M335 280 H785" stroke="#9dacc2"/>
+<text x="355" y="306">sequence INTEGER · PK，自增</text><text x="355" y="334">id TEXT · UNIQUE；session_id TEXT · FK</text><text x="355" y="362">status TEXT · running / completed / failed</text><text x="355" y="390">result TEXT；error TEXT · JSON，可为空</text><text x="355" y="418">created_at TEXT；finished_at TEXT</text><text class="note" x="355" y="443">每个 Session 同时最多有一个 running 的 Run</text>
+<rect class="box" x="20" y="545" width="340" height="190" rx="8"/>
+<text class="label" x="40" y="576">steps · 模型请求</text><path d="M20 590 H360" stroke="#9dacc2"/>
+<text x="40" y="616">run_id TEXT · FK</text><text x="40" y="643">number INTEGER</text><text x="40" y="670">request TEXT · JSON</text><text x="40" y="697">created_at TEXT</text><text class="note" x="40" y="722">联合 PK：(run_id, number)</text>
+<rect class="box" x="390" y="545" width="340" height="190" rx="8"/>
+<text class="label" x="410" y="576">messages · 消息</text><path d="M390 590 H730" stroke="#9dacc2"/>
+<text x="410" y="616">sequence INTEGER · PK，自增</text><text x="410" y="643">run_id TEXT · FK</text><text x="410" y="670">step INTEGER</text><text x="410" y="697">message TEXT · JSON</text>
+<rect class="box" x="760" y="545" width="340" height="190" rx="8"/>
+<text class="label" x="780" y="576">events · 进度事件</text><path d="M760 590 H1100" stroke="#9dacc2"/>
+<text x="780" y="616">sequence INTEGER · PK，自增</text><text x="780" y="643">run_id TEXT · FK；step INTEGER</text><text x="780" y="670">kind TEXT</text><text x="780" y="697">data TEXT · JSON</text><text x="780" y="724">created_at TEXT</text>
+<g class="arrow" marker-end="url(#arrow)"><path d="M560 160 V235"/><path d="M410 455 V500 H190 V545"/><path d="M560 455 V545"/><path d="M710 455 V500 H930 V545"/></g>
+<text x="575" y="192">1 → 0..*，runs.session_id 引用 sessions.id</text>
+<text class="note" x="190" y="528" text-anchor="middle">1 → 0..*</text><text class="note" x="575" y="520">1 → 0..*</text><text class="note" x="930" y="528" text-anchor="middle">1 → 0..*</text>
+<text class="note" x="560" y="763" text-anchor="middle">PK：主键；FK：外键；UNIQUE：值不可重复。下方三表的 run_id 都引用 runs.id。</text>
+<text class="note" x="560" y="788" text-anchor="middle">step 只是消息与事件中的步号，没有外键指向 steps；step=0 用于运行级记录。</text>
+</svg>

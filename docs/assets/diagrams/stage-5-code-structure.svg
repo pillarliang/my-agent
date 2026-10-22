@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 850" role="img" aria-labelledby="title"><title id="title">阶段 5 当前限制与后续恢复设计：先查询事实，再决定是否重新执行</title>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:14px}.box{fill:#f4f7fb;stroke:#9dacc2;stroke-width:1.4}.planned{fill:#fffaf0;stroke:#b28a43;stroke-dasharray:6 4}.head{font-size:16px;font-weight:650}.note{fill:#52637b;font-size:13px}.edge{fill:none;stroke:#40516b;stroke-width:1.5}.future{stroke:#9a722c;stroke-dasharray:6 4}</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
+<rect class="box" x="20" y="20" width="960" height="110" rx="8"/>
+<text x="36" y="49" class="head">当前代码 · start_run() 拒绝在有 running 任务的会话中启动新任务</text>
+<text x="36" y="77" class="">inspect_session() 可以查询未结束运行；当前没有 resume()、checkpoint 或自动恢复执行接口。</text>
+<text x="36" y="103" class="">下面的恢复流程仍是设计，不会由现有入口自动触发。</text>
+<rect class="box planned" x="350" y="210" width="300" height="110" rx="8"/>
+<text x="366" y="239" class="head">恢复协调 · 拟新增职责</text>
+<text x="366" y="267" class="">读取检查点与动作记录</text>
+<text x="366" y="293" class="">重建暂停状态，核对执行结果</text>
+<rect class="box" x="20" y="430" width="280" height="140" rx="8"/>
+<text x="36" y="459" class="head">SessionStore · 已有类</text>
+<text x="36" y="487" class="">现有：请求、消息、进度事件</text>
+<text x="36" y="513" class="">后续：恢复记录的结构待设计</text>
+<text x="36" y="539" class="">不能仅凭 running 判断动作结果</text>
+<rect class="box planned" x="350" y="430" width="300" height="140" rx="8"/>
+<text x="366" y="459" class="head">结果核对 · 拟新增职责</text>
+<text x="366" y="487" class="">查询文件或外部操作状态</text>
+<text x="366" y="513" class="">已完成 / 未派发 / 结果未知</text>
+<text x="366" y="539" class="">未知结果不能直接重试</text>
+<rect class="box" x="700" y="430" width="280" height="140" rx="8"/>
+<text x="716" y="459" class="head">Policy · 已有类</text>
+<text x="716" y="487" class="">再次判断当前动作的权限</text>
+<text x="716" y="513" class="">历史允许不代表现在仍获准</text>
+<text x="716" y="539" class="">获准只表示可以尝试执行</text>
+<rect class="box" x="350" y="700" width="300" height="85" rx="8"/>
+<text x="366" y="729" class="head">ToolRegistry · 已有类</text>
+<text x="366" y="757" class="">执行经核对且当前获准的动作</text>
+<path class="edge future" d="M400 320 V370 H160 V430" marker-end="url(#arrow)"/>
+<path class="edge future" d="M500 320 V430" marker-end="url(#arrow)"/>
+<path class="edge future" d="M650 500 H700" marker-end="url(#arrow)"/>
+<path class="edge future" d="M840 570 V635 H500 V700" marker-end="url(#arrow)"/>
+<text x="500" y="648" class="note" text-anchor="middle">恢复协调按核对结果决定下一步，不跳过授权</text>
+<text x="500" y="832" class="note" text-anchor="middle">实框：已有类与现有限制；虚框、虚线：未来恢复职责与调用。检查点表和动作表尚未设计或创建。</text>
+</svg>

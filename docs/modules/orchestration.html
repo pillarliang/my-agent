@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orchestration：安排多个 Agent 分工与协作 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="../stages/stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-orchestration"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Orchestration：安排多个 Agent 分工与协作</h2></header><section class="lesson-section" id="module-orchestration-p1-panel-A"><h3>1. 实现原理：为主任务、子任务和结果建立对应关系</h3><div class="lesson-body"><div class="am-md"><p>报告任务可以由主 Agent 负责整体目标，将资料检索和证据检查交给不同执行者。调度层需要知道谁拥有任务、谁在运行、结果交给谁，以及最终由谁对用户负责。</p>
+<p><strong>多 Agent：任务、子任务运行与汇合</strong></p>
+<p>设计方案 · 当前仍是单 Agent 基线。</p>
+</div>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-stage-6-1-panel-C-1.svg" width="376" height="405" alt="流程图：用户目标与总预算、主 Run、子 Run 读取资料、子 Run 核对来源、合并结果、证据与未解决项、检查实际产物并形成结论、授权与资源范围" loading="lazy"></figure>
+<div class="am-md"><p>角色名可以帮助模型理解分工；程序仍需分别配置工具、运行 ID、预算、状态与权限。Context 隔离、文件修改隔离、操作系统隔离是三个不同问题。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-interaction"><h3>2. 与相关模块怎样交互</h3><div class="lesson-body"><div class="am-md"><p><strong>编排层分配任务，各 Runner 执行任务。</strong>以“检索资料＋核对来源”为例，编排层为子任务指定输入快照、完成条件、预算与允许能力；子 Runner 使用各自的 <a href="context.html#module-context">Context</a>，经 Model、Tools 和 Policy 完成实际调用。角色名称不会自动创建独立上下文或隔离工作区。</p><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-orchestration-collaboration.svg" width="1000" height="558" alt="未来委派协作示例：编排层负责分配与汇合，子 Runner 使用自身模块执行；当前尚无子任务执行协议。" loading="lazy"><figcaption>未来委派协作示例：编排层负责分配与汇合，子 Runner 使用自身模块执行；当前尚无子任务执行协议。</figcaption></figure><p><a href="state.html#module-state">State</a> 保存父子任务的对应关系、消息和结果；编排层核对证据后汇合，必要时将产物交给 <a href="quality.html#module-quality">Quality</a> 检查。子任务超时、部分完成和已确认取消应分别报告；父任务超时不能证明子工具已经停止。只有明确协议才能决定重试、继续等待或报告未解决项。</p><p>初始化时选择执行者、工具与权限范围，运行时才传递任务和消息；子任务授权不得超出父任务允许范围。任务隔离、文件隔离与系统级隔离需要分别落实，不能靠多写几个角色提示词实现。</p></div></div></section>
+
+<section class="lesson-section" id="module-orchestration-p1-panel-C"><h3>3. 有哪些编排方案</h3><div class="lesson-body"><div class="am-md"><p>这些方案比较的层面不同：A、B 侧重任务与交互责任，C 侧重控制流，D 侧重持续通信，E 侧重领取与调度。可按需要组合，不能把它们理解为必经升级路线。<strong>当前均未实现，阶段 3 仍是单 Runner。</strong></p><h4>A. Agent 作为工具</h4>
+<p>主 Agent 提交一个边界明确的子任务，子 Agent 使用独立 Context 与受限工具，返回结构化结果，主 Agent 继续负责整合和回答。</p>
+<p>实现时定义输入快照、任务要求、返回证据和错误；同步版本可以先限制深度为一层。它适合检索、分析和独立评审，代价是额外调用与交接遗漏。子 Agent 声称完成仍需核对结果。</p>
+<h4>B. Handoff 转移交互责任</h4>
+<p>当前 Agent 把这段交互交给另一专家，后者继续与用户工作，可能不返回原 Agent。它适合专业路由和明确的责任切换。</p>
+<p>实现需要决定转交哪些历史、当前任务和授权，下一次用户输入也要路由到正确执行者。它与“主 Agent 调用助手再继续”不同，不能只复用同一个子任务调用接口而不明确由谁负责当前交互。</p>
+<h4>C. 显式 Graph 与并行汇合</h4>
+<p>程序定义分类、分支、节点与合并策略；节点可以是普通函数，也可以是 Agent。独立任务可以并行执行，汇合时核对版本并处理失败。</p>
+<p>它适合业务阶段稳定、依赖清晰的任务。代价是状态合并、节点版本和恢复；多数投票不能自动证明答案正确，评审角色也可能共享相同盲点。</p>
+<h4>D. 持续子会话与邮箱</h4>
+<p>子 Agent 保留自己的 ID 和状态，后续可接收任务、澄清和更正。消息应有发送者、接收者、序号、任务归属与是否需要唤醒模型的类型。</p>
+<p>它适合持续沟通，代价是乱序、重复、过期消息、取消和回收。普通进度通知不应必然触发新的模型请求，否则容易产生空转和互相回复的循环。</p>
+<h4>E. 共享任务板与队列</h4>
+<p>执行者领取满足依赖的任务，持有租约，提交结果后更新状态。需要记录任务版本，确保一个任务不会被同时领取，并处理超时和重新分配。</p>
+<p>它适合大量可独立处理的任务和后台扩容，代价是调度与资源冲突。它主要解决任务分配，不自动定义内容质量或 Agent 之间如何理解对方的结果。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>谁负责最终结果</th>
+<th>需要保存的关键状态</th>
+<th>主要代价</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Agent 作为工具</td>
+<td>主 Agent</td>
+<td>子任务、输入快照和结果</td>
+<td>交接与整合</td>
+</tr>
+<tr>
+<td>Handoff</td>
+<td>接手的执行者</td>
+<td>交互归属和转交信息</td>
+<td>路由与权限迁移</td>
+</tr>
+<tr>
+<td>Graph</td>
+<td>应用工作流</td>
+<td>节点、边和合并状态</td>
+<td>状态与恢复维护</td>
+</tr>
+<tr>
+<td>邮箱</td>
+<td>按任务约定</td>
+<td>Agent ID、消息序号和等待条件</td>
+<td>去重、唤醒和生命周期</td>
+</tr>
+<tr>
+<td>任务板</td>
+<td>调度器和任务拥有者</td>
+<td>租约、版本和依赖</td>
+<td>竞争、重复派发和冲突</td>
+</tr>
+</tbody></table></div>
+<p>这些方案能组合，但也各自适合不同需求。持续邮箱不是每个同步子任务都必须升级到的形态。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p1-panel-D"><h3>4. 真实实现怎样分工</h3><div class="lesson-body"><div class="am-md"><p><strong>OpenAI Agents SDK，官方文档。</strong> <a href="https://developers.openai.com/api/docs/guides/agents/orchestration">编排与 Handoff</a> 明确区分 Manager 调用 Agent 工具和转移交互责任。可以借鉴的是先明确谁负责当前任务，再选择调用方式。</p>
+<p><strong>Deep Agents，源码核对。</strong> <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/subagents.py">subagents.py</a> 为普通子任务构建任务输入，将结果转换为主过程的工具结果；fork 另有历史继承路径。可借鉴的是显式定义子任务继承哪些输入、返回哪些结果，不把所有子 Agent 都视为全新窗口或全部共享历史。</p>
+<p><strong>Claude Code，官方文档。</strong> <a href="https://code.claude.com/docs/en/sub-agents">子 Agent 说明</a>描述独立窗口、工具范围和结果返回，普通子任务与继承父 Agent 的历史的 fork 不同。它说明了探索过程隔离的价值，同时也提醒子任务有自己的请求成本。</p>
+<p><strong>AgentScope Java，指定版本的官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/subagent.md">子 Agent 设计</a>区分工作区模式、同步等待和后台任务；特定同步等待超时可以转成后台继续。可借鉴的是将“等待超时”“取消执行”和“任务失败”分别定义。目录层面的 ISOLATED 也不能自行证明操作系统访问隔离。</p>
+<p><strong>LangGraph，官方文档。</strong> <a href="https://docs.langchain.com/oss/python/langgraph/graph-api">Graph API</a> 用状态、节点和边表达工作流，并通过 reducer 定义状态更新。可借鉴的是让合并规则进入程序，而不是只把多个模型答案拼接在一起。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p1-panel-E"><h3>5. 子任务契约怎样设计</h3><div class="lesson-body"><div class="am-md"><p>建议输入包含目标、验收要求、资料引用与版本、允许工具和预算；输出包含发现、证据位置、产物 ID 或路径、实际检查和未解决问题。不要默认复制所有父 Agent 的历史，也不要把没有共享的重要要求留给子 Agent 猜测。</p>
+</div>
+<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">task = {id, parent_run_id, revision, objective, constraints, input_refs}
+limits = {deadline, model_calls, token_budget, max_depth}
+result = {status, findings, evidence_refs, artifact_refs, checks, uncertainties}
+</code></pre></figure>
+<div class="am-md"><p>程序只允许子任务执行父任务权限与子任务配置都允许的操作；子任务不能因为拥有不同角色而扩大授权。所有调用和摘要用量计入总预算，委派开始前可以预留额度，防止并行执行者各自使用完整上限。</p>
+<p>取消需要传播并等待执行端确认。父调用超时不等于子任务已停止，HTTP 断开也不等于后台资源已释放；结果未知时保留实际状态，不能补造失败回执。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p1-panel-F"><h3>6. 共享工作区怎样处理</h3><div class="lesson-body"><div class="am-md"><p>只读任务可以使用同一固定快照；独立写入可按资源划分，必要时加版本检查或锁。代码修改可以用独立 Git worktree，再在汇合时合并和测试。</p>
+<p>Worktree 隔离 Git 文件修改，不限制拥有主机权限的进程访问其他目录。最终验收应在合并后的产物上运行，而不是把各分支单独通过视为整体通过。除了 Git 能发现的文件冲突，还要检查合并后的代码逻辑是否仍然一致。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p1-panel-G"><h3>7. 外部调度与长时间等待</h3><div class="lesson-body"><div class="am-md"><p>Cron 触发周期任务，Webhook 响应外部变化，持久工作流保存等待与后续步骤。它们管理外层任务，内部仍可运行同一 Agent Loop。</p>
+<p>长时间等待时保存外部任务 ID、条件和截止时间，再释放 Worker；事件到达后去重、检查任务版本并唤醒。调度器还应处理重叠、并发和重试。没有变化的事件不必不断调用模型，真正的状态变化才需要进入决策。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 3A：单 Agent、单 Runner，没有选择多 Agent 编排方案。</strong>同一会话可有多个先后执行的 Run，但这些是用户连续提交的任务，不是父子 Agent。当前没有子任务工具、Handoff、Graph、邮箱、共享任务队列或主任务与子任务的预算分配机制。</p><p>选择单循环是为了先验证工具、权限、记录与上下文的职责，见<a href="../stages/stage-3.html#stage-3">阶段 3</a>。如果后续遇到明确的独立子任务，可按<a href="../stages/stage-6.html#stage-6">阶段 6 的编排方向</a>约定输入、预算、证据与汇合，再和单 Agent 比较收益；下方练习只是一个可选的起步方案。</p></div></div></section>
+<section class="lesson-section" id="module-orchestration-p2-panel-B"><h3>9. 后续练习：委派一次范围明确的只读任务</h3><div class="lesson-body"><div class="am-md"><p>增加一个只读 <code>review_document</code> 子 Agent 工具，使用真实模型检查固定文档快照，返回问题、证据位置和不确定项。主 Agent 检查引用再整合，子任务不再创建子任务，也没有写权限。</p>
+<p>分别检查输入缺少必要信息、子任务超时、结果重复和父任务取消；最后对同一任务集比较单 Agent 与委派版本。只有收益和新增成本都可解释，才继续增加异步通信和共享任务调度。</p>
+</div></div>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="extensions.html#module-extensions">← Extensions：接入 Skills、Hooks 和外部工具</a><a href="../reference/architecture-agent-harness.html#architecture-agent-harness">当前最小骨架与未来模块蓝图 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

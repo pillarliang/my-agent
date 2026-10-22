@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Interfaces：让不同用户入口共用执行流程 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="../stages/stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-interfaces"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Interfaces：让不同用户入口共用执行流程</h2></header><section class="lesson-section" id="module-interfaces-p1-panel-A"><h3>1. 实现原理：提交、执行和观察分开</h3><div class="lesson-body"><div class="am-md"><p><strong>Web 与 CLI 的入口结构</strong></p>
+<p>通用目标示意：CLI 与 Web 可以共用应用服务；当前仅有 CLI，图中的 HTTP / WebRuns 尚未实现。</p>
+</div>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-module-interfaces-1-panel-A-1.svg" width="291" height="572" alt="流程图：CLI、AgentService、浏览器、HTTP 适配、WebRuns、Runner、SQLite" loading="lazy"></figure>
+<div class="am-md"><p>同一个生成报告的请求，无论来自命令行还是浏览器，都应经过相同配置、权限和执行流程。前端不需要理解模型协议，CLI 也不应复制另一个 Agent Loop。</p>
+<p>应用服务接收业务数据，例如会话 ID 和问题，而不是 HTTP Request 或 DOM 对象。存储中的 Run ID 用来关联执行、历史和进度，页面显示什么不能用来判断任务是否实际完成，应以保存的执行记录为准。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-interaction"><h3>2. 与相关模块怎样交互</h3><div class="lesson-body"><div class="am-md"><p>以“读取 notes.txt”为例，<strong>入口</strong>收集问题并展示结果，<strong>应用服务</strong>选定工作目录、工具能力和权限配置，再交给 <a href="loop.html#module-loop">Runner</a>。Runner 控制执行，<a href="state.html#module-state">记录层</a>保存事实。入口无需识别模型协议，也不能仅凭前端按钮决定工具权限。</p>
+<p>执行和查询是两条路径：提交任务会启动运行；查询只读取已经保存的记录，不再次调用模型或工具。错误沿发起调用的路径返回，展示层应区分“请求未被接受”“运行失败”和“查询失败”，不能将缺少结果显示为成功。</p><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-interfaces-collaboration.svg" width="1000" height="622" alt="通用协作示例：运行经应用服务进入 Runner；查询读取记录，不触发执行。" loading="lazy"><figcaption>通用协作示例：运行经应用服务进入 Runner；查询读取记录，不触发执行。</figcaption></figure><p><strong>初始化和运行时分开：</strong>初始化时选择组件与配置；运行时传递任务、ID、结果和错误。改用后台队列后，需要另行确定谁负责运行任务；入口仍应如实展示已保存的执行记录。</p></div></div></section>
+
+<section class="lesson-section" id="module-interfaces-p1-panel-C"><h3>3. 执行服务有哪些方案</h3><div class="lesson-body"><div class="am-md"><p>这里比较<strong>谁负责运行任务、提交者是否等待</strong>。当前采用 A：CLI 同步等待；B、C、D 均是未接入的可选方向。进度怎样传输是下一节的另一项选择。</p><h4>A. 请求内同步执行</h4>
+<p>接口一直等待 Runner 返回，适合 CLI 和耗时很短的调用，实现简单、错误直接。代价是请求等待时间限制了任务能运行多久，页面断开后也难以清楚表达执行状态。</p>
+<h4>B. 进程内后台执行</h4>
+<p>接口先返回任务 ID，程序在当前进程中管理后台任务，查询和进度接口独立工作。它适合本地 Web MVP，代码少，也能避免模型网络等待阻塞 HTTP 事件循环。</p>
+<p>不足是 Web 进程退出时，后台任务也会停止，线程里的阻塞工作也不能仅靠取消异步 Task 就可靠停止。<a href="https://fastapi.tiangolo.com/async/">FastAPI 并发说明</a>有助于理解异步 HTTP 处理与同步阻塞工作的区别；仍需由应用明确哪个组件负责启动、等待和停止任务。</p>
+<h4>C. 持久队列与独立 Worker</h4>
+<p>先把提交的任务保存到存储中，由 Worker 领取并运行，前端继续按任务 ID 查询。它适合长任务、服务重启和独立扩容。</p>
+<p>还需要处理重复投递、租约、任务状态、取消请求的传递，以及外部操作的结果核对。队列保证受理或再次投递，并不自动保证每个工具只执行一次，参见 <a href="state.html#module-state">State</a>。</p>
+<h4>D. 外部 Agent 运行服务</h4>
+<p>Web 或 CLI 调用完整运行服务，接收它返回的任务 ID 与事件。它减少自建调度，但需要明确会话、权限、历史和生成结果由谁管理，避免同时维护两套冲突状态。</p>
+<p>这是部署与控制权方向的选择，不必为了拥有 Web UI 就引入它。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p1-panel-D"><h3>4. 进度协议怎样选择</h3><div class="lesson-body"><div class="am-md"><p><strong>Web 进度、补读与历史查询</strong></p>
+<p>未来 SSE 方案示意，尚未实现；观察与 Run 执行分别进行。</p>
+</div>
+<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-module-interfaces-1-panel-D-1.svg" width="607" height="624" alt="时序图：浏览器、HTTP、AgentService、Store" loading="lazy"></figure>
+<div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>工作方式</th>
+<th>适用情况</th>
+<th>主要代价</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HTTP 轮询</td>
+<td>周期查询状态或增量</td>
+<td>低频状态、简单客户端</td>
+<td>间隔与重复查询</td>
+</tr>
+<tr>
+<td>POST + SSE + GET</td>
+<td>提交、单向事件、最终查询</td>
+<td>聊天与工具进度</td>
+<td>长连接、游标和补读</td>
+</tr>
+<tr>
+<td>WebSocket</td>
+<td>双向消息通道</td>
+<td>高频控制与交互</td>
+<td>消息协议、重连和连接状态</td>
+</tr>
+</tbody></table></div>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events">MDN SSE 说明</a>定义单向事件、事件 ID 和重连行为。如果后续 Web 入口主要接收进度，可以选择 SSE；提交任务、取消或审批可以另用普通 POST。这是候选方案，当前项目没有 HTTP / SSE 服务。</p>
+<p>进度传输与模型流式生成不同。阶段 3 保存模型请求、响应、工具回执和运行结束等事件，并打印终端进度；没有工具开始事件、实时推送或逐 Token 展示。轮询适合低频更新，SSE 适合单向推送，WebSocket 适合持续双向交互，后两者需要连接与重连管理。模型流式还需修改 Model 适配器。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p1-panel-E"><h3>5. 真实系统怎样组织入口</h3><div class="lesson-body"><div class="am-md"><p><strong>AgentScope Java，指定版本的官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/architecture.md">架构说明</a>区分直接调用、当前请求内流式事件，以及持久会话任务操作。可借鉴的是让不同入口复用模型、工具与中间件配置，同时明确谁安排执行。</p>
+<p><strong>pi，指定版本的官方文档。</strong> <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/docs/rpc.md">RPC 接口</a>通过结构化命令与事件将运行核心接入其他界面。可以借鉴“不同协议适配器共用同一个执行核心”的组织方式；RPC 不是必须使用 HTTP 或浏览器的接口。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p1-panel-F"><h3>6. 断线、历史与重复提交</h3><div class="lesson-body"><div class="am-md"><p>每个事件使用固定 ID，客户端保存已读位置；重新连接后补读遗漏事件，再按事件 ID 去重。持久历史负责重建页面，实时事件负责显示后续变化；只保存前端聊天数组，无法可靠应对刷新和跨入口读取。</p>
+<p>用户点击发送后网络中断，可能不知道任务是否已经受理。后续可以增加客户端请求 ID，由服务做提交去重；仅仅重发 HTTP POST 可能启动第二次任务。这个请求 ID 与模型工具调用 ID 不同。</p>
+<p>页面关闭、请求断开、用户取消和进程退出也应分别定义。取消的接口应返回受理状态，最终停止要由执行端确认；UI 不应在发出取消请求后立即伪装所有工具已经停止。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-interfaces-p1-panel-G"><h3>7. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 3A：同步 CLI ＋独立只读查询。</strong>任务经 run_task() 进入 Runner，最终返回 RunResult；入口持有会话存储连接，应用服务创建并关闭模型连接。这一组合便于沿一次调用观察配置、执行和结果。</p><p>运行前由入口设置工作目录与 Policy，工具清单由应用配置决定；模型按任务选择调用。使用 --show-session 时，入口只查询记录，不创建模型服务。当前没有输入预算参数，具体命令见<a href="../stages/stage-3a.html#stage-3a">阶段 3A</a>。</p><p><strong>未实现：</strong>Web、后台任务、队列、SSE、WebSocket、请求去重和用户取消协议。它们属于<a href="../stages/stage-6.html#stage-6">阶段 6 的可选扩展</a>，不要求为了增加另一种展示方式而全部建设。</p></div></div></section>
+<section class="lesson-section" id="module-interfaces-p2-panel-A"><h3>8. 后续练习：Web 入口与任务控制</h3><div class="lesson-body"><div class="am-md"><p>需要 Web 时，先让 CLI 与 HTTP 共用同一个应用服务，分别验证任务提交、只读查询和进度查看；再依据等待时长选择同步、后台或队列执行。查询和刷新页面不能启动另一次运行。</p><p>若增加重连、提交去重或取消，分别检查缺失进度能补读、使用同一请求 ID 重复提交时，不会再次启动任务，以及取消后确实收到执行端停止确认。保存真实状态与未解决错误，不能仅凭前端连接关闭就标记任务结束。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="../stages/stage-6.html#stage-6">← 阶段 6：按需求增加入口、扩展与编排</a><a href="loop.html#module-loop">Loop / Runner：控制一次任务怎样继续和停止 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

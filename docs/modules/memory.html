@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Memory：选择跨会话保留的知识 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="../stages/stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-memory"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Memory：选择跨会话保留的知识</h2></header><section class="lesson-section" id="module-memory-p1-panel-A"><h3>1. 实现原理：写入和读取是两个流程</h3><div class="lesson-body"><div class="am-md"><p>报告任务结束后，可以复用的知识可能是“这个项目使用 uv”和“用户偏好报告列出来源”。“本次测试失败”则与产物版本和时刻相关，不宜直接保存为永远有效的项目事实。</p>
+<p><strong>Memory：受控写入、读取与遗忘</strong></p>
+<p>后续能力 · 阶段 3 已有会话记录，尚未实现跨会话长期记忆。</p>
+</div>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-module-memory-1-panel-A-1.svg" width="403" height="563" alt="流程图：历史与显式输入、候选提取、核对来源、范围与冲突、确认后按版本保存、有效条目与索引、当前任务与用户信息、范围过滤与检索、带来源的 Context 片段" loading="lazy"></figure>
+<div class="am-md"><p>写入流程判断“是否值得记住”；读取流程判断“现在是否适用”。即使自动提取质量很好，后续仍要处理过期、冲突和撤销。相似度只帮助寻找候选，不证明内容真实、有效或获准使用。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-interaction"><h3>2. 与相关模块怎样交互</h3><div class="lesson-body"><div class="am-md"><p><strong>State 提供原始记录，Memory 管理可复用条目，Context 选择本次材料。</strong>例如用户明确提出“以后报告都附来源”：记忆写入入口接收这条偏好和适用范围，或从 <a href="state.html#module-state">State</a> 取得带记录 ID 的原始消息；核对来源、冲突与确认条件后才提交条目。模型可以辅助提取候选，但生成候选不等于事实已经确认。</p><p>开始新任务时，应用或 Context 向 Memory 提供任务线索和可访问范围；Memory 返回带来源、版本和有效状态的候选，<a href="context.html#module-context">Context Manager</a> 再根据输入预算选择要发送的内容。检索无命中、记忆已过期和服务查询失败是不同结果，不应都显示成“没有记忆”。</p><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-memory-collaboration.svg" width="1000" height="494" alt="未来协作示例：写入先核对来源，读取返回候选供 Context 选择；当前尚未实现此 Memory 流程。" loading="lazy"><figcaption>未来协作示例：写入先核对来源，读取返回候选供 Context 选择；当前尚未实现此 Memory 流程。</figcaption></figure><p>若让模型通过工具写入记忆，写入仍经 <a href="tools.html#module-tools">Tools</a> 和 <a href="policy.html#module-policy">Policy</a> 授权；记忆内容不能扩大权限。当前 Policy 只处理文件操作权限；未来若按用户或项目管理记忆条目，还需要定义条目访问权限。保存会话和提炼长期知识可以独立建设。</p></div></div></section>
+
+<section class="lesson-section" id="module-memory-p1-panel-C"><h3>3. 先区分知识类型和存储方案</h3><div class="lesson-body"><div class="am-md"><p>知识可以分成事实与偏好、经验案例、可复用方法。前两类适合保存来源和适用条件；多步骤方法也可能更适合整理成 Skill。分类帮助确定生命周期，不要求为每类部署一个数据库。</p>
+<p>文件、SQL 和向量索引则属于另一组选择：文件方便人工编辑，SQL 方便字段格式与关联关系的检查，向量索引方便按含义查找内容。它们可以组合，不是知识类型，也不是固定的技术升级阶梯。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-D"><h3>4. 有哪些实现方案</h3><div class="lesson-body"><div class="am-md"><p>以下是<strong>可以组合的设计方向，当前均未接入长期记忆</strong>。A–C 主要比较保存与检索方式；D 比较写入自动化程度。也可以由用户确认后写入 SQL，或用文件保存正文再建立向量索引，不必把自动提取与向量检索绑定。</p><h4>A. 用户维护的文件记忆</h4>
+<p>用短索引列出主题，正文放在 Markdown 文件中；每个 Run 只加载相关概览，再按需读取正文。写入由用户维护或由显式操作触发。</p>
+<p>它容易审阅、版本控制和迁移，适合单用户学习系统。代价是冲突合并、作用域和删除规则需要约定；每次都加载全部记忆文件，仍会导致输入越来越长。</p>
+<h4>B. 结构化条目加关键词检索</h4>
+<p>用 SQLite 保存 ID、类型、作用域、来源、版本和状态，再按关键词、项目和时间检索。正文可以在数据库或文件中，检索索引由程序维护。</p>
+<p>它便于更正、撤销和审计，精确术语和项目名也容易命中；代价是查询与 Schema 设计，同一意思换种说法时可能检索不到。如果先验证结构化偏好与更正，可以从 SQL 条件开始，再按需要增加全文检索（FTS）；它只是候选方案，当前没有实现。</p>
+<h4>C. 向量或混合检索</h4>
+<p>为条目生成 Embedding，按含义检索，再与关键词、时效和类型过滤组合，必要时重排。它适合知识量大、相同意思有多种表达的检索问题。</p>
+<p>新增成本包括模型用量、索引版本、重建和质量评测。权限过滤不能只在拿到前几条结果后做，否则既可能漏掉有权内容，也会把越权数据带入后续处理。原文、来源和条目状态仍应在正式存储中维护。</p>
+<h4>D. 自动提取与后台整理</h4>
+<p>任务结束时或压缩前，从交互提取候选，再合并、去重和确认。有的系统直接更新记忆文件，有的先保存日记或观察，再定期整理。</p>
+<p>它减少人工维护，但可能把模型猜测写成事实、把一次性要求写成长期偏好，或在用户更正后写回旧值。应记录提取器版本和来源范围，先允许查看与拒绝候选，再逐步提高自动写入比例。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>适合什么</th>
+<th>收益</th>
+<th>主要问题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>文件索引与正文</td>
+<td>少量、人工可审查知识</td>
+<td>透明、易迁移</td>
+<td>合并和范围管理</td>
+</tr>
+<tr>
+<td>SQL 条目与关键词</td>
+<td>需要版本、更正与隔离</td>
+<td>行为可解释</td>
+<td>难以找到意思相近但用词不同的内容</td>
+</tr>
+<tr>
+<td>混合检索</td>
+<td>资料多、同一意思有多种表达</td>
+<td>更容易找到相关内容</td>
+<td>索引与评测成本</td>
+</tr>
+<tr>
+<td>自动整理</td>
+<td>人工维护困难</td>
+<td>减少重复整理</td>
+<td>错写、冲突和遗忘失效</td>
+</tr>
+</tbody></table></div>
+<p>自动整理是写入策略，混合检索是读取策略。两者可以分别引入，不能因为增加向量数据库就宣称获得了完整记忆系统。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-E"><h3>5. 不同实现怎样做</h3><div class="lesson-body"><div class="am-md"><p><strong>Claude Code，官方文档。</strong> <a href="https://code.claude.com/docs/en/memory">记忆说明</a>区分用户维护的规则文件和自动记忆；自动记忆使用有大小限制的 <code>MEMORY.md</code> 索引，主题文件按需读取。可借鉴的是“短索引常驻、细节按需”，以及让用户能查看和修改保存内容；它不证明记忆会始终正确。</p>
+<p><strong>Deep Agents，源码核对。</strong> <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py">MemoryMiddleware</a> 在 <code>before_agent</code> 加载配置来源，在请求修改阶段把记忆片段加入 System 消息；已经存在于状态中的内容不会无条件重读。<a href="https://docs.langchain.com/oss/python/deepagents/memory">官方记忆文档</a>说明通过后端配置用户或 Agent 作用域。可借鉴的是加载与存储分离；引入本项目时要自行明确哪些文件可作为指令，哪些只能作为参考资料。</p>
+<p><strong>AgentScope Java，指定版本的官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/memory.md">Memory 设计</a>使用按日追加的记录和合并后的长期文件，区分事实提取、合并与会话摘要；长期内容作为参考材料进入 Context。它展示了“先积累、后整理”的写入流程，也会产生额外模型调用与维护工作。</p>
+<p><strong>LangChain，官方文档。</strong> <a href="https://docs.langchain.com/oss/python/langchain/long-term-memory">长期记忆 Store</a> 用 namespace 和 key 管理条目，并支持范围内查找。可借鉴的是先确定用户、项目等作用域，再决定用哪种索引。namespace 的构造与访问校验仍是应用责任。</p>
+<p>这些做法不同，尤其是记忆进入 System 还是参考材料。教程不会把某个实现的默认信任方式视为所有系统必须遵循的规则。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-F"><h3>6. 本项目可以采用的数据结构</h3><div class="lesson-body"><div class="am-md"><p>以下是建议，不是已经存在的表：</p>
+</div>
+<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">json</span></figcaption><pre class="am-code"><code data-lang="json">{
+  "id": "memory_001",
+  "scope": {"user_id": "local", "project_id": "learn-agent"},
+  "kind": "project_fact",
+  "text": "项目使用 uv 管理依赖。",
+  "source_ids": ["run_x/message_1"],
+  "version": 1,
+  "status": "active",
+  "supersedes": null,
+  "created_at": "2026-10-18T00:00:00Z",
+  "expires_at": null,
+  "confirmed_by": "user"
+}
+</code></pre></figure>
+<div class="am-md"><p>ID、作用域和版本由程序产生，来源指向可追溯记录。<code>confirmed_by</code> 不能由提取模型自行伪造。对于“测试通过”，还应保存被测产物版本和检查范围，避免新版本错误继承旧结论。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-G"><h3>7. 更正、遗忘和时效怎样实现</h3><div class="lesson-body"><div class="am-md"><p>事实变化时，将旧条目标为被替代，再写入新版本；读取时只选有效条目。若存在冲突且没有明确更正依据，应保留不确定性，而不是任意挑一个更相似的结果。</p>
+<p>遗忘至少涉及正式条目、检索索引和提取来源。只删除向量索引，后台仍可能从旧历史重新提取；只删除数据库，缓存或摘要还可能留有副本。可用撤销标记阻止被遗忘来源再次进入提取，但具体是否删除原始记录、备份和派生产物，需要明确操作范围。</p>
+<p>时效由知识类型决定：当前构建状态很快失效，稳定偏好可以长期保留但允许覆盖。记忆中的“用户曾经批准发送”不能代替本次动作授权，权限始终由 <a href="policy.html#module-policy">Policy</a> 判断。</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 3A：尚未选择或实现长期记忆方案。</strong>已有 SQLite 会话记录，同一会话的新任务可使用已完成历史；这属于 State 与 Runner，不是跨会话的偏好库或知识检索。当前没有记忆条目、候选确认、关键词／向量检索、自动提炼或遗忘接口。</p><p>阶段 3 先验证“完整记录与本次输入分开”，见<a href="../stages/stage-3.html#stage-3">阶段实践</a>。长期记忆作为<a href="../stages/stage-4.html#stage-4">后续阶段的可选方向</a>，应先确定具体复用任务、访问范围、更正和删除要求，再选文件、结构化条目或检索方式；没有承诺必须实施某一种数据库。</p></div></div></section>
+<section class="lesson-section" id="module-memory-p2-panel-B"><h3>9. 后续练习：跨会话复用与遗忘</h3><div class="lesson-body"><div class="am-md"><p>在两个新会话中检验用户明确要求保存的同一项目的记忆，再用另一个项目验证范围隔离。更正后检查新版本生效，遗忘后检查条目、索引和后续提取均不再复用它；记忆内容也不能开启写权限。</p>
+<p>引入自动化后，再统计候选准确率、错误内容写入正式记忆的比例、检索到过期内容的比例和遗忘后重新出现的比例。检索命中和实际任务检查结果一起报告，才能判断记忆是否帮助了系统。</p>
+</div></div>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="quality.html#module-quality">← Quality：观测与评测</a><a href="extensions.html#module-extensions">Extensions：接入 Skills、Hooks 和外部工具 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 700 510"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+/* Embedded previews can lose html[data-theme]; the fallbacks keep diagrams readable, and defined theme variables still win. */
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+/* Diagram tokens (docs/reference.md, "Diagram tokens"): each painted part reads an optional token and falls back to the look it always had,
+   so a theme that sets none of them draws the same diagram. Font family, size and weight are not tokens: diagram text is measured for the sans font. */
+.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); }
+/* A cylinder is two shapes (body, then cap): only the body casts the shadow. */
+.am-node-shape ~ .am-node-shape { filter: none; }
+/* The corner radius is an SVG attribute (the fallback for Safari before 17.4, which ignores a CSS rx); the default here equals the attribute. A pill and a diamond keep their shape. */
+.am-node--rect .am-node-shape, .am-node--er .am-node-shape { rx: var(--node-radius, 3px); }
+.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
+.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); }
+.am-node--hi text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-diagram .am-node--hi .am-node-text { fill: var(--hi-text, var(--accent, #1d5fbf)); }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
+.am-edge-label rect { fill: var(--paper, #ffffff); }
+.am-diagram .am-edge-label text { fill: var(--edge-label, var(--accent, #1d5fbf)); font-size: 11.5px; }
+.am-cluster { fill: var(--cluster-fill, var(--fill, #f3f5f8)); stroke: var(--cluster-stroke, var(--line-2, #d6dae1)); stroke-width: 1; stroke-dasharray: 4 3; }
+.am-diagram .am-cluster-label { fill: var(--ink-2, #4b5260); font: 11px var(--font-mono, monospace); }
+/* The PK / FK / UK marks of an entity follow the node text, and the highlighted text in a highlighted entity, so they stay readable on the theme's fills. */
+.am-diagram .am-er-key { fill: var(--node-text, var(--ink-2, #4b5260)); }
+.am-diagram .am-node--hi .am-er-key { fill: var(--hi-text, var(--ink-2, #4b5260)); }
+.am-lifeline { stroke: var(--lifeline-color, var(--ink-3, #8b929e)); stroke-width: 1; stroke-dasharray: 4 4; }
+/* An actor (and the box of a divider) looks like a node unless the theme sets the actor tokens. */
+.am-actor { fill: var(--actor-fill, var(--node-fill, var(--paper, #ffffff))); stroke: var(--actor-stroke, var(--node-stroke, var(--line, #1d2026))); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); rx: var(--node-radius, 2px); }
+.am-diagram .am-actor-text { fill: var(--actor-text, var(--node-text, var(--ink, #16181d))); }
+.am-note { fill: var(--note-fill, var(--warn-bg, #fdf3e2)); stroke: var(--note-stroke, var(--warn, #a8620a)); stroke-width: var(--note-width, 1); rx: var(--note-radius, 2px); }
+.am-diagram .am-step { fill: var(--ink-3, #8b929e); font: 10px var(--font-mono, monospace); }
+
+
+svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+</style>
+<defs><marker id="stage-1-tools-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<g class="am-edge" fill="none" marker-end="url(#stage-1-tools-arrow)">
+<path d="M240,65 V103"/><path d="M240,145 V183"/><path d="M240,225 V303"/><path d="M240,345 V423"/>
+<path d="M365,124 H480 V203"/><path d="M365,204 H478"/><path d="M555,245 V445 H367"/>
+<path d="M365,324 H465"/>
+</g>
+<g class="am-node"><rect class="am-node-shape" x="115" y="23" width="250" height="42" rx="4"/><text class="am-node-text" x="240" y="49" text-anchor="middle">Loop 提交 ToolCall</text></g>
+<g class="am-node"><rect class="am-node-shape" x="115" y="103" width="250" height="42" rx="4"/><text class="am-node-text" x="240" y="129" text-anchor="middle">注册表按名称查找</text></g>
+<g class="am-node"><rect class="am-node-shape" x="115" y="183" width="250" height="42" rx="4"/><text class="am-node-text" x="240" y="209" text-anchor="middle">解析 JSON / 参数模型校验</text></g>
+<g class="am-node"><rect class="am-node-shape" x="115" y="303" width="250" height="42" rx="4"/><text class="am-node-text" x="240" y="329" text-anchor="middle">识别动作 / Policy / 获准执行</text></g>
+<g class="am-node"><rect class="am-node-shape" x="115" y="423" width="250" height="42" rx="4"/><text class="am-node-text" x="240" y="449" text-anchor="middle">ToolResult → Loop 关联调用 ID</text></g>
+<g class="am-node"><rect class="am-node-shape" x="480" y="203" width="150" height="42" rx="4"/><text class="am-node-text" x="555" y="229" text-anchor="middle">失败回执</text></g>
+<g class="am-node"><rect class="am-node-shape" x="467" y="303" width="175" height="42" rx="4"/><text class="am-node-text" x="554" y="329" text-anchor="middle">程序错误向外抛出</text></g>
+<g font-size="12" fill="currentColor"><text x="380" y="112">未注册</text><text x="380" y="193">输入不合法</text><text x="257" y="268">参数通过</text><text x="257" y="389">成功数据</text><text x="380" y="309">非预期异常</text><text x="240" y="495" text-anchor="middle">调用前：应用显式注册工具，并从参数模型生成 Schema。</text></g>
+<path class="am-edge" fill="none" d="M365,338 H420 V265 H555 V247" marker-end="url(#stage-1-tools-arrow)"/>
+<text x="430" y="285" font-size="12" fill="currentColor">预期失败</text>
+</svg>
