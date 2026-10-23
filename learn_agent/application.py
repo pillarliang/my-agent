@@ -6,6 +6,7 @@ from pathlib import Path
 from .models import LLMService
 from .policy import PolicyEvaluator
 from .runner import RunResult, run_agent
+from .session import SessionLog
 from .tools import (
     LIST_FILES,
     READ_FILE,
@@ -24,11 +25,14 @@ def run_task(
     policy: PolicyEvaluator,
     *,
     definitions: Iterable[ToolDefinition] = DEFAULT_TOOLS,
+    session: SessionLog | None = None,
 ) -> RunResult:
-    """注册工具并运行一次任务；消息留在本次调用中，模型连接在这里关闭。"""
+    """会话由入口持有；校验工作区后运行任务，最后关闭模型连接。"""
+    if session is not None:
+        session.check_workspace(workspace)
     tools = ToolRegistry(definitions, workspace, policy)
     model = LLMService()
     try:
-        return run_agent(model, question, tools)
+        return run_agent(model, question, tools, session=session)
     finally:
         model.close()
