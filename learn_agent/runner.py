@@ -1,9 +1,18 @@
-"""阶段 3：用完整消息驱动循环，按任务保存记录并加载已完成历史。"""
+"""阶段 4：每次请求前选择上下文，按任务保存完整消息与真实回执。"""
 
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
-from .models import Model, ModelError, ModelMessage, ModelRequest, TextMessage
+from .context import (
+    DEFAULT_BUDGET,
+    DEFAULT_METER,
+    ContextBudget,
+    ContextDecision,
+    HistoryTurn,
+    InputMeter,
+    select_context,
+)
+from .models import Model, ModelError, ModelMessage, TextMessage
 from .session import SessionLog
 from .tools import ToolExecutor, ToolResult
 
@@ -20,12 +29,13 @@ SYSTEM = TextMessage(
 
 @dataclass(frozen=True)
 class RunResult:
-    """模型回答与工具回执；会话和任务 ID 用于定位记录，不代替成果验收。"""
+    """模型回答、真实回执与每步上下文决策；会话和任务 ID 用于定位原始记录。"""
 
     answer: str
     tool_results: tuple[ToolResult, ...]
     session_id: str | None = None
     turn_id: str | None = None
+    context_decisions: tuple[ContextDecision, ...] = ()
 
 
 def run_agent(
@@ -35,23 +45,38 @@ def run_agent(
     *,
     max_steps: int = 4,
     session: SessionLog | None = None,
+    history: tuple[HistoryTurn, ...] | None = None,
+    required_turn_ids: frozenset[str] = frozenset(),
+    context_budget: ContextBudget = DEFAULT_BUDGET,
+    input_meter: InputMeter = DEFAULT_METER,
 ) -> RunResult:
     """一个 Turn 对应一次用户任务；循环步数仅限制本任务的模型请求次数。"""
     if not question.strip() or max_steps <= 0:
         raise ValueError("任务不能为空，请求次数上限必须为正数。")
+    if session is not None and history is not None:
+        raise ValueError("会话历史与内存历史只能选择一种来源。")
     specs = tuple(tools.specs)
     tool_results: list[ToolResult] = []
-    messages: list[ModelMessage] = [SYSTEM]
-    if session is not None:
-        # 先取旧历史，再开始新任务，避免把当前问题加载两次。
-        messages.extend(session.history())
-    messages.append(TextMessage("user", question))
+    decisions: list[ContextDecision] = []
+    # 历史保留完整任务边界，当前任务单独累积；裁剪不改动这两个来源。
+    history = session.history_turns() if session is not None else (history or ())
+    messages: list[ModelMessage] = [TextMessage("user", question)]
     turn_id = session.start_turn(question) if session is not None else None
     try:
         for step in range(1, max_steps + 1):
-            request = ModelRequest(tuple(messages), specs)
+            selection = select_context(
+                system=SYSTEM,
+                history=history,
+                current=tuple(messages),
+                tools=specs,
+                required_turn_ids=required_turn_ids,
+                budget=context_budget,
+                meter=input_meter,
+            )
+            decisions.append(selection.decision)
+            print(f"上下文：{json.dumps(asdict(selection.decision), ensure_ascii=False)}")
             print(f"Step {step}: 请求模型")
-            reply = model.invoke(request)
+            reply = model.invoke(selection.request)
             # 拒答或截断也保存原响应，再判断是否允许执行其中的调用。
             if session is not None and turn_id is not None:
                 session.append_message(turn_id, reply)
@@ -71,6 +96,7 @@ def run_agent(
                     tuple(tool_results),
                     session.header.session_id if session is not None else None,
                     turn_id,
+                    tuple(decisions),
                 )
             for call in reply.tool_calls:
                 receipt = tools.execute(call)

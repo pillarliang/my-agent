@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orchestration: Coordinate Multi-Agent Division of Labor · Learn Agent</title>
+<link rel="stylesheet" href="../../assets/tutorial.css">
+<script src="../../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Choose Long-Task Mechanisms from Real Failures</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Application &amp; Behavior Config</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><div class="nav-group-title">3. Harness Core</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality: Observability &amp; Evaluation</a><div class="nav-group-title">4. On-Demand Capabilities</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">Long Tasks &amp; Knowledge Reuse</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">Reliable Execution &amp; Isolation</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">5. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">6. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/orchestration.html#module-orchestration">中文版</a></p><article class="chapter" id="module-orchestration"><header class="chapter-header"><span class="kind">Module Principles &amp; Design Options</span><h2>Orchestration: Coordinate Multi-Agent Division of Labor</h2></header><section class="lesson-section" id="module-orchestration-p1-panel-A"><h3>1. Starting Problem: When Do We Need Multi-Agent Collaboration, and What Must Be Controlled?</h3><div class="lesson-body"><div class="am-md"><p>When a single task involves extensive independent document searches or specialized verification, cramming everything into a single Agent loop quickly floods the main context window with intermediate exploration noise. Instead, a main Agent can own the overall goal and synthesis while delegating focused search or evidence verification to isolated sub-agents.</p>
+<p><strong>Multi-Agent Collaboration: Task Dispatch, Sub-Task Execution &amp; Result Aggregation (Future Design; Current Baseline Is Single-Agent)</strong></p>
+</div>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../../assets/diagrams/diagram-stage-7-1-panel-C-1.svg" width="376" height="405" alt="Flowchart: User goal and total budget, parent Run, child Run reads materials, child Run verifies sources, merge results/evidence/open items, check actual artifacts and form conclusion, authorization and resource scope" loading="lazy"></figure>
+<div class="am-md"><ul>
+<li><strong>Role prompts do not equal system isolation</strong>: Naming a model "Read-Only Reviewer" only affects the prompt—code must explicitly configure each sub-task with its own Run ID, restricted tool subset, token budget, and Policy permissions.</li>
+<li><strong>Distinguish three independent dimensions of isolation</strong>: Context isolation (not sharing full message histories), workspace file isolation (not overwriting each other's files), and OS-level sandbox isolation are three distinct concerns that must be enforced separately.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-interaction"><h3>2. Module Collaboration: How Does the Orchestration Layer Coordinate Core Modules?</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Task dispatch (Orchestration → Child Runner)</strong>: The orchestration layer specifies the input snapshot, completion criteria, budget cap, and allowed toolset for each sub-task; each child Runner uses its own <a href="context.html#module-context">Context</a> and executes via Model, Tools, and Policy.</li>
+<li><strong>Lineage recording &amp; result aggregation (State &amp; Quality)</strong>: <a href="state.html#module-state">State</a> records parent-child Run relationships, handoff payloads, and execution results; the orchestration layer verifies evidence before merging, optionally passing deliverables to <a href="quality.html#module-quality">Quality</a> for checking.</li>
+<li><strong>Permission &amp; timeout boundaries</strong>: A sub-task's permissions can never exceed its parent task's authorized scope; furthermore, the system must clearly distinguish between "sub-task partially completed," "wait timed out," and "cancellation confirmed" (a parent timing out on its wait does not mean the background child process has stopped).</li>
+</ul><figure class="am-diagram am-seq"><img class="lesson-svg" src="../../assets/diagrams/module-orchestration-collaboration.svg" width="1000" height="558" alt="Future delegation collaboration example: the orchestration layer handles dispatch and aggregation while child Runners execute using their own modules; no sub-task execution protocol is implemented yet." loading="lazy"><figcaption>Future delegation collaboration example: the orchestration layer handles dispatch and aggregation while child Runners execute using their own modules; no sub-task execution protocol is implemented yet.</figcaption></figure></div></div></section>
+
+<section class="lesson-section" id="module-orchestration-p1-panel-C"><h3>3. Comparing Core Approaches: 5 Multi-Agent Orchestration Patterns</h3><div class="lesson-body"><div class="am-md"><p>The 5 patterns below address different collaboration needs and can be adopted on demand (none are implemented yet; Stage 3 uses a single Runner):</p><h4>A. Subagent as a Tool</h4>
+<ul>
+<li><strong>How it works</strong>: The main Agent submits a well-bounded sub-task via a tool call; the sub-agent runs inside an isolated context window with a restricted toolset and returns structured findings and evidence citations, while the main Agent remains responsible for synthesis and the final reply.</li>
+<li><strong>Best for</strong>: Document search, long-file analysis, and independent code/document review (start by capping delegation depth at 1).</li>
+</ul>
+<h4>B. Conversational Handoff</h4>
+<ul>
+<li><strong>How it works</strong>: The active Agent transfers session control directly to another domain-specialist Agent, and subsequent user inputs route directly to the new owner.</li>
+<li><strong>Best for</strong>: Customer support triage and multi-domain routing; requires explicitly defining which historical messages, task states, and permissions transfer across the handoff.</li>
+</ul>
+<h4>C. Explicit Workflow Graph (Graph &amp; Parallel Fan-In)</h4>
+<ul>
+<li><strong>How it works</strong>: Application code defines nodes (plain functions or Agents), conditional edges, and reducer functions to fix task transitions and parallel fan-in merging rules.</li>
+<li><strong>Best for</strong>: Business pipelines with stable stage boundaries and clear dependencies; note that majority voting among models never replaces deterministic deliverable verification.</li>
+</ul>
+<h4>D. Persistent Sub-Sessions &amp; Async Mailboxes</h4>
+<ul>
+<li><strong>How it works</strong>: Sub-agents retain persistent IDs and state, receiving follow-up clarifications or instructions via message queues carrying sequence numbers, sender IDs, and wake triggers.</li>
+<li><strong>Best for</strong>: Long-lived asynchronous collaboration; requires safeguards so ordinary status notifications do not trigger infinite back-and-forth message loops between models.</li>
+</ul>
+<h4>E. Shared Task Board &amp; Worker Queue</h4>
+<ul>
+<li><strong>How it works</strong>: Multiple Workers claim tasks according to dependency graphs, hold time-bounded leases, and submit results while incrementing task revision numbers.</li>
+<li><strong>Best for</strong>: High-volume batches of parallelizable sub-tasks; requires solving lock contention, lease expiration, and result conflicts.</li>
+</ul>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Orchestration Pattern</th>
+<th>Who Owns the Final Result</th>
+<th>Key State to Persist</th>
+<th>Main Implementation Cost</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Subagent as a Tool</td>
+<td>Main Agent</td>
+<td>Sub-task contract, input snapshot &amp; returned evidence</td>
+<td>Extra call overhead and handoff verification</td>
+</tr>
+<tr>
+<td>Handoff</td>
+<td>Receiving Agent</td>
+<td>Active session ownership &amp; transferred context</td>
+<td>Subsequent routing and permission boundary migration</td>
+</tr>
+<tr>
+<td>Explicit Graph</td>
+<td>Application workflow</td>
+<td>Node states, edge conditions &amp; reducer rules</td>
+<td>Maintaining state schemas and checkpoint recovery</td>
+</tr>
+<tr>
+<td>Async Mailbox</td>
+<td>Defined by task contract</td>
+<td>Agent ID, message sequence numbers &amp; wake conditions</td>
+<td>Message deduplication, out-of-order handling &amp; loop prevention</td>
+</tr>
+<tr>
+<td>Shared Task Board</td>
+<td>Scheduler &amp; task owner</td>
+<td>Task leases, revision numbers &amp; dependency graph</td>
+<td>Concurrency lock contention, timeout reassignment &amp; conflict resolution</td>
+</tr>
+</tbody></table></div>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p1-panel-D"><h3>4. Open-Source &amp; Industry Orchestration Practices</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>OpenAI Agents SDK (Official Docs)</strong>: <a href="https://developers.openai.com/api/docs/guides/agents/orchestration">Orchestration &amp; Handoffs</a> clearly distinguishes between "Manager invoking sub-agents as tools" and "Handoffs transferring conversation control."</li>
+<li><strong>Deep Agents (Source Verified)</strong>: <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/subagents.py">subagents.py</a> constructs isolated task inputs for sub-tasks and converts their outputs into tool receipts for the main Agent, cleanly separating isolated windows from forked paths that inherit parent history.</li>
+<li><strong>Claude Code (Official Docs)</strong>: Its <a href="https://code.claude.com/docs/en/sub-agents">Subagents guide</a> uses isolated context windows and restricted toolsets to contain intermediate exploration, returning only the final summary to the main session.</li>
+<li><strong>AgentScope Java (Official Docs)</strong>: Its <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/subagent.md">SubAgent design</a> distinguishes workspace modes, synchronous waiting, and background execution while modeling "wait timeout," "execution cancelled," and "task failed" as separate states.</li>
+<li><strong>LangGraph (Official Docs)</strong>: <a href="https://docs.langchain.com/oss/python/langgraph/graph-api">Graph API</a> uses explicit state schemas, nodes, edges, and Reducer functions to manage multi-node fan-in rather than concatenating free-form natural language replies as a substitute for state merging.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p1-panel-E"><h3>5. Designing the Sub-Task Handoff Contract</h3><div class="lesson-body"><div class="am-md"><p>To prevent sub-tasks from guessing requirements or the parent task from blindly trusting conclusions, sub-task inputs, budgets, and return values should use an explicit structured contract:</p>
+</div>
+<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">task = {id, parent_run_id, revision, objective, constraints, input_refs}
+limits = {deadline, model_calls, token_budget, max_depth}
+result = {status, findings, evidence_refs, artifact_refs, checks, uncertainties}
+</code></pre></figure>
+<div class="am-md"><ul>
+<li><strong>Intersect permissions</strong>: A sub-task may only perform operations allowed by <code>parent_permissions ∩ child_config</code>—switching roles never escalates permissions.</li>
+<li><strong>Deduct from a shared budget</strong>: Sub-task model calls and token usage count against the overall task budget, with quotas reserved before parallel dispatch.</li>
+<li><strong>Require executor confirmation on cancel</strong>: When a parent task is cancelled or times out, propagate the cancellation signal to child tasks and wait for executor confirmation; record indeterminate states honestly rather than fabricating failure receipts.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p1-panel-F"><h3>6. Isolating Shared Workspaces Under Concurrent Execution</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Read-only tasks share a pinned snapshot</strong>: Multiple read-only search or review sub-tasks can safely read the same immutable file snapshot concurrently.</li>
+<li><strong>Write tasks isolate by resource or Git worktree</strong>: Concurrent code modifications can run in separate Git worktrees, merging and running end-to-end verification tests during the fan-in stage (note that Git worktrees only isolate working tree files and do not provide OS-level sandbox isolation).</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p1-panel-G"><h3>7. Outer Task Scheduling &amp; Long-Horizon Waiting</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Outer triggers</strong>: Cron schedules, incoming Webhooks, and durable workflows start or wake a Run when specific events arrive, while the Run itself executes the standard Agent Loop inside.</li>
+<li><strong>Suspend and wake on events</strong>: When waiting for human approval or a long-running build, persist the external job ID, wait condition, and deadline and release the worker process; wake and resume only after the external event arrives and passes version and deduplication checks, rather than burning model tokens in a busy-wait polling loop.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-orchestration-p2-panel-A"><h3>8. Current Implementation &amp; Unimplemented Scope</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Implemented (as of Stage 3: Single Agent, Single Runner)</strong>: Each invocation processes one user task inside a single Runner loop and supports continuing history within the same session (see <a href="../stages/stage-3.html#stage-3">Stage 3</a>).</li>
+<li><strong>Not Yet Implemented (deferred to <a href="../stages/stage-7.html#stage-7">Stage 7 On-Demand Extensions</a>)</strong>: Sub-task delegation tools, Handoffs, explicit Graphs, async mailboxes, shared task boards, and joint parent-child budget enforcement.</li>
+</ul></div></div></section>
+<section class="lesson-section" id="module-orchestration-p2-panel-B"><h3>9. Expected Outcomes (Future Sub-Task Delegation Exercise)</h3><div class="lesson-body"><div class="am-md"><p>When introducing multi-agent collaboration in a later stage, start with the simplest pattern: a read-only <code>review_document</code> sub-agent tool with maximum delegation depth 1.</p>
+<p><strong>Expected Outcomes:</strong></p>
+<ul>
+<li><strong>Intermediate exploration stays out of the main window</strong>: The sub-agent's multi-step file searches stay inside the child context window, while the main Agent receives only a structured issue list, evidence locations, and open uncertainties.</li>
+<li><strong>Strictly bounded permissions and depth</strong>: The read-only sub-agent cannot invoke any file-writing tools and cannot recursively spawn deeper sub-tasks.</li>
+<li><strong>Clear distinction of errors and timeouts</strong>: When required inputs are missing, a sub-task times out, or the parent task is cancelled, the main flow receives an explicit status rather than mistaking incomplete output for a passing review.</li>
+<li><strong>Quantifiable cost/benefit comparison</strong>: Comparing the single-agent baseline against sub-task delegation on the same task suite clearly reports the reduction in main-window tokens alongside changes in total call cost and task accuracy.</li>
+</ul>
+</div></div>
+</section><nav class="chapter-nav" aria-label="Chapter navigation"><a href="extensions.html#module-extensions">← Extensions: Connect Skills, Hooks &amp; External Tools</a><a href="../reference/architecture-agent-harness.html#architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint →</a></nav></article><footer class="footer"><p>Maintain this HTML page directly; general principles and stage practices are linked together.</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

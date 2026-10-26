@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Context Manager: Assemble What Goes to the Model · Learn Agent</title>
+<link rel="stylesheet" href="../../assets/tutorial.css">
+<script src="../../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Choose Long-Task Mechanisms from Real Failures</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Application &amp; Behavior Config</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><div class="nav-group-title">3. Harness Core</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality: Observability &amp; Evaluation</a><div class="nav-group-title">4. On-Demand Capabilities</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">Long Tasks &amp; Knowledge Reuse</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">Reliable Execution &amp; Isolation</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">5. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">6. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/context.html#module-context">中文版</a></p><article class="chapter" id="module-context">
+<header class="chapter-header"><span class="kind">Module Principles &amp; Design Options · Based on pi / Codex / Deep Agents Source</span><h2>Context Manager: Assemble What Goes to the Model</h2></header>
+<section class="lesson-section" id="module-context-p1-panel-A"><h3>1. Starting Problem &amp; Design Principles: Why Does "Saving History" Not Mean "Sending Everything Every Turn"?</h3><div class="lesson-body"><div class="am-md">
+<p>In multi-turn conversations or long-running tasks, historical messages and tool outputs grow rapidly. Consider this multi-step scenario:</p>
+<ul>
+<li><strong>User (Turn 1)</strong>: "Write an event announcement in Chinese, use UTC for all timestamps, and do not overwrite the original file before the final draft is approved."</li>
+<li><em>(Followed by multiple rounds of reading files, inspecting long logs, and revising drafts, accumulating dozens of historical messages)</em></li>
+<li><strong>User (Current Turn)</strong>: "Follow the earlier time rule and condense the announcement into two sentences."</li>
+</ul>
+<p>If the system simply concatenates every record from persistent storage and sends it to the model verbatim, two problems appear immediately:</p>
+<ul>
+<li><strong>Resending everything blows up the context window and dilutes key constraints</strong>: Obsolete drafts and bulky tool outputs repeatedly consume the model's context window, driving up latency and cost, triggering context-length overflow errors, or burying Turn 1's "UTC time" rule in noise.</li>
+<li><strong>Blind truncation drops constraints or breaks wire protocols</strong>: Simply slicing the "last K messages" can both drop Turn 1's core requirements and slice right between a tool call (<code>ToolCall</code>) and its execution receipt (<code>ToolResult</code>), immediately causing a model API protocol error.</li>
+</ul>
+<p>Therefore, <strong>"how much history is saved in storage (State / Transcript)" and "how much content is actually sent to the model in this request (Context)" must be separated into two distinct responsibilities</strong>. The <strong>Context Manager</strong> is dedicated to filtering and assembling each request before calling the model, selecting from candidate history, current task messages, reference materials, and tool definitions within the input budget.</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Data Object</th>
+<th>What It Stores</th>
+<th>Maintained By</th>
+<th>Sent in Full on Every Turn?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Execution Transcript (<code>Transcript / SessionLog</code>)</td>
+<td>Strictly ordered on-disk user prompts, full model responses, tool calls, and actual receipts</td>
+<td>Session &amp; State Layer (<a href="state.html#module-state">State</a>)</td>
+<td>No (retained in storage as the complete audit and recovery record)</td>
+</tr>
+<tr>
+<td>Structured Task State (<code>Task State</code>)</td>
+<td>Current goal, confirmed constraints (e.g., UTC rule), todo items, and check statuses</td>
+<td>Application or Task State Layer</td>
+<td>Only currently active items are sent</td>
+</tr>
+<tr>
+<td>External Artifacts (<code>Artifacts</code>)</td>
+<td>Workspace files, long logs, and other concrete data artifacts</td>
+<td>Filesystem &amp; Artifact Storage</td>
+<td>Reference paths, summary previews, or relevant snippets sent on demand</td>
+</tr>
+<tr>
+<td>Long-Term Memory (<code>Memory</code>)</td>
+<td>Project facts and user preferences reused across sessions</td>
+<td>Memory Module (<a href="memory.html#module-memory">Memory</a>)</td>
+<td>Filtered and injected by user/project scope</td>
+</tr>
+<tr>
+<td>Current Context (<code>Context</code>)</td>
+<td>System instructions, selected messages, reference snippets, and tool definitions actually sent in this request</td>
+<td><strong>Context Manager</strong></td>
+<td><strong>Yes (directly forms a single <code>ModelRequest</code>)</strong></td>
+</tr>
+</tbody></table></div>
+<p>Whether you use whole-block trimming, tool output offloading, or history summarization, Context Manager must uphold <strong>four baseline invariants</strong>:</p>
+<ul>
+<li><strong>Separate raw records from model input (read-only, side-effect-free)</strong>: Filtering, trimming, or compacting only produces an "input view for the current model call" and never overwrites or deletes the complete history in session storage.</li>
+<li><strong>Keep calls and receipts strictly paired (protocol integrity)</strong>: In the filtered message sequence, every <code>ToolCall</code> must appear paired with its corresponding <code>ToolResult</code>, never leaving orphaned calls or receipts.</li>
+<li><strong>Account for the full encoded payload in the budget</strong>: Budget accounting must cover system instructions, selected history, current task messages, tool schemas, and protocol continuation data (<code>continuation</code>), while reserving output headroom for the model's reply (<code>max_output_tokens</code>).</li>
+<li><strong>Preserve source roles and permission boundaries</strong>: Data entering the context from different sources must keep its original role (never elevating file contents or old messages into system instructions), and past authorizations in history never alter current <a href="policy.html#module-policy">Policy</a> checks; if required content alone exceeds the budget, fail explicitly before calling the model rather than silently dropping required constraints.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-context-interface"><h3>2. Black-Box Interaction &amp; Call Timing: Who Initiates, Who Decides, Who Executes?</h3><div class="lesson-body"><div class="am-md">
+<p>Inside the execution loop, Context Manager plugs in as a pure decision module <strong>right before Runner calls <code>Model.invoke()</code> on every step</strong>, exchanging two core data structures with neighboring modules:</p>
+<ul>
+<li><strong>Input (candidate materials &amp; budget config)</strong>: System instructions, candidate historical blocks grouped by task, prompts/responses/receipts generated so far in the current task, available tool definitions (schemas), and the input token budget.</li>
+<li><strong>Output (current request view or overflow error)</strong>: The assembled message sequence within budget plus a <strong>selection decision manifest</strong> (recording which blocks were kept, which were omitted or compacted, and the final token count); if fixed required content alone exceeds the budget, it returns an explicit unbuildable reason.</li>
+</ul>
+<p>Note the call timing: <strong>context is not filtered just once when the user prompt arrives—it must be re-evaluated before every single model request inside the loop</strong>. After Step 1 calls a tool to read a file within the same task, the large returned receipt immediately increases the input size for Step 2's model request.</p>
+<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 900 620" width="900" height="620" role="img" aria-label="General interaction: Runner reads completed history from the recording layer and tool definitions from the tool system, hands them to Context Manager to filter within budget before every model request, invokes Model with the selected input, authorizes tool execution via Policy, and appends actual receipts before re-checking on the next step">
+<defs><marker id="context-interface-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+<g fill="none" stroke="currentColor" stroke-width="1.3"><rect x="16" y="16" width="132" height="44" rx="8"/><rect x="185" y="16" width="130" height="44" rx="8"/><rect x="365" y="16" width="170" height="44" rx="8"/><rect x="590" y="16" width="110" height="44" rx="8"/><rect x="755" y="16" width="130" height="44" rx="8"/></g>
+<g fill="currentColor" text-anchor="middle" font-size="15"><text x="82" y="44">State / Records</text><text x="250" y="44">Runner</text><text x="450" y="44">Context Manager</text><text x="645" y="44">Model</text><text x="820" y="44">Tools / Policy</text></g>
+<g stroke="currentColor" opacity=".25" stroke-dasharray="5 5"><path d="M82 60 V570 M250 60 V570 M450 60 V570 M645 60 V570 M820 60 V570"/></g>
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#context-interface-arrow)"><path d="M250 110 H82"/><path d="M250 190 H820"/><path d="M250 285 H450"/><path d="M250 400 H645"/><path d="M250 490 H820"/><path d="M250 565 H82"/></g>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#context-interface-arrow)"><path d="M82 150 H250"/><path d="M820 230 H250"/><path d="M450 345 H250"/><path d="M645 445 H250"/><path d="M820 530 H250"/></g>
+<g fill="currentColor" text-anchor="middle" font-size="14"><text x="166" y="98">Read completed history blocks</text><text x="166" y="138">Ordered history &amp; turn grouping</text><text x="535" y="178">Get available tool declarations</text><text x="535" y="218">Tool schemas (without executing)</text><text x="350" y="264">System prompt, history, current msgs,</text><text x="350" y="280">tool schemas &amp; input budget</text><text x="350" y="323">Request view + selection manifest</text><text x="350" y="339">(or budget overflow error)</text><text x="447" y="388">Invoke model with filtered input</text><text x="447" y="433">Answer or tool calls (ModelResponse)</text><text x="535" y="478">Submit action → Policy check → execute</text><text x="535" y="518">Actual ToolResult (incl. denial/failure)</text><text x="166" y="553">Append response &amp; receipt (keep old history)</text><text x="450" y="605">Solid: call or append record; dashed: return result. Re-verify budget via Context Manager before next model call.</text></g>
+</svg><figcaption>General collaboration boundary: Context Manager filters and assembles the current input read-only, without modifying session storage or taking over tool permissions.</figcaption></figure>
+</div></div></section>
+<section class="lesson-section" id="module-context-p1-panel-B"><h3>3. Core Mechanism Breakdown: How Open-Source Harnesses Solve Three Shared Problems</h3><div class="lesson-body"><div class="am-md">
+<p>To safely turn candidate data into a single model request, every Agent Harness must solve three concrete problems in order: <strong>where to transform the view, how to account for the budget, and where to cut safely</strong>.</p>
+</div>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../../assets/diagrams/diagram-module-context-1-panel-B-1.svg" width="363" height="669" alt="Flowchart: Current requirements and execution progress, gather candidate content, history/materials and tool definitions, verify source and access scope, select required and relevant snippets, choose strategy when over budget, encode and re-verify budget, ready to send?" loading="lazy"><figcaption>Input construction flow for a single model request: gather candidates → separate required from optional → trim/compact within budget → encode and re-verify before sending.</figcaption></figure>
+<div class="am-md">
+<h4>Problem 1: How Are Persistent Records Transformed into a Model Request View?</h4>
+<ul>
+<li><strong>pi (Explicit three-step pipeline)</strong>: Strictly separates "storage records → context messages → provider wire protocol" into three layers. <code>buildSessionContext</code> in <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/session/context.ts">session/context.ts</a> first reconstructs the active branch's messages from the JSONL entry tree; inside <code>streamAssistantResponse</code> in <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">agent-loop.ts</a>, it first calls <code>transformContext</code> to filter or inject at the Agent message layer, and finally calls <code>convertToLlm</code> to encode into the specific provider's request format.</li>
+<li><strong>Codex (Rollout reconstruction &amp; runtime context)</strong>: <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/rollout/src/recorder.rs">RolloutRecorder</a> appends full interactions to JSONL; on resume or request, <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/model_context.rs">model_context.rs</a> (<code>load_latest_model_context</code>) and <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/core/src/session/rollout_reconstruction.rs">rollout_reconstruction.rs</a> extract the active <code>ResponseItem</code> sequence based on rollback or compaction markers.</li>
+<li><strong>Deep Agents &amp; AgentScope Java (Pre-request middleware interception)</strong>: Deep Agents intercepts model calls and replaces oversized history inside <code>wrap_model_call</code> in <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/summarization.py">summarization.py</a>; AgentScope Java checks budgets and invokes its compactor before requests in <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/middleware/CompactionMiddleware.java">CompactionMiddleware.java</a>.</li>
+</ul>
+<h4>Problem 2: How Do We Measure Size and Decide When to Trigger Trimming or Compaction?</h4>
+<p>"Keep only the last 5 conversation turns" cannot prevent overflows—a single receipt from reading a large file can fill the entire context window. A reliable implementation must account in tokens and reserve output headroom for the model's reply:</p>
+<p><code>Available Input Budget = Model Context Window (contextWindow) - Max Output Reserve (reserveTokens / max_output_tokens) - Safety Margin</code></p>
+<ul>
+<li><strong>pi (Window minus reserved tokens)</strong>: <code>shouldCompact(contextTokens, contextWindow, settings)</code> in <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/compaction/compaction.ts">compaction.ts</a> checks whether current context tokens exceed <code>contextWindow - settings.reserveTokens</code>, reserving space ahead of time for the current generation.</li>
+<li><strong>Deep Agents (Proportional threshold from model window)</strong>: <code>compute_summarization_defaults</code> in <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/summarization.py">summarization.py</a> automatically sets the compaction trigger token threshold and retained tail budget based on the model's maximum context window.</li>
+<li><strong>Codex (Configurable compaction threshold)</strong>: Exposes the context window and automatic compaction token threshold in its <a href="https://learn.chatgpt.com/docs/config-file/config-reference">Configuration Reference</a>.</li>
+</ul>
+<h4>Problem 3: Where Can We Cut Without Breaking Tool Call and Receipt Pairing?</h4>
+<p>Model protocols require every assistant <code>ToolCall</code> to be followed by its matching <code>ToolResult</code> with the same <code>call_id</code>. Slicing arbitrarily by message count leaves orphaned calls or half-receipts that the model API will immediately reject:</p>
+<ul>
+<li><strong>pi (<code>findCutPoint</code> avoids toolResult boundaries)</strong>: <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/compaction/compaction.ts">compaction.ts</a> accumulates the retained tail backward from the newest message (<code>keepRecentTokens</code>) and, in <code>findCutPoint</code>, explicitly enforces that <strong>a cut point must never start on a <code>toolResult</code> message</strong>—it must align with a complete interaction boundary, preserving everything after the cut point verbatim as <code>retainedTail</code>.</li>
+<li><strong>AgentScope Java (Paired pruning verification)</strong>: <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/memory/compaction/ConversationCompactor.java">ConversationCompactor.java</a> explicitly verifies and guarantees that tool calls and tool results are retained or removed in pairs when pruning old tool outputs and compacting history.</li>
+<li><strong>This Project's Stage 4 MVP (Using a completed <code>Turn</code> as the minimal trimming unit)</strong>: Directly reuses the closed user-task boundaries (<code>Turn</code>) validated in Stage 3. A completed <code>Turn</code> encapsulates "user prompt → all tool calls and receipts → final answer" as a whole; retaining or omitting entire <code>Turn</code> blocks naturally guarantees that no <code>call_id</code> pair is ever split apart.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-context-p1-panel-D"><h3>4. Comparing Design Options: 7 Strategies When Content Exceeds the Budget</h3><div class="lesson-body"><div class="am-md">
+<p>When candidate content exceeds the input budget, you can choose from the following strategies progressively based on your actual bottleneck (think of them as a composable toolkit rather than a checklist to build all at once in v1):</p>
+<h4>A. Full History Concatenation (Baseline Control)</h4>
+<ul>
+<li><strong>How it works</strong>: Send all completed history and current messages in chronological order along with system instructions and tool definitions (Stage 3's current behavior).</li>
+<li><strong>Best for</strong>: Short conversations with few turns and brief tool outputs, or as a baseline for diagnosing whether a model error was caused by trimming away needed context.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Input size grows linearly with turns and tool calls, inevitably hitting context window limits on large files or long conversations.</li>
+</ul>
+<h4>B. Deterministic Trimming by Complete Interaction Block (Stage 4 MVP Choice)</h4>
+<ul>
+<li><strong>How it works</strong>: Lock system instructions, explicitly pinned required history, and current task messages, treating all other completed historical tasks (<code>Turn</code>) as optional blocks; when over budget, omit optional <code>Turn</code> blocks from oldest to newest until the budget is met.</li>
+<li><strong>Best for</strong>: Multi-turn daily Q&amp;A, self-contained phased tasks, and the foundational budget guardrail before adding long-task mechanisms.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Zero extra model calls, 100% deterministic behavior, and 100% verbatim fidelity inside kept blocks; however, if early requirements are neither pinned nor extracted into structured task state, very early constraints will be dropped along with old turns.</li>
+</ul>
+<h4>C. Large Tool Result Offloading &amp; Preview (Offloading)</h4>
+<ul>
+<li><strong>How it works</strong>: When a tool returns a huge file or long log, save the full content to the workspace or artifact store and keep only the execution status, head/tail preview, file path, and pagination instructions in context; in later turns, large write arguments that have already been flushed to disk can also be replaced with compact references.</li>
+<li><strong>Best for</strong>: Tasks that frequently read long documents, large source files, or build logs.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Drastically cuts single-step volume noise without extra model calls; however, you must provide a reliable paginated read tool (truncating without a way to read the rest permanently hides middle details) and record content hashes in case the underlying file changes.</li>
+</ul>
+<h4>D. History Summarization + Recent Verbatim Tail (Compaction / Summarization)</h4>
+<ul>
+<li><strong>How it works</strong>: At a safe cut point (such as <code>findCutPoint</code>), ask a model to condense earlier interaction blocks into a structured summary (retaining goals, confirmed constraints, key findings, failed attempts, and file references) and combine it with "recent verbatim blocks (<code>retainedTail</code>) + current task messages."</li>
+<li><strong>Best for</strong>: Complex long tasks that evolve the same deliverable across dozens of turns.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Adds extra model call latency and token cost; repeated summarization can accumulate drift (e.g., dropping "UTC time" or misstating "do not overwrite yet"), so hard constraints should live in structured state and summarization must have a fallback strategy on failure.</li>
+</ul>
+<h4>E. On-Demand Retrieval &amp; Progressive Disclosure (Retrieval / Progressive Disclosure)</h4>
+<ul>
+<li><strong>How it works</strong>: Put only a brief index, document titles, or Skill summaries in the initial context, dynamically fetching relevant snippets during execution via keyword search (e.g., FTS) or vector retrieval based on the current query.</li>
+<li><strong>Best for</strong>: Projects with large reference libraries, specification docs, or many extension tools where any single turn only needs a tiny fraction.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Only supplements external static/semi-static reference material and cannot replace the execution state of the active conversation; carries retrieval-miss risk, and both indexing and reading must obey Policy workspace boundaries.</li>
+</ul>
+<h4>F. Isolated Sub-agent Context Windows (Sub-agent Isolation)</h4>
+<ul>
+<li><strong>How it works</strong>: Delegate step-heavy code searches, log investigations, or independent reviews to a sub-agent with its own isolated context window; the main Agent receives only the distilled conclusion and evidence citations (see <a href="orchestration.html#module-orchestration">Orchestration</a>).</li>
+<li><strong>Best for</strong>: Sub-problems with long exploratory trails and noisy intermediate output but concise final conclusions.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Increases multi-agent coordination and verification overhead; if the sub-agent omits critical context, the main Agent may not notice.</li>
+</ul>
+<h4>G. Provider-Native Server-Side Compaction (Provider-Native Compaction)</h4>
+<ul>
+<li><strong>How it works</strong>: Call a model provider's dedicated compaction endpoint (such as OpenAI Responses API Compaction), which returns opaque compacted continuation data to pass into subsequent turns.</li>
+<li><strong>Best for</strong>: Scenarios standardized on a single model provider that want to avoid maintaining custom summarization prompts.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Compacted payloads are opaque, cannot be partially edited, and cannot be reused across models or providers; you must still keep local raw JSONL records for auditing and model switching.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-context-p1-panel-E"><h3>5. Side-by-Side Comparison &amp; How Mechanisms Combine</h3><div class="lesson-body"><div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>Core Pain Point Addressed</th>
+<th>Added Engineering Cost</th>
+<th>Typical Failure Risk</th>
+<th>Place in Evolution Roadmap</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Whole-block trimming</td>
+<td>Multi-turn history accumulation</td>
+<td>Protocol-aligned token counting + Turn-block filtering</td>
+<td>Unpinned early constraints dropped with old blocks</td>
+<td><strong>Stage 4 MVP (Foundational budget guardrail)</strong></td>
+</tr>
+<tr>
+<td>Large result offloading</td>
+<td>Single tool call returning huge logs or files</td>
+<td>Artifact storage, preview generation &amp; paginated read tool</td>
+<td>Preview misses key error, or underlying file mutates</td>
+<td>Stage 5 (Introduced when large tool outputs hurt)</td>
+</tr>
+<tr>
+<td>History summarization</td>
+<td>Long exploratory trail cannot simply be dropped</td>
+<td>Extra model call, cut-point logic &amp; summary versioning</td>
+<td>Summary drops hard constraints or drifts over multiple passes</td>
+<td>Stage 5 (Introduced when long horizons hurt)</td>
+</tr>
+<tr>
+<td>Retrieval &amp; progressive loading</td>
+<td>Too many reference docs or extension descriptions</td>
+<td>Index maintenance &amp; multi-round retrieval round-trips</td>
+<td>Missed key passages or stale hits</td>
+<td>Stage 5 / 7 (Introduced as reference scale grows)</td>
+</tr>
+<tr>
+<td>Sub-agent window isolation</td>
+<td>Intermediate search/trial-and-error floods main window</td>
+<td>Sub-task delegation contract, separate budget &amp; verification</td>
+<td>Handoff context loss or sub-agent hallucination propagation</td>
+<td>Stage 7 (Introduced with multi-role collaboration)</td>
+</tr>
+<tr>
+<td>Provider-native compaction</td>
+<td>Growing protocol continuation state under a specific API</td>
+<td>Vendor lock-in &amp; server-side compaction billing</td>
+<td>Opaque black-box state &amp; incompatible across vendors</td>
+<td>Optional extension (provider-specific adapter)</td>
+</tr>
+</tbody></table></div>
+<p><strong>Do not confuse Prefix Caching with Context Budget Management:</strong> Keeping system instructions and leading prefixes stable lets model providers hit prefix caches, reducing repeated compute cost and time-to-first-token; however, <strong>cached tokens still count 100% toward the current request's context window limit</strong>—prefix caching never replaces input token accounting and trimming.</p>
+</div></div>
+</section>
+<section class="lesson-section" id="module-context-p1-panel-F"><h3>6. Summary of Open-Source &amp; Industry Source Evidence</h3><div class="lesson-body"><div class="am-md">
+<p>The pinned source files and official docs below show where these mechanisms live in production projects (for the full repository list, see <a href="../reference/research.html#reference-research">Design Basis</a>):</p>
+<ul>
+<li><strong>pi (Pinned commit <code>9d2ec7ffabe927bfad2214c1cee25b6632a78dcf</code>)</strong>:
+  <ul>
+  <li><a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">packages/agent/src/agent-loop.ts</a>: Calls <code>transformContext</code> followed by <code>convertToLlm</code> before every model request.</li>
+  <li><a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/compaction/compaction.ts">packages/agent/src/harness/compaction/compaction.ts</a>: <code>shouldCompact</code> accounts for window size and reserved tokens, <code>findCutPoint</code> avoids <code>toolResult</code> boundaries to find a safe cut point, and <code>prepareCompaction</code> generates a summary while keeping <code>retainedTail</code>.</li>
+  <li><a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/session/context.ts">packages/agent/src/harness/session/context.ts</a>: <code>buildSessionContext</code> reconstructs the model input view from the latest compaction entry and subsequent messages.</li>
+  </ul>
+</li>
+<li><strong>Deep Agents (Pinned commit <code>97f856dcb08264ef78722a4687cab9133ec5fb7a</code>)</strong>:
+  <ul>
+  <li><a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/filesystem.py">middleware/filesystem.py</a>: Intercepts oversized tool outputs at the <code>wrap_tool_call</code> boundary and offloads them to file references.</li>
+  <li><a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/summarization.py">middleware/summarization.py</a>: Accounts for budgets, compacts old tool arguments, and triggers history summarization at the <code>wrap_model_call</code> boundary (see <a href="https://docs.langchain.com/oss/python/deepagents/context-engineering">official docs</a>).</li>
+  </ul>
+</li>
+<li><strong>AgentScope Java Harness (Pinned commit <code>40a4a57ad79e82f8505572d3b195d0264ec7efcb</code>)</strong>:
+  <ul>
+  <li><a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/context.md">docs/v2/zh/docs/harness/context.md</a>: Partitions priority budgets across stable instructions, history records, task state, and reference materials.</li>
+  <li><a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/middleware/CompactionMiddleware.java">CompactionMiddleware.java</a> &amp; <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/memory/compaction/ConversationCompactor.java">ConversationCompactor.java</a>: Prunes old tool results and generates summaries by threshold before requests while enforcing paired tool calls and receipts.</li>
+  </ul>
+</li>
+<li><strong>Claude Code &amp; Codex / OpenAI Responses (Official Docs &amp; Source)</strong>:
+  <ul>
+  <li><a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code Works</a>: Keeps always-on rules concise, loads Skills on demand, isolates sub-tasks in separate windows, and clears old tool outputs before compacting history as the window limit approaches.</li>
+  <li><a href="https://learn.chatgpt.com/docs/config-file/config-reference">Codex Configuration Reference</a> &amp; <a href="https://developers.openai.com/api/docs/guides/compaction">OpenAI Responses Compaction Guide</a>: Document automatic compaction threshold settings and server-side native compaction protocols.</li>
+  </ul>
+</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-context-p1-panel-G"><h3>7. Scenario Walkthrough: How Different Strategies Behave on the Same Long Task</h3><div class="lesson-body"><div class="am-md"><p>Returning to our opening scenario, suppose a 30-turn task goes through four key milestones:</p>
+<ul>
+<li><strong>Turn 1 (User)</strong>: "Write an event announcement in Chinese, use UTC for all timestamps, and do not overwrite the original file before the final draft is approved."</li>
+<li><strong>Turn 10 (Tool receipt)</strong>: Reads 50 pages of past event records and long logs.</li>
+<li><strong>Turn 20 (User)</strong>: "Format the schedule at the end of the announcement as a three-column table."</li>
+<li><strong>Turn 30 (User)</strong>: "Follow the earlier rules and finish the final announcement."</li>
+</ul>
+<p>How different strategies perform in this scenario:</p>
+<ul>
+<li><strong>Whole-block trimming only (without pinning required blocks)</strong>: Preserves Turn 20's three-column table requirement and recent tool pairs intact, but drops Turn 1's "UTC time" rule because it is the oldest block; <strong>improvement</strong>: support explicitly pinning required historical blocks (such as keeping <code>T1</code>) or extracting structured task constraints.</li>
+<li><strong>History summarization only</strong>: Condenses the first 20 turns into a short paragraph, but the summarizer model might drop "UTC time" or misstate "do not overwrite the original file yet" as "prepare to write to the original file" (which is why, alongside preserving key requirement text verbatim, write operations must still be gated by an independent <a href="policy.html#module-policy">Policy</a>).</li>
+<li><strong>Large tool result offloading only</strong>: Eliminates the massive footprint of Turn 10's 50-page log, but cannot stop the continuous growth of the 30 conversation turns themselves.</li>
+<li><strong>External document retrieval only</strong>: Finds past event snippets by keyword, but has no idea the user verbally changed the table format in Turn 20.</li>
+<li><strong>Staged combination</strong>: First implement "budget accounting + required block protection + deterministic whole-Turn trimming" in <strong>Stage 4</strong> to guard the context window baseline; then in <strong>Stage 5</strong> add "large result offloading with previews" for long logs and "history summarization" for extended exploration trails.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-context-p2-panel-A"><h3>8. Current Project Choice &amp; Evolution Roadmap</h3><div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>History source</strong>: <code>SessionLog.history_turns()</code> reconstructs complete completed turns from JSONL; in-memory history is also supported. Original records remain separate from each model input.</li>
+<li><strong>Currently implemented (<a href="../stages/stage-4.html#stage-4">Stage 4 MVP: Context Management &amp; Budgets</a>)</strong>: We choose <strong>shared protocol encoding for offline size estimates + output reserve calculation + required content protection + deterministic oldest-first trimming by complete user task (<code>Turn</code>) + re-verification before every <code>model.invoke()</code> + returning a selection decision manifest</strong>.
+  <ul>
+  <li><strong>Why this combination for v1</strong>: Reusing Stage 3's closed <code>Turn</code> boundaries guarantees 100% intact <code>ToolCall</code> and <code>ToolResult</code> pairing; pure functional logic consumes zero extra model tokens for summarization, behaves deterministically, and is easy to hand-verify and boundary-test locally.</li>
+  </ul>
+</li>
+<li><strong>Measurement scope</strong>: UTF-8 bytes of input JSON provide a conservative estimate, not an exact provider token count. Configure the window allowance and safety margin or replace the meter for a specific model; see <a href="../stages/stage-4.html#stage-4-budget">Stage 4</a>.</li>
+<li><strong>Future on-demand extensions (<a href="../stages/stage-5.html#stage-5">Stage 5</a> and beyond)</strong>: Large tool result offloading and paginated reading, history summarization (Compaction), on-demand retrieval (RAG), and cross-session long-term memory (Memory).</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-context-p2-panel-B"><h3>9. Expected Outcomes</h3><div class="lesson-body"><div class="am-md">
+<p>Once Context Manager is wired into the loop, <strong>expected outcomes:</strong></p>
+<ul>
+<li><strong>Zero damage to raw records</strong>: Regardless of how many old turns are omitted from the current request, the full original history in <code>SessionLog</code> files or memory remains untouched.</li>
+<li><strong>Strictly paired calls and receipts</strong>: Every tool call (<code>ToolCall</code>) and tool receipt (<code>ToolResult</code>) in the filtered input is closed in pairs, never triggering protocol pairing errors.</li>
+<li><strong>Protected required constraints</strong>: System instructions, explicitly pinned required history (such as Turn 1's UTC requirement), and the currently executing task's messages are prioritized; if required content alone exceeds the budget, the run fails explicitly before calling the model.</li>
+<li><strong>Dynamic in-loop re-verification</strong>: After a tool returns a large receipt within the same task, the next step automatically recounts and re-filters before invoking the model, preventing mid-loop window overflows.</li>
+<li><strong>Transparent, auditable selection decisions</strong>: Every build returns the budget cap, kept block list, omitted block list, and final token count, making it immediately clear whether "information was never sent to the model" or "it was sent but the model ignored it."</li>
+</ul>
+</div></div>
+</section><nav class="chapter-nav" aria-label="Chapter navigation"><a href="state.html#module-state">← Session / State: Manage Sessions &amp; Execution Records</a><a href="quality.html#module-quality">Quality: Observability &amp; Evaluation →</a></nav></article><footer class="footer"><p>Maintain this HTML page directly; general principles and stage practices are linked together.</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

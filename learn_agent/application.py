@@ -3,6 +3,7 @@
 from collections.abc import Iterable
 from pathlib import Path
 
+from .context import DEFAULT_BUDGET, ContextBudget
 from .models import LLMService
 from .policy import PolicyEvaluator
 from .runner import RunResult, run_agent
@@ -26,6 +27,8 @@ def run_task(
     *,
     definitions: Iterable[ToolDefinition] = DEFAULT_TOOLS,
     session: SessionLog | None = None,
+    context_budget: ContextBudget = DEFAULT_BUDGET,
+    required_turn_ids: frozenset[str] = frozenset(),
 ) -> RunResult:
     """会话由入口持有；校验工作区后运行任务，最后关闭模型连接。"""
     if session is not None:
@@ -33,6 +36,13 @@ def run_task(
     tools = ToolRegistry(definitions, workspace, policy)
     model = LLMService()
     try:
-        return run_agent(model, question, tools, session=session)
+        return run_agent(
+            model,
+            question,
+            tools,
+            session=session,
+            context_budget=context_budget,
+            required_turn_ids=required_turn_ids,
+        )
     finally:
         model.close()

@@ -39,9 +39,16 @@ class TutorialHandler(SimpleHTTPRequestHandler):
     """复用标准静态响应，同时限制发布范围和目录入口。"""
 
     def send_head(self) -> io.BytesIO | BinaryIO | None:
-        if urlsplit(self.path).path in {"/", "/docs", "/docs/"}:
+        request_path = urlsplit(self.path).path
+        if request_path in {"/", "/docs", "/docs/"}:
             self.send_response(HTTPStatus.FOUND)
             self.send_header("Location", "/docs/tutorial.html")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return None
+        if request_path in {"/docs/en", "/docs/en/"}:
+            self.send_response(HTTPStatus.FOUND)
+            self.send_header("Location", "/docs/en/tutorial.html")
             self.send_header("Content-Length", "0")
             self.end_headers()
             return None

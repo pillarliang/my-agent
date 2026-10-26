@@ -11,8 +11,9 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
+from .context import HistoryTurn
 from .models import ModelMessage, ModelResponse, TextMessage
-from .tools import ToolCall, ToolResult
+from .tools import ToolResult
 
 
 class SessionHeader(BaseModel):
@@ -94,43 +95,9 @@ def _message(payload: dict[str, Any]) -> ModelMessage:
             raise ValueError("未知的历史消息类型。")
 
 
-def _validate_completed(messages: list[ModelMessage]) -> None:
-    """completed 历史必须是用户问题、完整调用回执链与最终回答。"""
-    if not messages or not isinstance(messages[0], TextMessage) or not messages[0].content.strip():
-        raise ValueError("已完成任务缺少用户问题。")
-    pending: list[ToolCall] = []
-    final = False
-    for message in messages[1:]:
-        if final:
-            raise ValueError("最终回答之后还有消息。")
-        if isinstance(message, ModelResponse):
-            if pending:
-                raise ValueError("已完成任务缺少工具回执。")
-            if message.refusal or message.stop_reason not in ("stop", "tool_calls"):
-                raise ValueError("已完成任务包含未正常结束的模型响应。")
-            pending = list(message.tool_calls)
-            if len({call.call_id for call in pending}) != len(pending):
-                raise ValueError("同一模型响应中有重复的工具调用 ID。")
-            if not pending:
-                if not (message.text or "").strip():
-                    raise ValueError("已完成任务的最终回答为空。")
-                final = True
-        elif isinstance(message, ToolResult):
-            if not pending or (message.call_id, message.name) != (
-                pending[0].call_id,
-                pending[0].name,
-            ):
-                raise ValueError("工具回执与调用不匹配。")
-            pending.pop(0)
-        else:
-            raise ValueError("一个用户任务中不能插入另一个用户问题。")
-    if pending or not final:
-        raise ValueError("已完成任务的消息链不完整。")
-
-
-def _history(records: list[Record]) -> tuple[ModelMessage, ...]:
+def _history(records: list[Record]) -> tuple[HistoryTurn, ...]:
     """失败或未结束片段保留在记录中，只将完整 completed 任务带入模型。"""
-    history: list[ModelMessage] = []
+    history: list[HistoryTurn] = []
     messages: list[ModelMessage] = []
     active: str | None = None
     seen = set()
@@ -148,8 +115,7 @@ def _history(records: list[Record]) -> tuple[ModelMessage, ...]:
         else:
             match record.payload:
                 case {"status": "completed"} if set(record.payload) == {"status"}:
-                    _validate_completed(messages)
-                    history.extend(messages)
+                    history.append(HistoryTurn(record.turn_id, tuple(messages)))
                 case {"status": "failed", "error": {"code": str(), "message": str()}}:
                     if set(record.payload) != {"status", "error"} or set(
                         record.payload["error"]
@@ -207,6 +173,10 @@ class SessionLog:
             raise ValueError("会话工作目录与当前工作目录不一致。")
 
     def history(self) -> tuple[ModelMessage, ...]:
+        return tuple(message for turn in self._completed for message in turn.messages)
+
+    def history_turns(self) -> tuple[HistoryTurn, ...]:
+        """保留已完成任务的边界，供上下文选择按整块裁剪。"""
         return self._completed
 
     def _record(

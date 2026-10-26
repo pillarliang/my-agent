@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 700" role="img" aria-labelledby="title desc"><title id="title">阶段 4 当前实现：在每次模型请求前执行上下文选择与预算复核</title><desc id="desc">Runner 在每次模型请求前调用 select_context；会话保留完整原文。</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:16px}.head{font-size:19px;font-weight:650}.small{font-size:14.5px;fill:#526176}.box{fill:#f4f7fb;stroke:#c2cddd;stroke-width:1.5}.active{fill:#eff6ff;stroke:#7ca4d8;stroke-width:1.5}.planned{fill:#fffaf0;stroke:#b28a43;stroke-width:1.6;stroke-dasharray:none}.arrow{fill:none;stroke:#40516b;stroke-width:1.6}.future{fill:none;stroke:#9a722c;stroke-width:1.6;stroke-dasharray:none}</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker><marker id="future-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#9a722c"/></marker></defs>
+<text x="24" y="32" class="head">阶段 4 接入位置：每次调用 model.invoke() 前执行预算核算与整块裁剪</text>
+<rect x="24" y="56" width="410" height="92" rx="8" class="box"/>
+<text x="40" y="86" class="head">入口 / 应用配置 · 预算参数</text>
+<text x="40" y="114" class="small">传入工作目录、Policy、会话及模型窗口／输出预留配置</text>
+<text x="40" y="136" class="small">无需用户每次手动计算 Token，也不由模型自行审批超限</text>
+<rect x="476" y="56" width="380" height="170" rx="8" class="box"/>
+<text x="492" y="86" class="head">SessionLog（可选）· 已有模块</text>
+<text x="492" y="114" class="small">读取：提取已完成的历史 Turn 块（含 turn_id）</text>
+<text x="492" y="139" class="small">写入：按原样追加本轮问题、响应、回执与结束状态</text>
+<text x="492" y="164" class="small">边界：裁剪只影响模型请求视图，绝不删改磁盘记录</text>
+<text x="492" y="189" class="small">解耦：无持久会话时，内存历史块同样可参与预算裁剪</text>
+<path d="M229 148 V196" class="arrow" marker-end="url(#arrow)"/>
+<rect x="24" y="200" width="410" height="156" rx="8" class="active"/>
+<text x="40" y="230" class="head">run_agent() 循环 · 已有主线</text>
+<text x="40" y="258" class="small">汇总系统指令、候选历史 Turn 块、当前任务消息与工具定义</text>
+<text x="40" y="283" class="small">每步请求模型前调用上下文选择；拿到响应后推进工具循环</text>
+<text x="40" y="308" class="small">工具返回大段回执后，下一轮请求前重新触发复核</text>
+<text x="40" y="333" class="small">若收到必需内容超限错误，记录失败并立即停止循环</text>
+<path d="M476 140 H438" class="arrow" marker-end="url(#arrow)"/>
+<text x="457" y="128" class="small" text-anchor="middle">历史块</text>
+<path d="M434 240 H472" class="arrow" marker-end="url(#arrow)"/>
+<text x="455" y="260" class="small" text-anchor="middle">追加记录</text>
+<rect x="476" y="264" width="380" height="196" rx="8" class="planned"/>
+<text x="492" y="294" class="head">上下文选择与预算复核 · select_context()</text>
+<text x="492" y="322" class="small">1. 划分固定必需内容、显式必需历史与可选历史 Turn</text>
+<text x="492" y="347" class="small">2. 共用协议编码，以 UTF-8 字节数估算输入体积</text>
+<text x="492" y="372" class="small">3. 超出输入预算时，从最旧的可选 Turn 开始整块省略</text>
+<text x="492" y="397" class="small">4. 仅必需内容已超限时，直接返回包含明细的超限错误</text>
+<text x="492" y="422" class="small">5. 返回筛选后的消息序列 + 保留／省略决策清单</text>
+<text x="492" y="445" class="small">纯逻辑函数：不发网络请求、不执行工具、不改原文件</text>
+<path d="M434 300 H472" class="future" marker-end="url(#future-arrow)"/>
+<path d="M476 340 H438" class="future" marker-end="url(#future-arrow)"/>
+<rect x="24" y="456" width="196" height="114" rx="8" class="box"/>
+<text x="40" y="486" class="head">Model · 已有接口</text>
+<text x="40" y="514" class="small">invoke(ModelRequest)</text>
+<text x="40" y="539" class="small">只发送筛选后的消息与</text>
+<text x="40" y="559" class="small">配置的 max_output_tokens</text>
+<rect x="238" y="456" width="196" height="114" rx="8" class="box"/>
+<text x="254" y="486" class="head">Tools + Policy · 已有</text>
+<text x="254" y="514" class="small">校验与授权后执行工具</text>
+<text x="254" y="539" class="small">真实 ToolResult 追加回</text>
+<text x="254" y="559" class="small">当前任务并参与下轮复核</text>
+<path d="M110 356 V452" class="arrow" marker-end="url(#arrow)"/>
+<path d="M140 456 V360" class="arrow" marker-end="url(#arrow)"/>
+<path d="M320 356 V452" class="arrow" marker-end="url(#arrow)"/>
+<path d="M350 456 V360" class="arrow" marker-end="url(#arrow)"/>
+<rect x="24" y="600" width="832" height="76" rx="8" class="box"/>
+<text x="40" y="628" class="head">当前实现：按完整 Turn 选择上下文，保留原始历史与工具回执</text>
+<text x="40" y="655" class="small">阶段 4 先落地“协议一致计量 + 按完整 Turn 整块裁剪 + 每次请求前复核”；大结果另存、摘要与检索留作阶段 5 按需扩展。</text>
+</svg>

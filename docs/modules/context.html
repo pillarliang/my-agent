@@ -5,141 +5,159 @@
 <link rel="stylesheet" href="../assets/tutorial.css">
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
-<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
-<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-context"><header class="chapter-header"><span class="kind">模块原理与方案 · 尚未实现</span><h2>Context Manager：组织本次发给模型的内容</h2></header><section class="lesson-section" id="module-context-p1-panel-A"><h3>1. 问题起点：Context 管理的对象是什么？</h3><div class="lesson-body"><div class="am-md"><p>在长任务中，历史消息与外部资料会快速膨胀。考虑以下多步场景：</p>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/modules/context.html#module-context">English</a></p><article class="chapter" id="module-context">
+<header class="chapter-header"><span class="kind">模块原理与方案 · 依据 pi / Codex / Deep Agents 源码</span><h2>Context Manager：组织本次发给模型的内容</h2></header>
+<section class="lesson-section" id="module-context-p1-panel-A"><h3>1. 问题起点与设计原则：为什么“保存了历史”不等于“每次全发给模型”？</h3><div class="lesson-body"><div class="am-md">
+<p>在多轮对话或长任务中，历史消息与工具返回结果会快速膨胀。考虑以下多步场景：</p>
 <ul>
-<li><strong>用户</strong>：“读取项目资料，生成包含来源和 UTC 时间的报告，先不要发布。”</li>
-<li><em>（经过多轮读取、修改和检查，累计了数十条消息与大段日志）</em></li>
-<li><strong>用户</strong>：“继续完成报告。”</li>
+<li><strong>用户（第 1 轮）</strong>：“帮我写一份活动通知，用中文，时间统一写 UTC，定稿前先不要覆盖原文件。”</li>
+<li><em>（中间经历多轮文件读取、长日志排查与草稿调整，累积了数十条历史消息）</em></li>
+<li><strong>用户（当前轮）</strong>：“沿用前面的时间规则，把通知缩成两句。”</li>
 </ul>
-<p>此时，模型仍然需要知道整体目标、关键约束（如“先不要发布”）、已确认的信息、当前文件状态和下一步计划：</p>
+<p>此时，系统如果直接把持久化存储里的记录原样拼给模型，会立刻遇到两个问题：</p>
 <ul>
-<li><strong>全量重发</strong>：很容易超出模型上下文窗口限制，且无关日志会稀释关键信息。</li>
-<li><strong>随意删减</strong>：如果简单截断早期消息，很可能把第 1 轮“先不要发布”的约束一起删掉。</li>
+<li><strong>全量重发会撑爆窗口并稀释重点</strong>：早已作废的草稿和大段工具输出会反复占用模型上下文窗口（Context Window），不仅拉高耗时与费用，还会触发输入超限报错，或把第 1 轮的“UTC 时间”要求淹没在噪音中。</li>
+<li><strong>盲目截断会丢失约束或破坏协议</strong>：如果简单截取“最近 K 条消息”，既可能把第 1 轮的核心要求删掉，又可能把一次工具调用（<code>ToolCall</code>）和它的执行回执（<code>ToolResult</code>）从中间切断，直接触发模型接口协议报错。</li>
 </ul>
-<p><strong>Context Manager（或 Context Builder）</strong>的核心职责，就是根据带来源标记的历史记录与参考资料，<strong>按预算筛选并组装本轮实际发给模型的输入内容</strong>。它既不是简单拼接聊天记录，也不负责替用户授予工具执行权限。</p>
+<p>因此，<strong>“存储层保存了多少历史（State / Transcript）”与“本次请求实际发给模型多少内容（Context）”必须拆成两个独立职责</strong>。<strong>Context Manager（上下文管理器）</strong>专门负责：在每次调用模型前，根据输入预算从候选历史、当前任务消息、参考资料与工具定义中筛选并组装本轮请求。</p>
 <div class="am-table-wrap"><table>
 <thead>
 <tr>
 <th>数据对象</th>
-<th>保存什么</th>
-<th>谁维护</th>
-<th>是否每轮全部发送</th>
+<th>保存什么内容</th>
+<th>由谁维护</th>
+<th>是否每轮全量发给模型</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Transcript</td>
-<td>原始请求、模型输出、工具调用与回执</td>
-<td>执行记录层（State）</td>
-<td>否</td>
+<td>执行记录（Transcript / SessionLog）</td>
+<td>按严格顺序落盘的用户提问、模型完整响应、工具调用与真实回执</td>
+<td>会话与状态层（<a href="state.html#module-state">State</a>）</td>
+<td>否（作为完整审计与恢复依据保留在存储中）</td>
 </tr>
 <tr>
-<td>Task State</td>
-<td>当前目标、已确认约束、待办、检查状态</td>
-<td>应用与状态层</td>
-<td>只发送本轮需要的部分</td>
+<td>结构化任务状态（Task State）</td>
+<td>当前目标、已确认约束（如 UTC 规则）、待办与检查状态</td>
+<td>应用或任务状态层</td>
+<td>只发送当前生效的部分</td>
 </tr>
 <tr>
-<td>Artifacts</td>
-<td>文件、日志和其他真实产物</td>
-<td>工具与产物存储</td>
-<td>通常发送引用和摘要片段</td>
+<td>外部产物（Artifacts）</td>
+<td>工作区文件、长日志等真实数据产物</td>
+<td>文件系统与产物存储</td>
+<td>按需发送引用路径、摘要预览或相关片段</td>
 </tr>
 <tr>
-<td>Memory</td>
-<td>跨会话可复用的知识与偏好</td>
-<td>记忆管理模块</td>
-<td>按用户、项目等作用域筛选</td>
+<td>长期记忆（Memory）</td>
+<td>跨会话复用的项目事实与用户偏好</td>
+<td>记忆模块（<a href="memory.html#module-memory">Memory</a>）</td>
+<td>按用户、项目等作用域筛选注入</td>
 </tr>
 <tr>
-<td>Context</td>
-<td>本轮指令、消息、参考资料和工具定义</td>
-<td>Context Manager</td>
-<td>是（即为本轮请求输入）</td>
+<td>本轮上下文（Context）</td>
+<td>本次请求实际发送的系统指令、入选消息、参考片段与工具定义</td>
+<td><strong>Context Manager</strong></td>
+<td><strong>是（直接构成单次 <code>ModelRequest</code>）</strong></td>
 </tr>
 </tbody></table></div>
-<p>不同来源的内容进入模型时必须保留<strong>来源标记与信任边界</strong>：应用配置的系统指令、用户要求、读取文件中的普通文本，绝不能因为最终都拼成字符串就被当成同等优先级的指令；历史记录里保存的旧授权，也不能改变当前执行器的权限判定。</p>
+<p>无论后续采用整块裁剪、结果另存还是历史摘要，Context Manager 都必须保证<strong>四条设计底线</strong>：</p>
+<ul>
+<li><strong>原始记录与模型输入分离（只读无副作用）</strong>：筛选、裁剪或压缩只生成“本次发给模型的输入视图”，绝不覆盖或删除会话存储中的完整历史记录。</li>
+<li><strong>调用与回执严格配对（协议完整性）</strong>：筛选后的消息序列中，每个 <code>ToolCall</code> 都必须与对应的 <code>ToolResult</code> 成对出现，绝不产生孤立的调用或回执。</li>
+<li><strong>全量编码口径核算预算</strong>：预算计算必须同时覆盖系统指令、入选历史、当前任务消息、工具 Schema、协议续接数据（<code>continuation</code>），并为模型回答预留输出空间（<code>max_output_tokens</code>）。</li>
+<li><strong>严守来源角色与权限边界</strong>：不同来源的数据进入上下文时必须保持原始角色（绝不把文件内容或旧消息提权为系统指令），历史中的旧授权也不改变当前 <a href="policy.html#module-policy">Policy</a> 的权限判断；若仅必需内容就已超出预算，必须在请求模型前明确报错停止，绝不静默丢弃必需约束。</li>
+</ul>
 </div></div>
 </section>
-<section class="lesson-section" id="module-context-interface"><h3>2. 模块协作：谁发起、谁决定、谁执行？</h3><div class="lesson-body"><div class="am-md">
-<p>在一次模型请求前后，各模块的协作流程如下：</p>
+<section class="lesson-section" id="module-context-interface"><h3>2. 黑盒交互与调用时机：谁发起、谁决定、谁执行？</h3><div class="lesson-body"><div class="am-md">
+<p>在运行循环中，Context Manager 作为纯逻辑决策模块接入在 <strong>Runner 每次调用 <code>Model.invoke()</code> 之前</strong>，与周边模块交换两项核心数据：</p>
 <ul>
-<li><strong>Runner 发起输入构建</strong>：传入当前问题、系统指令、已保存的历史消息与工具回执、可用参考资料以及 Token 预算。</li>
-<li><strong>State 与 Tools 提供候选数据</strong>：记录层提供历史消息，工具系统提供工具定义（Schema）和已产生的回执。</li>
-<li><strong>Context Manager 做出筛选决定</strong>：决定哪些内容进入本轮请求，并返回组装好的输入与来源清单。</li>
-<li><strong>Runner 调用 Model 与 Tools</strong>：拿到构建好的输入后请求 Model；模型返回工具调用后交由 Tools 与 Policy 校验执行，拿到真实回执并保存后进入下一轮。</li>
+<li><strong>输入（候选材料与预算配置）</strong>：系统指令、按任务归组的候选历史块、当前任务已产生的提问／响应／回执、可用工具定义（Schema）以及输入 Token 预算。</li>
+<li><strong>输出（本轮请求视图或超限错误）</strong>：在预算内组装好的消息序列与<strong>选择决策清单</strong>（记录保留了哪些块、省略或压缩了哪些块、最终计量体积）；若仅固定必需内容已超出预算，则返回明确的无法构建原因。</li>
 </ul>
-<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 900 660" width="900" height="660" role="img" aria-label="通用交互：Runner 从记录层取得历史和从工具系统取得能力说明，交给 Context Manager 选择；收到输入后请求 Model，工具执行由 Policy 授权，真实回执保存后进入下一轮">
+<p>注意调用时机：<strong>不是只在收到用户提问时筛选一次，而是循环内每发起一次模型请求前都要重新复核</strong>。因为同一任务内部第 1 步调用工具读取文件后，返回的大段回执会立刻增大第 2 步请求模型的输入体积。</p>
+<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 900 620" width="900" height="620" role="img" aria-label="通用交互：Runner 从记录层取得已完成历史、从工具系统取得工具定义，在每步请求模型前交给 Context Manager 按预算筛选；拿到本轮输入后请求 Model，工具执行经 Policy 授权，真实回执追加保存后进入下一轮复核">
 <defs><marker id="context-interface-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
 <g fill="none" stroke="currentColor" stroke-width="1.3"><rect x="16" y="16" width="132" height="44" rx="8"/><rect x="185" y="16" width="130" height="44" rx="8"/><rect x="365" y="16" width="170" height="44" rx="8"/><rect x="590" y="16" width="110" height="44" rx="8"/><rect x="755" y="16" width="130" height="44" rx="8"/></g>
 <g fill="currentColor" text-anchor="middle" font-size="15"><text x="82" y="44">会话／记录层</text><text x="250" y="44">Runner</text><text x="450" y="44">Context Manager</text><text x="645" y="44">Model</text><text x="820" y="44">Tools / Policy</text></g>
-<g stroke="currentColor" opacity=".25" stroke-dasharray="5 5"><path d="M82 60 V610 M250 60 V610 M450 60 V610 M645 60 V610 M820 60 V610"/></g>
-<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#context-interface-arrow)"><path d="M250 110 H82"/><path d="M250 190 H820"/><path d="M250 285 H450"/><path d="M250 390 H82"/><path d="M250 440 H645"/><path d="M250 530 H820"/><path d="M250 610 H82"/></g>
-<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#context-interface-arrow)"><path d="M82 150 H250"/><path d="M820 230 H250"/><path d="M450 345 H250"/><path d="M645 485 H250"/><path d="M820 570 H250"/></g>
-<g fill="currentColor" text-anchor="middle" font-size="14"><text x="166" y="98">读取历史记录</text><text x="166" y="138">历史与来源</text><text x="535" y="178">取得可用工具的说明</text><text x="535" y="218">工具定义（不执行工具）</text><text x="350" y="264">当前要求、历史、回执</text><text x="350" y="280">工具定义与预算</text><text x="350" y="323">本次输入与选择清单</text><text x="350" y="339">或无法构建的原因</text><text x="166" y="378">保存本次请求的内容</text><text x="447" y="428">用选出的输入请求模型</text><text x="447" y="473">回答或工具调用</text><text x="535" y="518">提交动作 → Policy 授权 → 获准才执行</text><text x="535" y="558">真实回执（含拒绝与执行失败）</text><text x="166" y="598">保存响应与回执</text><text x="450" y="647">实线：发起请求或保存；虚线：返回。回执进入下一轮输入构建。</text></g>
-</svg><figcaption>通用协作示例：由 Runner 协调。Context Manager 只负责筛选和组装输入，不直接依赖数据库或工具执行器。</figcaption></figure>
-<p><strong>异常与边界处理：</strong></p>
-<ul>
-<li><strong>预算不足无法构建时</strong>：Context Manager 返回明确原因，由 Runner 决定停止或切换策略，绝不能悄悄丢掉必需约束后继续请求。</li>
-<li><strong>职责严格解耦</strong>：选中某段文件内容不等于授予其指令权限；历史记录中的旧授权也不代表本次动作获准。</li>
-<li><strong>数据传入方式</strong>：既可以由 Runner 先取好历史传给构建器（依赖少、易测试），也可以让构建器通过只读接口按需加载（适合多数据源系统）。</li>
-</ul>
-<p><strong>当前代码状态：</strong>尚未接入独立的 Context Manager。目前 Runner 直接加载同一会话的已完成历史并追加当前消息，详细演进计划见<a href="../stages/stage-4.html#stage-4">阶段 4</a>。</p>
+<g stroke="currentColor" opacity=".25" stroke-dasharray="5 5"><path d="M82 60 V570 M250 60 V570 M450 60 V570 M645 60 V570 M820 60 V570"/></g>
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#context-interface-arrow)"><path d="M250 110 H82"/><path d="M250 190 H820"/><path d="M250 285 H450"/><path d="M250 400 H645"/><path d="M250 490 H820"/><path d="M250 565 H82"/></g>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#context-interface-arrow)"><path d="M82 150 H250"/><path d="M820 230 H250"/><path d="M450 345 H250"/><path d="M645 445 H250"/><path d="M820 530 H250"/></g>
+<g fill="currentColor" text-anchor="middle" font-size="14"><text x="166" y="98">读取已完成历史块</text><text x="166" y="138">有序历史与任务归属</text><text x="535" y="178">取得可用工具的声明</text><text x="535" y="218">工具 Schema（不执行工具）</text><text x="350" y="264">系统指令、候选历史、当前消息</text><text x="350" y="280">工具 Schema 与输入预算</text><text x="350" y="323">本轮输入视图 + 选择决策清单</text><text x="350" y="339">（或超限无法构建原因）</text><text x="447" y="388">用筛选后的输入请求模型</text><text x="447" y="433">回答或工具调用（ModelResponse）</text><text x="535" y="478">提交动作 → Policy 授权 → 获准才执行</text><text x="535" y="518">真实回执 ToolResult（含拒绝与失败）</text><text x="166" y="553">追加保存本轮响应与回执（不改旧历史）</text><text x="450" y="605">实线：发起调用或追加记录；虚线：返回结果。下一步请求模型前再次经 Context Manager 复核预算。</text></g>
+</svg><figcaption>通用协作边界：Context Manager 只读筛选并组装本次输入，不直接修改会话存储，也不代管工具权限。</figcaption></figure>
 </div></div></section>
-<section class="lesson-section" id="module-context-p1-panel-B"><h3>3. 内部流程：如何组装一次模型输入？</h3><div class="lesson-body"><div class="am-md"><p><strong>Context 构建的通用处理流程</strong></p>
-<p>下图展示了从收集候选数据到预算复核的完整流程（当前代码仅实现历史读取，尚未实现筛选与预算复核）：</p>
+<section class="lesson-section" id="module-context-p1-panel-B"><h3>3. 核心机制拆解：开源 Harness 如何解决三个共同问题？</h3><div class="lesson-body"><div class="am-md">
+<p>要把候选数据安全地变成单次模型请求，所有 Agent Harness 都必须依次解决三个具体问题：<strong>在哪里转换视图、怎样核算预算、从哪里安全切分</strong>。</p>
 </div>
-<figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-module-context-1-panel-B-1.svg" width="363" height="669" alt="流程图：当前要求与执行过程、收集候选内容、历史与资料及工具定义、核对来源与访问范围、选择必需与相关片段、预算不足时选择策略、编码与预算复核、能够发送?" loading="lazy"></figure>
-<div class="am-md"><p><strong>三个核心实现原则：</strong></p>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-module-context-1-panel-B-1.svg" width="363" height="669" alt="流程图：当前要求与执行过程、收集候选内容、历史与资料及工具定义、核对来源与访问范围、选择必需与相关片段、预算不足时选择策略、编码与预算复核、能够发送?" loading="lazy"><figcaption>单次模型请求的输入构建流程：收集候选 → 区分必需与可选 → 预算内裁剪／压缩 → 编码复核后发送。</figcaption></figure>
+<div class="am-md">
+<h4>问题一：持久化记录如何转换成模型请求视图？</h4>
 <ul>
-<li><strong>按轮重整，按源刷新</strong>：每次调用模型前重新整理输入，不同数据源可按各自的周期刷新。</li>
-<li><strong>原始记录与模型输入分离</strong>：压缩或裁剪只影响“本次发给模型的视图（Context）”，不能覆盖或删除数据库中的完整历史记录（Transcript）。</li>
-<li><strong>全量预算核算</strong>：预算必须同时覆盖系统指令、历史消息、参考资料、工具 Schema、协议开销以及模型输出预留，不能只统计用户问题字数。</li>
-<li><strong>构建过程只读无副作用</strong>：构建上下文时只能做只读查询，不能顺便触发外部写操作；选择清单应保留在程序侧，便于排查“模型这一轮到底看见了什么、省略了什么”。</li>
+<li><strong>pi（三步显式流水线）</strong>：将“存储记录 → 上下文消息 → 供应商协议”严格拆成三层。<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/session/context.ts">session/context.ts</a> 中的 <code>buildSessionContext</code> 先从 JSONL 条目树重建当前分支的消息；进入 <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">agent-loop.ts</a> 的 <code>streamAssistantResponse</code> 后，先调用 <code>transformContext</code> 在 Agent 消息层完成筛选或注入，最后调用 <code>convertToLlm</code> 编码为具体供应商的请求格式。</li>
+<li><strong>Codex（Rollout 重建与运行期上下文）</strong>：<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/rollout/src/recorder.rs">RolloutRecorder</a> 将完整交互追加写入 JSONL；续接或请求时，由 <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/model_context.rs">model_context.rs</a>（<code>load_latest_model_context</code>）与 <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/core/src/session/rollout_reconstruction.rs">rollout_reconstruction.rs</a> 根据回滚或压缩标记提取有效 <code>ResponseItem</code> 序列。</li>
+<li><strong>Deep Agents 与 AgentScope Java（请求前中间件拦截）</strong>：Deep Agents 在 <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/summarization.py">summarization.py</a> 的 <code>wrap_model_call</code> 中拦截模型调用并替换过长历史；AgentScope Java 在 <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/middleware/CompactionMiddleware.java">CompactionMiddleware.java</a> 中于请求前检查预算并调用压缩器。</li>
+</ul>
+<h4>问题二：如何计量体积并判断何时触发裁剪或压缩？</h4>
+<p>“只保留最近 5 轮对话”无法防止超限——单次读取大文件的回执就可能占满整个窗口。可靠的实现必须按 Token 口径核算，并为模型回答预留输出额度：</p>
+<p><code>可用输入预算 = 模型上下文窗口 (contextWindow) - 最大输出预留 (reserveTokens / max_output_tokens) - 安全余量</code></p>
+<ul>
+<li><strong>pi（窗口减去预留额度）</strong>：<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/compaction/compaction.ts">compaction.ts</a> 中的 <code>shouldCompact(contextTokens, contextWindow, settings)</code> 判断当前上下文 Token 是否超过 <code>contextWindow - settings.reserveTokens</code>，提前为本轮生成留出空间。</li>
+<li><strong>Deep Agents（按模型窗口比例自动计算阈值）</strong>：<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/summarization.py">summarization.py</a> 中的 <code>compute_summarization_defaults</code> 根据模型最大窗口自动设定触发压缩的 Token 阈值与尾部保留额度。</li>
+<li><strong>Codex（可配置压缩阈值）</strong>：在<a href="https://learn.chatgpt.com/docs/config-file/config-reference">配置参考</a>中公开上下文窗口与自动触发压缩的 Token 阈值。</li>
+</ul>
+<h4>问题三：从哪里下刀才不会切断工具调用与回执配对？</h4>
+<p>模型协议要求助手发出的每个 <code>ToolCall</code> 后面必须紧跟对应 <code>call_id</code> 的 <code>ToolResult</code>。如果按消息条数从中间一刀切断，留下一半回执或孤立调用，模型接口会直接拒绝请求：</p>
+<ul>
+<li><strong>pi（<code>findCutPoint</code> 避开工具回执边界）</strong>：<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/compaction/compaction.ts">compaction.ts</a> 从最新消息往前累计保留尾部（<code>keepRecentTokens</code>），在寻找切分点 <code>findCutPoint</code> 时明确规定<strong>切分起点绝不能是 <code>toolResult</code> 消息</strong>，必须对齐到完整的交互边界，将切分点之后的尾部作为 <code>retainedTail</code> 原样保留。</li>
+<li><strong>AgentScope Java（成对裁剪校验）</strong>：<a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/memory/compaction/ConversationCompactor.java">ConversationCompactor.java</a> 在清理旧工具结果与压缩历史时，显式检查并保证工具调用与回执成对保留或成对移除。</li>
+<li><strong>本项目阶段 4 MVP（以已完成的完整 <code>Turn</code> 为最小裁剪单元）</strong>：直接复用阶段 3 已校验闭合的用户任务边界（<code>Turn</code>）。一个已完成的 <code>Turn</code> 完整包含“用户提问 → 全部工具调用与回执 → 最终回答”，按整块 <code>Turn</code> 保留或省略，天然不会拆散任何一组 <code>call_id</code>。</li>
 </ul>
 </div></div>
 </section>
-<section class="lesson-section" id="module-context-p1-panel-D"><h3>4. 核心方案对比：7 种上下文管理策略</h3><div class="lesson-body"><div class="am-md"><h4>A. 全量历史拼接：最直接的对照基线</h4>
+<section class="lesson-section" id="module-context-p1-panel-D"><h3>4. 可选方案对比：超出预算后的 7 种处理策略</h3><div class="lesson-body"><div class="am-md">
+<p>当候选内容超出输入预算时，可以根据任务瓶颈由浅入深选择以下处理策略（它们是按需组合的工具箱，而非首版必须一次做完的清单）：</p>
+<h4>A. 全量历史拼接（对照基线）</h4>
 <ul>
-<li><strong>做法</strong>：按时间顺序发送全部历史交互，附上系统指令和工具定义。</li>
-<li><strong>适用场景</strong>：短任务，或作为排查“模型是否因缺失信息而出错”的对照基线。</li>
-<li><strong>代价與局限</strong>：输入随轮次线性增长；且无关历史过多时，即便信息在窗口内，模型仍可能漏掉早期提出的要求。</li>
+<li><strong>做法</strong>：按时间顺序发送全部已完成历史与当前消息，附上系统指令和工具定义（阶段 3 的基线行为）。</li>
+<li><strong>适用场景</strong>：轮次少、工具输出短的简单对话，或作为排查“模型出错是否因为裁剪丢了信息”的对照基线。</li>
+<li><strong>代价与局限</strong>：输入体积随轮次与工具调用线性膨胀，遇到长文件或长对话必然触发窗口超限。</li>
 </ul>
-<h4>B. 按完整交互块裁剪：低成本限制输入增长</h4>
+<h4>B. 按完整交互块确定性裁剪（阶段 4 MVP 首选）</h4>
 <ul>
-<li><strong>做法</strong>：将消息划分为完整交互块（至少包含一次模型调用及其全部工具回执），保留近期块与当前请求，从最旧的块开始整块移除；绝不能只按“最后 N 条消息”居中切断调用与回执。</li>
-<li><strong>适用场景</strong>：短对话、彼此独立的任务。</li>
-<li><strong>代价与局限</strong>：无需额外调用模型生成摘要、行为确定；但早期提出的要求和证据会随旧块一起被移出，持续修改同一产物的任务需额外维护结构化任务状态。</li>
+<li><strong>做法</strong>：锁定系统指令、显式标记的必需历史与当前任务消息，将其余已完成的历史任务（<code>Turn</code>）作为可选块；超出预算时从最旧的可选 <code>Turn</code> 开始整块省略，直到满足预算。</li>
+<li><strong>适用场景</strong>：多轮日常问答、阶段性独立任务，以及构建长任务机制前的基础预算防线。</li>
+<li><strong>代价与局限</strong>：零额外模型调用、结果完全确定、块内原文 100% 保真；但若未显式标记必需块或维护结构化任务状态，极早期提出的要求会随旧块一起被移出。</li>
 </ul>
-<h4>C. 大段工具结果另存（Offloading）：优先消除大体积噪音</h4>
+<h4>C. 大段工具结果另存与预览（Offloading）</h4>
 <ul>
-<li><strong>做法</strong>：将长日志或大文件内容保存在产物存储中，消息里只保留执行状态、首尾预览、文件引用和分页补读方式；已写入文件的大段参数也可从后续请求中精简（原始记录仍保留）。</li>
-<li><strong>适用场景</strong>：工具频繁返回长日志、长文档或大段代码的任务。</li>
-<li><strong>代价与局限</strong>：无需模型概括，能保留精确路径与错误码；但必须提供可靠的补读路径（直接截断且无法补读会永久丢失细节），并记录内容哈希或版本以防文件被修改。</li>
+<li><strong>做法</strong>：当工具返回超大文件或长日志时，将完整内容另存到工作区或产物存储，上下文中只保留执行状态、首尾预览、文件路径与分页补读说明；后续轮次也可将已落盘的大段写入参数替换为简短引用。</li>
+<li><strong>适用场景</strong>：频繁读取长文档、大代码文件或构建日志的任务。</li>
+<li><strong>代价与局限</strong>：无需额外调用模型即可大幅消减单步体积噪音；但必须提供可靠的分页补读工具（只截断不给补读路径会永久丢失中间细节），并记录内容哈希以防原文件被改写。</li>
 </ul>
-<h4>D. 历史摘要 + 近期原文：长任务的状态压缩</h4>
+<h4>D. 历史摘要 + 近期原文（Compaction / Summarization）</h4>
 <ul>
-<li><strong>做法</strong>：将较早的完整交互块交由模型生成摘要（包含目标、已确认约束、关键事实与来源、失败尝试、待办与产物引用），与“结构化任务状态 + 近期原文块 + 当前参考资料”重新组装成输入。</li>
-<li><strong>适用场景</strong>：多步骤、长链路演进的复杂任务。</li>
-<li><strong>代价与局限</strong>：需要额外的模型调用与版本管理；连续多次摘要会累积信息失真，因此关键约束与检查结果应优先从结构化状态读取，且摘要失败时必须有保守回退策略（不能静默使用空摘要）。</li>
+<li><strong>做法</strong>：在安全切分点（如 <code>findCutPoint</code>）将较早的交互块交由模型浓缩为结构化摘要（保留目标、已确认约束、关键发现、失败尝试与文件引用），与“近期原文块（<code>retainedTail</code>）+ 当前任务消息”拼成新上下文。</li>
+<li><strong>适用场景</strong>：跨数十轮持续演进同一产物的复杂长任务。</li>
+<li><strong>代价与局限</strong>：增加额外的模型调用耗时与 Token 开销；多次连续摘要容易累积失真（如漏掉“UTC 时间”或误改“先不要覆盖”），因此核心硬约束应优先放入结构化状态，且摘要失败时必须有回退策略。</li>
 </ul>
-<h4>E. 按需检索与渐进加载：减少初始装入量</h4>
+<h4>E. 按需检索与渐进加载（Retrieval / Progressive Disclosure）</h4>
 <ul>
-<li><strong>做法</strong>：初始只提供目录、标题、工具名称或简短描述，当任务需要时再通过关键词（如 SQLite FTS）、向量或混合检索拉取正文片段。</li>
-<li><strong>适用场景</strong>：候选参考资料或扩展方法极多，但单轮只需要其中很小一部分。</li>
-<li><strong>代价与局限</strong>：无法替代过程状态（不知道刚才试过什么、目标为何改变）；检索可能漏掉资料或命中越权内容，必须在检索和读取原文两个阶段都做权限校验。</li>
+<li><strong>做法</strong>：初始上下文只放入简短目录、文档标题或技能（Skills）摘要，运行中按当前问题通过关键词（如全文检索 FTS）或向量检索动态拉取相关片段。</li>
+<li><strong>适用场景</strong>：项目参考资料、规范文档或扩展工具极多，但单轮只需用到其中极小一部分。</li>
+<li><strong>代价与局限</strong>：只能补充外部静态／半静态资料，无法代替当前对话的执行过程状态；存在漏检风险，且检索与原文读取都必须遵守 Policy 工作区权限边界。</li>
 </ul>
-<h4>F. 独立子任务隔离：避免主上下文被探索过程撑爆</h4>
+<h4>F. 独立子任务窗口隔离（Sub-agent Isolation）</h4>
 <ul>
-<li><strong>做法</strong>：把边界明确的搜索或评审交给独立子 Agent，只传入目标、约束和证据要求；主 Agent 仅接收最终结论与来源引用，无需装入子任务的全部中间探索过程。</li>
-<li><strong>适用场景</strong>：需要大量文件搜索、试错或独立评审的子问题。</li>
-<li><strong>代价与局限</strong>：增加额外调用与交接核验成本；若采用复制父 Agent 完整历史的 fork 模式，子任务本身仍有较高的初始输入成本（详见 <a href="orchestration.html#module-orchestration">Orchestration</a>）。</li>
+<li><strong>做法</strong>：将耗费大量步数的代码搜索、日志排查或独立评审委派给拥有独立上下文窗口的子 Agent；主 Agent 只接收子任务最终提炼的结论与证据引用（详见 <a href="orchestration.html#module-orchestration">Orchestration</a>）。</li>
+<li><strong>适用场景</strong>：探索过程长、中间噪音多，但最终结论简短的子问题。</li>
+<li><strong>代价与局限</strong>：增加多 Agent 协调与结果核验成本；若子任务漏报关键上下文，主 Agent 难以察觉。</li>
 </ul>
-<h4>G. 供应商原生压缩：托管协议状态</h4>
+<h4>G. 供应商服务端原生压缩（Provider-Native Compaction）</h4>
 <ul>
-<li><strong>做法</strong>：调用模型 API 提供的原生压缩接口，由服务端返回供后续请求续接的不透明协议数据。</li>
-<li><strong>适用场景</strong>：深度绑定单一供应商 API、希望减少自建摘要逻辑的场景。</li>
-<li><strong>代价与局限</strong>：压缩结果通常不可读、不可编辑，且无法跨模型供应商迁移；若需跨供应商切换，仍需在本地保存原始记录与结构化任务状态。</li>
+<li><strong>做法</strong>：调用模型服务商专有压缩端点（如 OpenAI Responses API 的 Compaction），由服务端返回不透明的压缩续接数据供下一轮传入。</li>
+<li><strong>适用场景</strong>：固定使用单一模型服务商、希望免去自建摘要 Prompt 的场景。</li>
+<li><strong>代价与局限</strong>：压缩产物不可读、不可局部编辑，且无法跨模型或跨供应商复用；本地仍需保留原始 JSONL 记录以备审计与切换模型。</li>
 </ul>
 </div></div>
 </section>
@@ -147,116 +165,129 @@
 <thead>
 <tr>
 <th>机制</th>
-<th>主要解决什么问题</th>
-<th>新增成本</th>
+<th>针对的核心痛点</th>
+<th>引入的新增成本</th>
 <th>典型失败风险</th>
-<th>如何组合使用</th>
+<th>在演进路线中的位置</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>完整块裁剪</td>
-<td>历史消息不断增长</td>
-<td>少量分块与选择逻辑</td>
-<td>丢失早期提出的要求</td>
-<td>与结构化任务状态、检索组合</td>
+<td>按完整块裁剪</td>
+<td>多轮历史消息持续累积</td>
+<td>协议一致计量 + Turn 分块筛选逻辑</td>
+<td>未标记的早期要求随旧块移出</td>
+<td><strong>阶段 4 MVP（基础预算防线）</strong></td>
 </tr>
 <tr>
 <td>大段结果另存</td>
-<td>单次工具结果或参数过大</td>
-<td>产物存储与分页补读接口</td>
-<td>引用失效、预览漏掉关键错误</td>
-<td>通常作为摘要前的第一步清洗</td>
+<td>单次工具返回长日志或大文件</td>
+<td>产物存储、预览生成与分页补读接口</td>
+<td>预览漏掉关键报错、原文件变动</td>
+<td>阶段 5（按大回执痛点引入）</td>
 </tr>
 <tr>
-<td>历史摘要</td>
-<td>长任务产生大量过程记录</td>
-<td>额外模型调用、摘要版本管理</td>
-<td>关键细节失真、多次压缩偏离原意</td>
-<td>与近期原文、原文补读组合</td>
+<td>历史摘要压缩</td>
+<td>长链路探索过程不能简单丢弃</td>
+<td>额外模型调用、切分点与摘要版本管理</td>
+<td>摘要遗漏硬约束、多次压缩失真</td>
+<td>阶段 5（按长过程痛点引入）</td>
 </tr>
 <tr>
 <td>检索与渐进加载</td>
-<td>候选参考资料和工具定义过多</td>
-<td>索引维护、多轮检索往返</td>
-<td>漏检相关资料、命中过期或越权内容</td>
-<td>与过程摘要互补，解决不同问题</td>
+<td>候选参考资料或扩展说明过多</td>
+<td>索引构建维护、多轮检索往返</td>
+<td>漏检关键段落、命中过期内容</td>
+<td>阶段 5 / 7（按资料规模引入）</td>
 </tr>
 <tr>
-<td>子任务隔离</td>
-<td>中间探索过程过多</td>
-<td>任务委派、结果核验与额外调用</td>
-<td>交接信息遗漏、子任务错误传播</td>
-<td>子任务内部同样需要 Context 管理</td>
+<td>子任务窗口隔离</td>
+<td>中间搜索试错过程撑爆主窗口</td>
+<td>子任务委派契约、独立预算与结果核验</td>
+<td>交接上下文遗漏、子任务幻觉传播</td>
+<td>阶段 7（按多角色协作引入）</td>
 </tr>
 <tr>
-<td>原生压缩</td>
-<td>协议续接数据与输入持续增长</td>
-<td>服务端用量、供应商强耦合</td>
-<td>状态不透明、跨模型不兼容</td>
-<td>需配合本地原始记录与产物存储</td>
-</tr>
-<tr>
-<td>前缀缓存</td>
-<td>重复前缀的计算开销与首字延迟</td>
-<td>需保持前缀稳定、统计命中率</td>
-<td>前缀变动导致缓存未命中</td>
-<td>只降成本与延迟，不减少上下文占用长度</td>
+<td>服务端原生压缩</td>
+<td>特定 API 下协议续接状态增长</td>
+<td>供应商强绑定、服务端压缩计费</td>
+<td>状态黑盒不可读、跨供应商失效</td>
+<td>可选扩展（特定协议适配器）</td>
 </tr>
 </tbody></table></div>
-<p><strong>注意区分“前缀缓存”与“上下文裁剪”：</strong>前缀缓存命中可以降低重复计算费用和延迟，但所有内容依然占用模型的有效上下文窗口，绝不能用缓存替代输入预算检查。</p>
+<p><strong>切勿混淆“前缀缓存（Prefix Caching）”与“上下文预算管理”：</strong>保持系统指令与前文前缀稳定，可以让模型服务商命中前缀缓存，从而降低重复计算的费用与首字延迟；但<strong>缓存命中的 Token 依然完整占用本轮上下文窗口长度</strong>，绝不能用前缀缓存替代输入计量与裁剪。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-context-p1-panel-F"><h3>6. 开源与工业界 Harness 实践对照</h3><div class="lesson-body"><div class="am-md"><h4>pi：分离“上下文整理”与“模型协议转换”</h4>
+<section class="lesson-section" id="module-context-p1-panel-F"><h3>6. 开源与工业界源码依据汇总</h3><div class="lesson-body"><div class="am-md">
+<p>以下固定版本源码与官方文档展示了上述机制在工业界项目中的具体落地位置（完整仓库样本见<a href="../reference/research.html#reference-research">方案依据</a>）：</p>
 <ul>
-<li><strong>实现机制（源码核对）</strong>：<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">agent-loop.ts</a> 先运行 <code>transformContext</code> 整理消息，再经 <code>convertToLlm</code> 转为供应商协议格式。<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/compaction/compaction.ts">compaction.ts</a> 根据窗口上限和预留额度判断是否压缩，寻找可安全切分的完整交互边界，保存摘要与 <code>retainedTail</code>；<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/session/context.ts">context.ts</a> 再据此重建本轮输入。</li>
-<li><strong>可借鉴点</strong>：将原始记录、上下文转换点和模型协议编码解耦，既保留完整审计记录，又能灵活调整本轮输入。</li>
-</ul>
-<h4>Deep Agents：用中间件协同“大结果另存”与“历史摘要”</h4>
-<ul>
-<li><strong>实现机制（源码核对）</strong>：<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/filesystem.py">filesystem.py</a> 在工具返回边界拦截大结果并另存；<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/summarization.py">summarization.py</a> 在 <code>wrap_model_call</code> 中应用已有摘要事件、精简旧参数并按阈值触发摘要（参考<a href="https://docs.langchain.com/oss/python/deepagents/context-engineering">官方文档</a>）。</li>
-<li><strong>可借鉴点</strong>：在工具结果边界和模型请求边界分别控制体积；但在学习阶段建议先写成显式函数，避免中间件顺序过早复杂化。</li>
-</ul>
-<h4>AgentScope Java Harness：显式分配預算与配对裁剪</h4>
-<ul>
-<li><strong>实现机制（文档与源码核对）</strong>：<a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/context.md">Context 文档</a>区分稳定指令、历史、任务状态与参考资料；<a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/middleware/CompactionMiddleware.java">CompactionMiddleware</a> 与 <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/memory/compaction/ConversationCompactor.java">ConversationCompactor</a> 在请求前按规则裁剪并生成摘要，严格保持工具调用与回执成对出现。</li>
-<li><strong>可借鉴点</strong>：数据源、任务状态、历史预算与完整执行日志（Session Log）职责分明。</li>
-</ul>
-<h4>Claude Code 与 Codex / OpenAI Responses：按需加载与分层清理</h4>
-<ul>
-<li><strong>Claude Code（官方文档）</strong>：<a href="https://code.claude.com/docs/en/how-claude-code-works">运行机制</a>采用“常驻规则简短、Skills 按需加载、子任务独立窗口”，并在接近上限时先清理旧工具输出再生成摘要。</li>
-<li><strong>Codex 与 Responses（官方文档）</strong>：<a href="https://learn.chatgpt.com/docs/config-file/config-reference">Codex 配置参考</a>公开了自动压缩阈值；<a href="https://developers.openai.com/api/docs/guides/compaction">Responses 压缩文档</a>提供服务端原生压缩，返回供后续请求续接的不透明数据。</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-context-p1-panel-G"><h3>7. 场景推演：不同策略在同一个长任务中的表现</h3><div class="lesson-body"><div class="am-md"><p>假设一个 30 轮的长任务经历了以下节点：</p>
-<ul>
-<li><strong>第 1 轮（用户）</strong>：“报告必须使用 UTC 时间，且完成前先不要发布。”</li>
-<li><strong>第 10 轮（工具）</strong>：读取了 50 页构建日志。</li>
-<li><strong>第 20 轮（用户）</strong>：“把报告表格改成三列格式。”</li>
-<li><strong>第 30 轮（用户）</strong>：“继续完成报告。”</li>
-</ul>
-<p>不同单点策略与组合策略的效果对比如下：</p>
-<ul>
-<li><strong>仅按块裁剪</strong>：保留了第 20 轮的新格式，但丢掉了第 1 轮的 UTC 时间要求（需靠结构化任务状态补回）。</li>
-<li><strong>仅做历史摘要</strong>：可能把“先不要发布”错误概括成“准备发布”（需靠保留关键约束原文和独立 Policy 授权兜底）。</li>
-<li><strong>仅另存大段结果</strong>：成功移走了第 10 轮的 50 页日志正文，但无法压缩 30 轮的对话过程。</li>
-<li><strong>仅做资料检索</strong>：能找到相关项目文档，但不知道用户在第 20 轮改过表格格式。</li>
-<li><strong>组合策略</strong>：用任务状态锁定“UTC 时间、不发布、三列格式”等核心约束，将第 10 轮长日志另存为引用，对早期探索过程做摘要，按需补读原文细节。</li>
+<li><strong>pi（固定提交 <code>9d2ec7ffabe927bfad2214c1cee25b6632a78dcf</code>）</strong>：
+  <ul>
+  <li><a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">packages/agent/src/agent-loop.ts</a>：在每次请求模型前依次调用 <code>transformContext</code> 与 <code>convertToLlm</code>。</li>
+  <li><a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/compaction/compaction.ts">packages/agent/src/harness/compaction/compaction.ts</a>：<code>shouldCompact</code> 核算窗口与预留额度，<code>findCutPoint</code> 避开 <code>toolResult</code> 寻找安全切分边界，<code>prepareCompaction</code> 生成摘要并保留 <code>retainedTail</code>。</li>
+  <li><a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/harness/session/context.ts">packages/agent/src/harness/session/context.ts</a>：<code>buildSessionContext</code> 从最新压缩条目与后续消息重建模型输入视图。</li>
+  </ul>
+</li>
+<li><strong>Deep Agents（固定提交 <code>97f856dcb08264ef78722a4687cab9133ec5fb7a</code>）</strong>：
+  <ul>
+  <li><a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/filesystem.py">middleware/filesystem.py</a>：在 <code>wrap_tool_call</code> 边界拦截超大工具输出并另存为文件引用。</li>
+  <li><a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/summarization.py">middleware/summarization.py</a>：在 <code>wrap_model_call</code> 边界核算预算、精简旧工具参数并触发历史摘要（对照<a href="https://docs.langchain.com/oss/python/deepagents/context-engineering">官方文档</a>）。</li>
+  </ul>
+</li>
+<li><strong>AgentScope Java Harness（固定提交 <code>40a4a57ad79e82f8505572d3b195d0264ec7efcb</code>）</strong>：
+  <ul>
+  <li><a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/context.md">docs/v2/zh/docs/harness/context.md</a>：划分稳定指令、历史记录、任务状态与参考资料的优先级预算。</li>
+  <li><a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/middleware/CompactionMiddleware.java">CompactionMiddleware.java</a> 与 <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/agentscope-harness/src/main/java/io/agentscope/harness/agent/memory/compaction/ConversationCompactor.java">ConversationCompactor.java</a>：请求前按阈值裁剪旧工具结果并生成摘要，强制保持工具调用与回执成对。</li>
+  </ul>
+</li>
+<li><strong>Claude Code 与 Codex / OpenAI Responses（官方文档与源码）</strong>：
+  <ul>
+  <li><a href="https://code.claude.com/docs/en/how-claude-code-works">Claude Code 运行机制</a>：常驻规则精简、Skills 按需加载、子任务独立窗口，接近窗口上限时先清理旧工具输出再压缩历史。</li>
+  <li><a href="https://learn.chatgpt.com/docs/config-file/config-reference">Codex 配置参考</a>与 <a href="https://developers.openai.com/api/docs/guides/compaction">OpenAI Responses 压缩指南</a>：公开自动压缩阈值配置与服务端原生压缩协议。</li>
+  </ul>
+</li>
 </ul>
 </div></div>
 </section>
-<section class="lesson-section" id="module-context-p2-panel-A"><h3>8. 本项目演进顺序</h3><div class="lesson-body"><div class="am-md"><p><strong>当前状态（阶段 3）：</strong>已实现会话保存与历史加载，Runner 直接将同一会话的已完成历史与本轮消息构造成 <code>ModelRequest</code>，尚未引入输入计量、裁剪、摘要或检索。</p><p>后续在<a href="../stages/stage-4.html#stage-4">阶段 4</a> 与<a href="../stages/stage-5.html#stage-5">阶段 5</a> 中，将按“先计量预算 → 再按完整交互块裁剪 → 最后按真实失败引入另存、摘要或检索”的顺序逐步演进。</p></div></div>
-</section>
-<section class="lesson-section" id="module-context-p2-panel-B"><h3>9. 期望达到的效果（后续实现验收）</h3><div class="lesson-body"><div class="am-md"><p>在后续阶段接入 Context Manager 时，建议先实现纯选择函数（输入完整记录块，输出保留、摘要与省略清单），再用固定长任务样本验证。</p>
-<p><strong>期望达到的效果：</strong></p>
+<section class="lesson-section" id="module-context-p1-panel-G"><h3>7. 场景推演：不同策略在同一个长任务中的表现</h3><div class="lesson-body"><div class="am-md"><p>回到开头的长任务场景，假设一次持续 30 轮的任务经历了以下四个关键节点：</p>
 <ul>
-<li><strong>原始记录零破坏</strong>：无论怎样裁剪或摘要，数据库中的完整历史记录（Transcript）始终保持原样。</li>
-<li><strong>调用回执严格配对</strong>：裁剪后的输入中，每一次工具调用（ToolCall）都与对应的工具回执（ToolResult）成对出现，不产生孤立消息。</li>
-<li><strong>核心约束不丢失</strong>：对话早期提出的格式要求和用户中途的更正，在压缩后依然保留在模型输入中。</li>
-<li><strong>引用可回溯原文</strong>：被另存的大段日志或文件保留准确的来源 ID 与补读路径，摘要消耗的 Token 计入总用量。</li>
-<li><strong>评价兼顾质量与成本</strong>：不仅统计节省的 Token 数，同时核对最终产物是否通过检查、额外调用次数与压缩失败率。</li>
+<li><strong>第 1 轮（用户）</strong>：“写一份活动通知，用中文，时间统一写 UTC，定稿前先不要覆盖原文件。”</li>
+<li><strong>第 10 轮（工具回执）</strong>：读取了 50 页的往期活动记录与长日志。</li>
+<li><strong>第 20 轮（用户）</strong>：“把通知末尾的日程改用三列表格呈现。”</li>
+<li><strong>第 30 轮（用户）</strong>：“沿用前面的规则，继续完成最终版通知。”</li>
+</ul>
+<p>不同策略在该场景下的真实效果对比：</p>
+<ul>
+<li><strong>仅按完整块裁剪（不标记必需块）</strong>：完整保留了第 20 轮的三列表格要求和近期工具配对，但第 1 轮的“UTC 时间”因时间最早被整块移出；<strong>改进方式</strong>：支持显式标记必需历史块（如保留 <code>T1</code>）或提取结构化任务约束。</li>
+<li><strong>仅做历史摘要</strong>：能把前 20 轮浓缩成一段话，但摘要模型可能漏掉“UTC 时间”或把“先不要覆盖原文件”误缩写为“准备写入原文件”（因此在保留关键要求原文的同时，写入动作仍须由独立 <a href="policy.html#module-policy">Policy</a> 拦截兜底）。</li>
+<li><strong>仅另存大段工具结果</strong>：消除了第 10 轮 50 页长日志占用的巨量体积，但无法阻止 30 轮对话消息本身的持续增长。</li>
+<li><strong>仅做外部资料检索</strong>：能按关键词查到往期活动片段，但不知道用户在第 20 轮口头改过表格格式。</li>
+<li><strong>分阶段组合演进</strong>：先在<strong>阶段 4</strong> 实现“预算计量 + 必需块保护 + 按完整 Turn 整块裁剪”守住窗口底线；到了<strong>阶段 5</strong> 再针对长日志引入“大结果另存预览”，针对超长探索过程引入“历史摘要”。</li>
 </ul>
 </div></div>
-</section><nav class="chapter-nav" aria-label="章节导航"><a href="model.html#module-model">← Model：适配模型服务与通信协议</a><a href="tools.html#module-tools">Tools：执行模型提出的工具调用 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+</section>
+<section class="lesson-section" id="module-context-p2-panel-A"><h3>8. 本项目当前选择与演进路线</h3><div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>当前历史来源</strong>：<code>SessionLog.history_turns()</code> 从 JSONL 还原已完成的完整任务块；也可直接提供内存历史。原始历史与本次模型输入分开保存。</li>
+<li><strong>当前已实现（<a href="../stages/stage-4.html#stage-4">阶段 4 MVP：上下文管理与预算</a>）</strong>：选择 <strong>共用协议编码的离线体积估算 + 输出预留核算 + 必需内容保护 + 按完整用户任务（<code>Turn</code>）从旧到新确定性裁剪 + 每次 <code>model.invoke()</code> 前复核 + 返回裁剪决策清单</strong>。
+  <ul>
+  <li><strong>为什么首版选这一组合</strong>：复用阶段 3 已闭合的 <code>Turn</code> 边界即可 100% 保证 <code>ToolCall</code> 与 <code>ToolResult</code> 配对不断裂；纯函数逻辑无需额外消耗模型 Token 生成摘要，行为完全确定、易于在本地做精确手算与边界验证。</li>
+  </ul>
+</li>
+<li><strong>计量范围</strong>：当前以输入 JSON 的 UTF-8 字节数保守估算 Token，不是供应商的精确计数。应用设置窗口额度与安全余量，可按模型替换计量器；具体配置见<a href="../stages/stage-4.html#stage-4-budget">阶段 4</a>。</li>
+<li><strong>后续按需扩展（<a href="../stages/stage-5.html#stage-5">阶段 5</a> 及以后）</strong>：大段工具结果另存与分页补读、历史摘要压缩（Compaction）、按需资料检索（RAG）与跨会话长期记忆（Memory）。</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-context-p2-panel-B"><h3>9. 期望达到的效果</h3><div class="lesson-body"><div class="am-md">
+<p>将 Context Manager 接入闭环后，<strong>期望达到的效果：</strong></p>
+<ul>
+<li><strong>原始记录零破坏</strong>：无论本轮请求省略了多少旧任务，<code>SessionLog</code> 文件或内存中的原始完整历史始终原样保留。</li>
+<li><strong>调用回执严格配对</strong>：筛选后的本轮输入中，所有工具调用（<code>ToolCall</code>）与工具回执（<code>ToolResult</code>）均成对闭合，绝不触发协议配对错误。</li>
+<li><strong>必需约束严格受保</strong>：系统指令、显式标记的必需历史（如第 1 轮的 UTC 要求）与当前正在执行的任务消息优先保留；若仅必需内容已超出预算，在请求模型前直接报错停止。</li>
+<li><strong>循环内动态复核</strong>：同一任务内工具返回大段回执后，下一步请求模型前自动重新计量与筛选，防止循环中途撑爆窗口。</li>
+<li><strong>取舍决策透明可查</strong>：每次构建均返回预算上限、保留块列表、省略块列表与最终计量值，一眼分清“是信息没发给模型，还是发了但模型没遵守”。</li>
+</ul>
+</div></div>
+</section><nav class="chapter-nav" aria-label="章节导航"><a href="state.html#module-state">← Session / State：管理会话与执行记录</a><a href="quality.html#module-quality">Quality：观测与评测 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 </body></html>

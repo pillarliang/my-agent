@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stage 3: Sessions &amp; Records · Learn Agent</title>
+<link rel="stylesheet" href="../../assets/tutorial.css">
+<script src="../../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Choose Long-Task Mechanisms from Real Failures</a><a class="chapter-link" href="stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Resume Safely After Interruption</a><a class="chapter-link" href="stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Application &amp; Behavior Config</div><a class="chapter-link" href="../modules/interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><div class="nav-group-title">3. Harness Core</div><a class="chapter-link" href="../modules/loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="../modules/model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="../modules/tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="../modules/policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="../modules/state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="../modules/context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="../modules/quality.html#module-quality" data-chapter="module-quality">Quality: Observability &amp; Evaluation</a><div class="nav-group-title">4. On-Demand Capabilities</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">Long Tasks &amp; Knowledge Reuse</a><a class="chapter-link" href="../modules/memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">Reliable Execution &amp; Isolation</a><a class="chapter-link" href="../modules/extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="../modules/orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">5. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">6. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../stages/stage-3.html#stage-3">中文版</a></p><article class="chapter" id="stage-3">
+<header class="chapter-header"><span class="kind">Derived from Requirements · Minimal Implementation Complete</span><h2>Stage 3: Sessions &amp; Records</h2></header>
+<span id="stage-3-task"></span><section class="lesson-section" id="stage-3-state"><h3>1. Starting Point: How Can the Program Remember Past Conversations?</h3><div class="lesson-body"><div class="am-md">
+<p>By default, both model APIs and single-run CLI invocations are stateless. Consider this scenario:</p>
+<ul>
+<li><strong>User</strong>: "In this conversation, please call me Star."</li>
+<li><strong>Model</strong>: "Got it, Star."</li>
+<li><em>(Exit the program and run it again)</em></li>
+<li><strong>User</strong>: "What did I just ask you to call me?"</li>
+</ul>
+<p>If only the last sentence is sent to the model, the model has no prior context and no way of knowing what was said earlier.</p>
+<p>To solve this problem, the system must satisfy two core requirements:</p>
+<ol>
+<li><strong>Provide context to the model</strong>: Automatically include prior history messages when asking follow-up questions in the same session.</li>
+<li><strong>Let users inspect history</strong>: Allow users to look up past conversations even after exiting and restarting the program.</li>
+</ol>
+<p>Therefore, the program cannot act merely as a stateless pass-through—it must also <strong>persist conversation records and load them by session when needed</strong>.</p>
+<p><strong>Expected Outcomes:</strong></p>
+<ul>
+<li><strong>Persistent records</strong>: After exiting and reopening the program, previous Q&amp;A records can still be queried.</li>
+<li><strong>Automatic context continuation</strong>: When asking a follow-up question in the same session, the program automatically passes prior messages to the model.</li>
+<li><strong>Isolated sessions</strong>: Creating a new session never mixes in history messages from other sessions.</li>
+<li><strong>Zero-compute queries</strong>: Viewing history reads directly from local storage without calling the model or executing tools.</li>
+</ul>
+</div></div></section>
+<section class="lesson-section" id="stage-3-content"><h3>2. What Conversation Data Needs to Be Saved?</h3><div class="lesson-body"><div class="am-md">
+<p>To reconstruct a conversation faithfully, we cannot save only the user's questions (otherwise we lose what the assistant answered) or only the final answer (otherwise we lose the initial constraints). At minimum, we must save the following in order:</p>
+<ul>
+<li><strong>User input (<code>TextMessage</code>)</strong>: Records the raw text and role of each user prompt.</li>
+<li><strong>Full model response (<code>ModelResponse</code>)</strong>: Contains not just the answer text, but also tool call requests, stop reasons, token usage, and protocol continuation data—it cannot be flattened into a plain text string.</li>
+<li><strong>Strict ordering</strong>: Saying "Call me Star" followed by "Call me River instead" means the opposite if reversed. Timestamps are for reference only; an incrementing sequence number is required to guarantee deterministic ordering.</li>
+</ul>
+<h4 id="stage-3-message-types">What Else Must Be Saved When Tool Calls Are Involved?</h4>
+<p>When a conversation triggers tool calls, the interaction becomes multi-step:</p>
+<ul>
+<li><strong>User</strong>: "What files are in the current workspace?"</li>
+<li><strong>Model</strong>: Issues a <code>list_files</code> tool call (including tool name, arguments, and <code>call_id</code>).</li>
+<li><em>(The tool runs locally and returns the actual file list or failure reason.)</em></li>
+<li><strong>Model</strong>: Produces the final answer based on the tool result.</li>
+</ul>
+<p>To verify both "what the model intended to do" and "what the tool actually executed," we must also save the verbatim <strong>tool result (<code>ToolResult</code>)</strong> and correlate it with the corresponding tool call via <code>call_id</code>. Permission denials and execution errors are real outcomes that must be recorded as-is; a model's verbal claim of "done" can never substitute for an actual tool result. For exact data structures, see the <a href="../../../learn_agent/models/contracts.py">model contracts</a> and <a href="../../../learn_agent/tools/contracts.py">tool contracts</a>.</p>
+</div></div></section>
+<section class="lesson-section" id="stage-3-choice"><h3>3. How to Group Multiple Prompts and Tell Whether a Task Finished?</h3><div class="lesson-body"><div class="am-md">
+<p>A flat list of messages is not enough; the system needs two boundary levels to organize records:</p>
+<ul>
+<li><strong>Session — Isolate distinct conversations</strong>: Mixing all questions into a single history causes old topics to pollute new ones. Assigning a unique identifier (<code>session_id</code>) to each continuous conversation lets follow-up prompts append to and read from the same record, while a new session starts from a blank history.</li>
+<li><strong>Turn — Mark the start and completion status of a single user task</strong>: Consider what happens if the program crashes mid-run after writing the user question to disk but before the model replies. On the next run, we must not mistake a few partial records in the file for a completed task. We therefore define the lifecycle from receiving a user prompt to producing a final answer (or stopping on error) as one <strong>Turn</strong>.</li>
+</ul>
+<p>Each Turn explicitly records its start and finish status:</p>
+<ul>
+<li><strong><code>completed</code></strong>: The message and tool-call chain for this prompt closed normally (note: if a tool call is denied by Policy and the model reports that denial to the user in a final answer, the conversation turn itself is still complete and recorded as <code>completed</code>).</li>
+<li><strong><code>failed</code></strong>: An exception occurred mid-execution and aborted the turn.</li>
+<li><strong>Unfinished (has start record, no finish record)</strong>: The process was interrupted mid-turn; the partial records remain on disk for inspection but are excluded from subsequent model context.</li>
+</ul>
+<p><strong>Current choice in this project: <code>Session</code> + user-task <code>Turn</code> + ordered records.</strong> This structure directly satisfies conversation isolation, message grouping, and unfinished-task detection without introducing extra <code>Run</code>, <code>Step</code>, or separate event tables.</p>
+<details><summary>Do other Agents use the same naming?</summary><p>Not necessarily. In pi, a turn is closer to a single assistant response plus its tool results, whereas in Codex a turn is closer to a single user task. This project adopts the latter granularity. The <a href="../modules/state.html#session-granularity">terminology comparison across pinned source versions</a> explains the differences; identical names do not imply identical data scopes.</p></details>
+</div></div></section>
+<span id="stage-3-implementation"></span><span id="stage-3-database"></span><span id="stage-3-field-reference"></span><span id="stage-3-message-json"></span><span id="stage-3-events-purpose"></span><span id="stage-3-message-rows"></span><span id="stage-3-first-events"></span><span id="stage-3-first-events-rows"></span><span id="stage-3-final-sessions-json"></span><span id="stage-3-final-runs-json"></span><span id="stage-3-final-steps-json"></span><span id="stage-3-final-messages-json"></span><span id="stage-3-final-events"></span><span id="stage-3-final-events-json"></span><span id="stage-3-final-events-rows"></span><section class="lesson-section" id="stage-3-contracts"><h3>4. Persistence Format: Why One JSONL File per Session?</h3><div class="lesson-body"><div class="am-md">
+<p>In-memory data disappears when the process exits, so records must be written to persistent storage. <strong>This project currently maps each session to a single JSONL file</strong> (default path: <code>.learn-agent/sessions/&lt;session_id&gt;.jsonl</code>), with one JSON object per line and new records appended to the end of the file. Compared with introducing a database upfront, plain-text JSONL requires zero external dependencies and can be opened directly to inspect ordering and payloads; we can evolve to SQLite later if massive session filtering or concurrent writes become necessary.</p>
+<h4 id="stage-3-record-types">Record Structure Inside a JSONL File</h4>
+<ul>
+<li><strong>First-line file header (<code>SessionHeader</code>)</strong>: Records the format version, <code>session_id</code>, bound <code>workspace</code> directory, and creation timestamp. Binding the workspace prevents accidentally resuming a session against a different directory.</li>
+<li><strong>Subsequent ordered entries (<code>Record</code>)</strong>: Each line fixes its order via an incrementing <code>seq</code>, marks its owning task via <code>turn_id</code>, records <code>time</code>, and distinguishes three entry types via <code>type</code>:
+  <ul>
+  <li><code>turn_started</code>: Marks the start of a user prompt.</li>
+  <li><code>message</code>: Uses <code>kind</code> (<code>user</code> / <code>assistant</code> / <code>tool_result</code>) and <code>value</code> inside <code>payload</code> to store the full message or tool result.</li>
+  <li><code>turn_finished</code>: Records the task completion status (<code>completed</code> / <code>failed</code>) and any failure reason.</li>
+  </ul>
+</li>
+</ul>
+<details><summary>Example of a wrapped user message entry</summary><pre class="am-code"><code>{
+  "seq": 2,
+  "turn_id": "T1",
+  "type": "message",
+  "time": "2026-10-25T01:00:00Z",
+  "payload": {
+    "kind": "user",
+    "value": {"role": "user", "content": "这段对话里，请叫我星河。"}
+  }
+}</code></pre><p><code>T1</code> is a shorthand label for readability; actual turn IDs are generated by the program. The session ID lives in the first-line header rather than being repeated on every line.</p></details>
+<p>The system prompt, model connection, tool registry, and Policy belong to the initialization config of the current run; they are assembled dynamically on each model request and are not duplicated inside user history messages.</p>
+</div></div></section>
+<section class="lesson-section" id="stage-3-saving"><h3>5. Write Timing &amp; Exception Handling</h3><div class="lesson-body"><div class="am-md">
+<p>If the program waited until the final answer to save everything at once, any mid-run error would lose the interactions that already occurred. Instead, the program <strong>appends and flushes records incrementally as execution progresses</strong>:</p>
+<ol>
+<li><strong>On turn start</strong>: Immediately writes <code>turn_started</code> and the user input message.</li>
+<li><strong>On model return</strong>: Writes the full <code>ModelResponse</code> to disk first, then checks the stop reason (even if refusal or truncation occurs, the raw response is preserved for debugging, though its tool calls will not be executed).</li>
+<li><strong>After tool execution</strong>: Writes the actual <code>ToolResult</code> to disk.</li>
+<li><strong>On turn finish</strong>: Writes <code>completed</code> on normal completion; if an exception is caught, writes <code>failed</code> along with the error message and re-raises the original exception.</li>
+</ol>
+<p><strong>Reliability and boundary constraints:</strong></p>
+<ul>
+<li><strong>Single-writer exclusive lock</strong>: Each session file uses a file lock so only one writer can append at a time, preventing interleaved sequence numbers across processes.</li>
+<li><strong>Fail fast on corruption</strong>: If reading encounters an unknown format version, a gap in sequence numbers, or a truncated trailing line, it raises an explicit error rather than silently falling back to empty history.</li>
+<li><strong>Non-transactional boundary</strong>: If the process is killed abruptly (e.g., <code>SIGKILL</code>), it may not write a finish entry, leaving that Turn in an "unfinished" state; local file operations and log appends are also not in a single transaction, so extreme events like power loss require verifying external state during recovery.</li>
+</ul>
+</div></div></section>
+<section class="lesson-section" id="stage-3-reading"><h3>6. Read Paths: Supporting History Queries &amp; Multi-Turn Continuation</h3><div class="lesson-body"><div class="am-md">
+<p>The saved JSONL files serve two distinct read paths:</p>
+<ul>
+<li><strong>History inspection for users</strong>: Listing sessions only reads the first-line header and modification time of each file without loading all messages; viewing a single session validates the version and sequence numbers and returns all records verbatim (including failed and unfinished turns) without calling the model or re-executing tools.</li>
+<li><strong>Context continuation for the model</strong>: Filters for turns in order whose status is <code>completed</code> and whose message chains are intact, reconstructing the message list accepted by the model. Failed or unfinished turns remain on disk for human debugging but are never mixed into subsequent model inputs; if a turn is marked <code>completed</code> yet lacks a paired tool result or final answer, the reader immediately reports file corruption.</li>
+</ul>
+<span id="stage-three-arrow"></span><span id="stage-3-first-sessions"></span><span id="stage-3-first-sessions-rows"></span><span id="stage-3-first-runs"></span><span id="stage-3-first-runs-rows"></span><span id="stage-3-first-steps"></span><span id="stage-3-first-steps-rows"></span><span id="stage-3-first-messages"></span><span id="stage-3-first-messages-rows"></span><span id="stage-3-final-sessions"></span><span id="stage-3-final-sessions-rows"></span><span id="stage-3-final-runs"></span><span id="stage-3-final-runs-rows"></span><span id="stage-3-final-steps"></span><span id="stage-3-final-steps-rows"></span><span id="stage-3-final-messages"></span><span id="stage-3-final-messages-rows"></span><h4 id="stage-3-message-example">Full Walkthrough: A Two-Turn Conversation ("Call Me Star")</h4>
+<ol><li id="stage-3-first-tables"><strong>Turn 1 prompt (create session <code>S1</code>, start turn <code>T1</code>)</strong>:
+<ul>
+<li><strong>Input sent to model</strong>: <code>[System prompt, User: "In this conversation, please call me Star."]</code></li>
+<li><strong>Appended to file</strong>: <code>T1 started</code> → <code>User message</code> → <code>Assistant response</code> → <code>T1 completed</code>.</li>
+</ul>
+</li><li id="stage-3-followup-example"><strong>Exit, reopen, and ask a follow-up (specify session <code>S1</code>, start turn <code>T2</code>)</strong>:
+<ul>
+<li><em>(System action: Locate file <code>S1</code>, validate version and workspace, extract messages from completed turn <code>T1</code>.)</em></li>
+<li><strong>Input sent to model</strong>: <code>[System prompt, Turn 1 question, Turn 1 answer, Follow-up: "What did I just ask you to call me?"]</code> (4 input items in total).</li>
+</ul>
+</li><li><strong>Receive Turn 2 answer and finish</strong>:
+<ul>
+<li><strong>Appended to file</strong>: <code>T2 started</code> → <code>Follow-up question</code> → <code>Assistant Turn 2 answer</code> → <code>T2 completed</code> (the history from <code>T1</code> is only read when requesting the model and is never written a second time to the file).</li>
+</ul>
+</li></ol>
+<p id="stage-3-final-tables">After both turns finish, the session file contains 1 header line and 8 records (4 of which are message records). Querying session details displays all 8 records, whereas the second model request receives the 4 filtered and reconstructed context items—<strong>the on-disk record format, the query display view, and the model request input each serve their own role; you cannot dump raw file lines straight into the model</strong>.</p>
+<p>Likewise, loading historical tool results simply places past observations back into the context without re-running tools; if the user asks about the current directory state again, the model will issue a new tool call. When history messages accumulate and approach the context window limit, we move to <a href="stage-4.html#stage-4">Stage 4: Context Management &amp; Budgets</a>.</p>
+</div></div></section>
+<section class="lesson-section" id="stage-3-loop-integration"><h3>7. Source Implementation: Connecting SessionLog to the Agent Loop</h3><div class="lesson-body"><div class="am-md">
+<p>Session persistence, querying, and history reconstruction are encapsulated in <a href="../../../learn_agent/session.py">session.py</a>; the Loop stays focused on driving the current task and calls session methods at key lifecycle points.</p>
+<figure class="am-diagram"><img class="lesson-svg" src="../../assets/diagrams/stage-3-loop-integration.svg" width="840" height="700" alt="Current implementation: entry point opens session, Runner reads history and records interactions, model responds, tool registry authorizes and executes." loading="lazy"><figcaption>Current implementation: pass the session object at initialization; read completed history and append records incrementally at runtime.</figcaption></figure>
+<h4 id="stage-3-code-structure">Tracing a Call Against the Source Code</h4>
+<ol id="stage-3-call-flow"><li><strong>Entry dispatch (<a href="../../../learn_agent/__main__.py">main()</a>)</strong>: Separates queries from execution. For query flags, it calls <code>read_session()</code> or <code>list_sessions()</code> directly, prints the output, and returns; for task execution, it creates or opens the specified <code>SessionLog</code> and passes the workspace and Policy.</li><li><strong>Environment verification (<a href="../../../learn_agent/application.py">run_task()</a>)</strong>: Verifies that the workspace bound to the session matches the current configuration, creates <code>ToolRegistry</code> and <code>LLMService</code>, calls <code>run_agent()</code>, and closes the model connection on exit.</li><li><strong>Load history &amp; start turn (<a href="../../../learn_agent/runner.py">run_agent()</a>)</strong>: Calls <code>session.history_turns()</code> first to retrieve completed history blocks, then <code>start_turn()</code> to record the new task and prompt without loading it twice. <code>history()</code> still provides flattened messages; see <a href="stage-4.html#stage-4-call-flow">Stage 4</a> for request-time budget selection.</li><li><strong>Record model responses &amp; tool results</strong>: Each time <code>model.invoke()</code> returns, calls <code>append_message()</code> to save the full response first; if tools need to run, executes them through <code>tools.execute()</code> (validation, authorization, execution) and calls <code>append_message()</code> to save the actual tool result.</li><li><strong>Record turn conclusion (<a href="../../../learn_agent/session.py">SessionLog</a>)</strong>: Once a valid final answer is obtained, calls <code>finish_turn()</code> to verify message-chain closure, write <code>completed</code>, and update the in-memory completed history; if an exception is raised mid-turn, writes <code>failed</code> with the reason and re-raises the exception.</li></ol>
+<p>When reading the source code, start with the <a href="../../../learn_agent/session.py">SessionHeader / Record</a> data structures, then read the write logic in <code>start_turn()</code>, <code>append_message()</code>, and <code>finish_turn()</code>, and finally see how <code>_history()</code> filters and reconstructs completed turns. The <a href="../modules/state.html#session-practice">Session / State Module Guide</a> compares these trade-offs against the pi and Codex codebases.</p>
+</div></div></section>
+<span id="stage-3-checks"></span><section class="lesson-section" id="stage-3-run"><h3>8. Running &amp; Verification</h3><div class="lesson-body"><div class="am-md">
+<p>Run the following commands from the project root (the first two call a real model and consume API tokens; configure environment variables as described in <a href="../../../README.md#安装与运行">README</a>):</p>
+<pre class="am-code"><code>uv run python -m learn_agent "这段对话里，请叫我星河。"
+uv run python -m learn_agent --session &lt;session_id_from_first_command&gt; "我刚才让你怎么称呼我？"</code></pre>
+<p>Then run the local read-only query commands (no model requests, no tool execution, and no API key required):</p>
+<pre class="am-code"><code>uv run python -m learn_agent --list-sessions
+uv run python -m learn_agent --show-session &lt;same_session_id&gt;</code></pre>
+<p>Run the local automated tests (using fixed local protocol responses and temporary files without calling an external model):</p>
+<pre class="am-code"><code>uv run pytest tests/test_session.py
+uv run python scripts/check_docs.py</code></pre>
+<h4>Expected Outcomes</h4>
+<ul>
+<li><strong>Round-trip record fidelity</strong>: After writing a Q&amp;A turn, finishing normally, and closing and reopening the session, the loaded message fields match the original content exactly.</li>
+<li><strong>Follow-up prompts include history automatically</strong>: On the second prompt in the same session, the request sent to the model contains <code>[system, user, assistant, user]</code> in order; creating a new session starts from an empty history without cross-contamination (see <a href="../../../tests/test_session.py">test_session.py</a>).</li>
+<li><strong>Side-effect-free queries</strong>: Running <code>--list-sessions</code> and <code>--show-session</code> creates no model connections, calls no tools, and adds no lines to the session file.</li>
+<li><strong>Intact tool call chains</strong>: Conversations involving tool calls preserve the model's tool call requests, <code>call_id</code>, actual tool results, and final answer; continuing a session reuses those recorded observations without re-running old tools.</li>
+<li><strong>Clear failure and corruption boundaries</strong>: Model errors, policy denials, and unfinished turns remain queryable on disk, but failed or unfinished turns are never mixed into subsequent model context; unknown format versions, sequence gaps, or truncated lines fail fast with an explicit error.</li>
+</ul>
+</div></div></section>
+<nav class="chapter-nav" aria-label="Chapter navigation"><a href="stage-2.html#stage-2">← Stage 2: Control Action Permissions with Policy</a><a href="stage-4.html#stage-4">Stage 4: Context Management &amp; Budgets →</a></nav>
+</article></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

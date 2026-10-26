@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stage 4: Context Management &amp; Budgets · Learn Agent</title>
+<link rel="stylesheet" href="../../assets/tutorial.css">
+<script src="../../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Choose Long-Task Mechanisms from Real Failures</a><a class="chapter-link" href="stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Resume Safely After Interruption</a><a class="chapter-link" href="stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Application &amp; Behavior Config</div><a class="chapter-link" href="../modules/interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><div class="nav-group-title">3. Harness Core</div><a class="chapter-link" href="../modules/loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="../modules/model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="../modules/tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="../modules/policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="../modules/state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="../modules/context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="../modules/quality.html#module-quality" data-chapter="module-quality">Quality: Observability &amp; Evaluation</a><div class="nav-group-title">4. On-Demand Capabilities</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">Long Tasks &amp; Knowledge Reuse</a><a class="chapter-link" href="../modules/memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">Reliable Execution &amp; Isolation</a><a class="chapter-link" href="../modules/extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="../modules/orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">5. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">6. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../stages/stage-4.html#stage-4">中文版</a></p><article class="chapter" id="stage-4">
+<header class="chapter-header"><span class="kind">Current Implementation · Context Management MVP</span><h2>Stage 4: Context Management &amp; Budgets</h2></header>
+<section class="lesson-section" id="stage-3-context"><h3>1. Starting Point: As History and Tool Results Grow, Should We Send Everything on Every Request?</h3><div class="lesson-body"><div class="am-md">
+<p>After Stage 3, the program can load history across turns and call tools repeatedly within a single turn. However, as an interaction deepens, input volume expands rapidly in two places:</p>
+<ul>
+<li><strong>User (Turn <code>T1</code>)</strong>: "Write an event announcement in Chinese, using UTC for all times."</li>
+<li><strong>Model</strong>: Produces a first draft.</li>
+<li><em>(Intermediate turns <code>T2</code> and <code>T3</code> repeatedly tweak the title and tone, generating several obsolete drafts.)</em></li>
+<li><strong>User (Current Turn <code>T4</code>)</strong>: "Refer to the past notes in the workspace, keep the earlier time rule, and condense the announcement into two sentences."</li>
+<li><em>(Step 1 of the current turn: the model calls <code>read_file</code>, the tool returns a large text result, and the program prepares to send Step 2 to the model.)</em></li>
+</ul>
+<p>When assembling the next model request, the program faces a dilemma:</p>
+<ol>
+<li><strong>If it sends only the latest prompt</strong>: The model neither knows the "UTC time rule" established in Turn 1 nor receives the file content just read or the draft to revise.</li>
+<li><strong>If it blindly concatenates all history and tool results</strong>: Obsolete drafts and bulky tool outputs repeatedly consume the model's context window, increasing latency and cost or triggering a context-window overflow error outright.</li>
+</ol>
+<p>"How much history is saved on disk" and "how much content is sent in this request" are two separate questions. The core task of this stage is: <strong>before every model call, select the context required for the current step within the input budget, and clearly record which task blocks were kept or omitted.</strong></p>
+<p><strong>Expected Outcomes:</strong></p>
+<ul>
+<li><strong>Pass through unchanged when within budget</strong>: When total candidate input volume does not exceed the budget, retain all available history and current messages intact.</li>
+<li><strong>Trim whole turns when over budget</strong>: When input exceeds the budget, retain explicitly pinned required history (such as <code>T1</code>) and current-turn messages, and omit optional history starting from the oldest whole <code>Turn</code>—never slicing a tool call apart from its result.</li>
+<li><strong>Fail fast when required content alone exceeds the budget</strong>: If omitting all optional history still leaves the system prompt, required history, and current-turn content over budget, stop with an explicit error before calling the model rather than silently truncating required content.</li>
+<li><strong>Re-evaluate dynamically at every step inside the loop</strong>: After a tool returns a large result mid-turn, re-measure and re-select before the next model request; trimming only builds a view for the current request while leaving on-disk and in-memory records intact.</li>
+</ul>
+</div></div></section>
+<section class="lesson-section" id="stage-4-materials"><h3>2. What Context Data Does a Single Model Request Contain?</h3><div class="lesson-body"><div class="am-md">
+<p id="stage-3-model-input">All inputs submitted to a single <code>model.invoke()</code> call make up the <strong>current request context</strong>. Against the existing <a href="../../../learn_agent/models/contracts.py">ModelRequest</a> contract, it consists of four parts:</p>
+<ul>
+<li><strong>System prompt (<code>SYSTEM</code>)</strong>: Application-configured global behavior rules (<code>TextMessage("system", ...)</code>).</li>
+<li><strong>Candidate history turns (Candidate History)</strong>: The sequence of previously completed user turns. They can come from <a href="stage-3.html#stage-3-reading">Stage 3's <code>SessionLog</code></a> or be passed directly in memory when file persistence is disabled—<strong>persistent storage is not a prerequisite for context budget management</strong>.</li>
+<li><strong>Current turn messages (Current Turn Messages)</strong>: The current user prompt, plus any <code>ModelResponse</code> and real <code>ToolResult</code> items already produced during the current turn's loop.</li>
+<li><strong>Tool definitions &amp; protocol continuation data</strong>: Even if the model does not call a tool on the current step, available tool schemas (<code>request.tools</code>) are sent with the request and occupy the context window; native continuation fields (<code>ProviderContinuation</code>) in historical responses also participate in protocol encoding.</li>
+</ul>
+<p>When selecting and assembling context, every item must preserve its <strong>original role and trust boundary</strong>: an early user requirement for UTC remains a <code>user</code> message, and file content returned by a tool remains a <code>ToolResult</code>. Marking a historical turn as "required" must never promote it to a system prompt, nor can a previously approved write in history bypass the current <a href="../modules/policy.html#module-policy">Policy</a> check.</p>
+</div></div></section>
+<section class="lesson-section" id="stage-4-budget"><h3>3. How to Measure Input Volume and Calculate the Budget?</h3><div class="lesson-body"><div class="am-md">
+<p>"Keep only the last 5 turns" cannot reliably control request size—a casual chat turn might take a dozen tokens, whereas a file-reading turn might take tens of thousands. To know whether the context fits, we need an explicit <strong>measurement basis and budget formula</strong>:</p>
+<ul>
+<li><strong>Measure the complete protocol-encoded request</strong>: Models process inputs in tokens. The measurement function must cover encoded message structures, role markers, tool call arguments, tool schemas (<code>ToolSpec</code>), and protocol continuation data, matching what <a href="../../../learn_agent/models/openai_chat.py">OpenAIChatModel</a> actually sends to the SDK rather than simply summing raw text character counts.</li>
+<li><strong>Deduct output reservation and safety margin</strong>: When input and output share the same model context window, the available input budget is:
+  <p><code>input_budget = context_window - max_output_tokens - safety_margin</code></p>
+  <p>If the application or provider also specifies a separate input cap (<code>max_input_tokens</code>), take the smaller of the two. If measurement fails or the resulting budget is non-positive, stop with an error immediately rather than treating unknown size as <code>0</code>.</p>
+</li>
+</ul>
+<p><strong>Current measurement:</strong> <a href="../../../learn_agent/models/openai_chat.py"><code>estimate_input_tokens()</code></a> shares <code>encode_input()</code> with the SDK adapter and counts UTF-8 bytes of the input JSON, including messages, tools, and tool control fields. This is a conservative estimate, not an exact provider token count or a guarantee against server-side overflow. The safety margin allows for template overhead and estimation error. Defaults are a configured window allowance of 32768, output reservation of 512, and margin of 1024, leaving 31232 input units. Set the window allowance for your actual model; it is not automatically detected. A model-specific <code>InputMeter</code> can replace the estimator.</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Limit Parameter</th>
+<th>What It Limits</th>
+<th>When Checked</th>
+<th>Behavior When Reached</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>max_steps</code></td>
+<td>Maximum number of model requests in a single user turn</td>
+<td>Before each step of the Runner loop</td>
+<td>Raises a <code>step_limit</code> error and stops the loop</td>
+</tr>
+<tr>
+<td><code>max_output_tokens</code></td>
+<td>Maximum output tokens generated in a single model response</td>
+<td>Sent with <code>ModelRequest</code> to the model server</td>
+<td>Server truncates generation and returns <code>stop_reason="length"</code></td>
+</tr>
+<tr>
+<td><code>input_budget</code></td>
+<td>Maximum input context volume allowed in a single model request</td>
+<td><strong>Before every <code>model.invoke()</code> call</strong></td>
+<td>Omits optional older turns as whole blocks first; stops with an error if required content alone exceeds the limit</td>
+</tr>
+</tbody></table></div>
+</div></div></section>
+<section class="lesson-section" id="stage-4-required"><h3>4. Separating "Required Content" from "Removable Blocks" Before Trimming</h3><div class="lesson-body"><div class="am-md">
+<p>Returning to the event announcement example: the "Chinese, UTC time" rule from Turn 1 (<code>T1</code>) matters more than the discarded title drafts from Turns 2 and 3 (<code>T2</code>, <code>T3</code>). <strong>"Most recent" is only a default ordering, not a synonym for "most important."</strong> Before introducing model-driven summarization, the first version divides candidate inputs into three categories:</p>
+<ul>
+<li><strong>Fixed required content for the current turn (Required Current)</strong>: The system prompt <code>SYSTEM</code>, tool definitions <code>tools</code>, the current user prompt, and any <code>ModelResponse</code> and <code>ToolResult</code> items already produced in the current <code>Turn</code> (because the current turn is still in progress, its internal steps are never partially trimmed).</li>
+<li><strong>Explicitly pinned required history (Pinned / Required Turns)</strong>: Completed historical turns explicitly designated by the caller via <code>turn_id</code> as mandatory to retain (for instance, pinning <code>T1</code> containing the active UTC rule).</li>
+<li><strong>Removable history grouped by whole <code>Turn</code> (Optional Turns)</strong>: All remaining completed historical turns.
+  <ul>
+  <li><strong>Why use a completed whole <code>Turn</code> as the minimum trimming unit?</strong> If a model response issues two tool calls (<code>call_1</code>, <code>call_2</code>) and receives two tool results, slicing by raw message count breaks <code>call_id</code> pairing and causes protocol errors. In Stage 3, every completed <code>Turn</code> is already verified for closure ("user prompt → tool call &amp; result chain → final answer"), so <strong>retaining or omitting an entire <code>Turn</code> never orphans a tool call or tool result</strong>.</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+<section class="lesson-section" id="stage-4-choice"><h3>5. First-Version Trimming Strategy: Omit Oldest Optional Turns as Whole Blocks</h3><div class="lesson-body"><div class="am-md">
+<p><strong>Stage 4 MVP choice in this project: deterministic whole-<code>Turn</code> trimming.</strong> The rule is: <strong>when within the input budget, retain all candidate content unchanged; when over budget, lock required content and omit optional turns starting from the oldest <code>Turn</code>, re-measuring the full candidate request after each removal until it fits the budget.</strong> Retained turns and messages strictly preserve their original chronological order.</p>
+<h4>Verifying the Trimming Process with Hand-Calculable Numbers</h4>
+<p>Suppose a unit test injects a hand-calculable measurement function with an input budget of <code>30</code> and the following candidate items:</p>
+<ul>
+<li><strong>Candidate items &amp; sizes</strong>: Fixed required content (system prompt + tool definitions + current prompt) takes <code>8</code>; explicitly pinned required turn <code>T1</code> (with the UTC rule) takes <code>4</code>; optional older turn <code>T2</code> takes <code>12</code>, and <code>T3</code> takes <code>7</code>.</li>
+<li><strong>Step 1 (initial full measurement)</strong>: Total candidate volume is <code>8 + 4 + 12 + 7 = 31</code>, exceeding the budget (<code>30</code>) by <code>1</code> unit.</li>
+<li><strong>Step 2 (skip required blocks, remove oldest optional block)</strong>: <code>T1</code> is pinned required history and is skipped; remove the oldest optional turn <code>T2</code> (size <code>12</code>). Even though we are over by only <code>1</code> unit, we never slice half the messages or tool results inside <code>T2</code> just to pack the budget to <code>30</code>.</li>
+<li><strong>Step 3 (re-measure full request and return)</strong>: Re-measure the remaining sequence <code>[SYSTEM, T1, T3, current prompt]</code>, yielding a total volume of <code>19 ≤ 30</code>, which fits the budget. Return the selected message sequence along with a selection manifest (<code>budget=30, used=19, kept=["T1", "T3"], dropped=["T2"]</code>).</li>
+</ul>
+<p>When connected to real protocol token counting, the selector likewise re-invokes the measurement function on the full candidate request after removing each optional <code>Turn</code>, rather than assuming individual block sizes always add up linearly.</p>
+</div></div></section>
+<section class="lesson-section" id="stage-4-failure"><h3>6. Per-Step Re-Evaluation in the Loop, Overflow Blocking &amp; Selection Manifest</h3><div class="lesson-body"><div class="am-md">
+<p id="stage-4-data">When integrating context selection into the <code>Runner</code> loop, we must account for dynamic growth across multi-step tool calls within a single turn. Consider a turn <code>T4</code> that calls a tool (budget still <code>30</code>):</p>
+<ul>
+<li><em>(Before Step 1 model request)</em>: The candidate sequence is <code>[SYSTEM, T1(required,4), T3(optional,7), T4 prompt(8)]</code>, measuring <code>19 ≤ 30</code>, so the first model request is sent normally.</li>
+<li><strong>Model (Step 1 response)</strong>: Issues a <code>read_file</code> tool call.</li>
+<li><em>(Tool executes and flushes to disk)</em>: <code>read_file</code> returns the file content result, which is appended to <code>SessionLog</code>.</li>
+<li><em>(Re-evaluate before Step 2 model request)</em>: The fixed required content for the current turn now includes the Step 1 model response and tool result:
+  <ul>
+  <li><strong>Case A (fits after omitting optional blocks)</strong>: If the new response and result take <code>6</code>, total volume becomes <code>19 + 6 = 25 ≤ 30</code> and passes directly; if they take <code>15</code>, total volume becomes <code>34 &gt; 30</code>, so the selector omits the remaining optional turn <code>T3</code> (saving <code>7</code>), re-measures <code>27 ≤ 30</code>, and sends the second model request.</li>
+  <li><strong>Case B (required content alone exceeds budget; block immediately)</strong>: If the tool result takes <code>20</code>, even after omitting all optional history (<code>T2</code>, <code>T3</code>), <code>[SYSTEM, T1, T4 prompt, Step 1 response &amp; result]</code> already reaches <code>32 &gt; 30</code>. The Context Manager refuses to truncate the current turn or required history and <strong>immediately returns a budget-overflow error before making the Step 2 model request</strong> (reporting required size <code>32</code>, budget limit <code>30</code>, and measurement basis); Runner marks the current Turn as <code>failed</code> and stops the loop.</li>
+  </ul>
+</li>
+</ul>
+<p><strong>Why return a "selection manifest" without mutating original records?</strong></p>
+<ul>
+<li><strong>Clear evidence for debugging</strong>: Every context build returns the budget limit, kept <code>turn_id</code> list, dropped <code>turn_id</code> list, and final measured size. If a model answer misses a requirement, developers can check the manifest to immediately tell whether that turn was trimmed due to budget limits or was sent to the model and ignored.</li>
+<li><strong>Original history remains intact</strong>: Trimming always returns a new message tuple to construct the current <code>ModelRequest</code>, never mutating in-memory history lists or JSONL records in <code>SessionLog</code>.</li>
+</ul>
+<details><summary>What real bottlenecks trigger Stage 5's result offloading, history compaction, or on-demand retrieval?</summary>
+<p>Once Stage 4's deterministic whole-turn trimming works, test it against real tasks. If you hit "Case B" above (a single tool call returns a huge file that blows past the required budget on its own), the bottleneck is single-result size, which triggers <strong>large tool result offloading and previews (Offloading)</strong> in <a href="stage-5.html#stage-5">Stage 5</a>; if long multi-turn evolution accumulates too many early details to pin manually by Turn, introduce <strong>structured task state or history summarization (Compaction)</strong>; if external reference documents are too numerous, introduce <strong>on-demand retrieval (Retrieval)</strong> (see the <a href="../modules/context.html#module-context-p1-panel-D">Context Module Guide</a> for a comparison).</p>
+</details>
+</div></div></section>
+<section class="lesson-section" id="stage-4-implementation"><h3>7. Initialization, Runtime Flow &amp; Source</h3><div class="lesson-body"><div class="am-md">
+<figure class="am-diagram"><img class="lesson-svg" src="../../assets/diagrams/stage-4-loop-integration.svg" width="880" height="700" alt="Current implementation: Runner selects complete history turns before every model request" loading="lazy"><figcaption>Context selection runs before each model request. Tool execution and session storage preserve the full original messages.</figcaption></figure>
+<h4 id="stage-4-code-structure">Initialization</h4>
+<ul>
+<li><strong>Budget:</strong> <a href="../../../learn_agent/__main__.py">The CLI</a> accepts window, output reservation, safety margin, optional input cap, and <code>--pin-turn</code>. <a href="../../../learn_agent/context.py"><code>ContextBudget</code></a> validates the values at construction. <a href="../../../learn_agent/application.py"><code>run_task()</code></a> passes them to Runner and closes the model connection afterward.</li>
+<li><strong>History:</strong> <a href="../../../learn_agent/session.py"><code>SessionLog.history_turns()</code></a> returns completed <code>HistoryTurn</code> blocks with IDs. <code>history()</code> still returns flattened messages. Without persistent storage, pass in-memory blocks through <code>run_agent(history=...)</code>. Both sources validate complete user/tool/answer chains.</li>
+<li><strong>Required turns:</strong> <code>required_turn_ids</code> pins completed historical turns. Unknown or incomplete IDs fail explicitly. CLI pins apply to the current invocation and must be specified again on subsequent runs.</li>
+</ul>
+<h4 id="stage-4-call-flow">Runtime flow</h4>
+<ol>
+<li><strong>Load history:</strong> <a href="../../../learn_agent/runner.py"><code>run_agent()</code></a> loads completed blocks before starting the new turn and accumulates current messages separately.</li>
+<li><strong>Select:</strong> <a href="../../../learn_agent/context.py"><code>select_context()</code></a> receives system instructions, history blocks, required IDs, current messages, tools, budget, and meter. It removes the oldest optional turn and remeasures the complete candidate request until it fits.</li>
+<li><strong>Invoke:</strong> Runner prints the decision and passes <code>ContextSelection.request</code> to <code>model.invoke()</code>. Its output cap matches the configured reservation.</li>
+<li><strong>Continue:</strong> Responses and tool receipts are appended in full to the current turn and session file. The next model request repeats selection with these new messages.</li>
+<li><strong>Finish or fail:</strong> <code>RunResult.context_decisions</code> returns per-step decisions. Required-content overflow raises <code>ContextOverflowError</code> with a <code>decision</code> describing size, budget, unit, and kept/dropped IDs. Runner records a failed turn and propagates the error. Measurement failures also stop before any request.</li>
+</ol>
+<p>Successful selection decisions are printed and returned, rather than inserted into conversation history. Overflow details are saved in the failed turn's error message.</p>
+</div></div></section>
+<section class="lesson-section" id="stage-4-run"><h3>8. Running &amp; Verification</h3><div class="lesson-body"><div class="am-md">
+<p>Local checks use temporary files and a local HTTP server without external model calls:</p>
+<pre class="am-code"><code>uv run pytest tests/test_context.py tests/test_session.py tests/test_models.py
+uv run python scripts/check_docs.py</code></pre>
+<p><a href="../../../tests/test_context.py">Context tests</a> verify:</p>
+<ul>
+<li><strong>Whole turns:</strong> Inputs at or below budget remain intact. Optional turns are removed oldest first while pinned history and message roles remain unchanged.</li>
+<li><strong>Overflow:</strong> Oversized required content causes zero model requests. Large tool receipts can stop the next request while preserving the action's full record.</li>
+<li><strong>Protocol:</strong> Multiple calls, failure receipts, and continuation fields stay together. SDK input matches measured input, including tools, and the output cap matches its reservation.</li>
+<li><strong>Preservation:</strong> Existing JSONL bytes remain an unchanged prefix. Dropped history remains available after reopening the session.</li>
+</ul>
+<h4>Continue with a real model</h4>
+<ol>
+<li><strong>Save a requirement:</strong> Run the first command and note its session and turn IDs.</li>
+<li><strong>Add drafts:</strong> Continue in that session to grow optional history.</li>
+<li><strong>Pin and continue:</strong> Pin the first turn, then inspect <code>budget</code>, <code>used</code>, <code>unit</code>, <code>kept</code>, and <code>dropped</code>.</li>
+</ol>
+<pre class="am-code"><code>uv run python -m learn_agent "Write an event notice in Chinese. Express all times in UTC."
+uv run python -m learn_agent --session SESSION_ID "Suggest several alternative titles and drafts."
+uv run python -m learn_agent --session SESSION_ID --pin-turn TURN_ID --max-input-tokens 6000 "Keep the time rule and shorten the notice to two sentences."
+uv run python -m learn_agent --show-session SESSION_ID</code></pre>
+<p>Replace the IDs with actual values. The 6000-unit cap is for observing trimming; whether history is dropped depends on its length. Configure <code>--context-window</code>, <code>--max-output-tokens</code>, and <code>--safety-margin</code> as appropriate. Required overflow fails explicitly.</p>
+<p>Task commands consume real API usage, with at most four model requests per task by default. History queries are local. Automated tests verify program behavior and protocol; real-model adherence to Chinese, UTC, and two-sentence requirements must be checked separately.</p>
+</div></div></section>
+<nav class="chapter-nav" aria-label="Chapter navigation"><a href="stage-3.html#stage-3">← Stage 3: Sessions &amp; Records</a><a href="stage-5.html#stage-5">Stage 5: Choose Long-Task Mechanisms from Real Failures →</a></nav>
+</article><footer class="footer"><p>This page is maintained directly as HTML; general principles and stage practices are connected via links.</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

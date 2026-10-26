@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Extensions: Connect Skills, Hooks &amp; External Tools · Learn Agent</title>
+<link rel="stylesheet" href="../../assets/tutorial.css">
+<script src="../../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Choose Long-Task Mechanisms from Real Failures</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Application &amp; Behavior Config</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><div class="nav-group-title">3. Harness Core</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality: Observability &amp; Evaluation</a><div class="nav-group-title">4. On-Demand Capabilities</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">Long Tasks &amp; Knowledge Reuse</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">Reliable Execution &amp; Isolation</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">5. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">6. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/extensions.html#module-extensions">中文版</a></p><article class="chapter" id="module-extensions"><header class="chapter-header"><span class="kind">Module Principles &amp; Design Options</span><h2>Extensions: Connect Skills, Hooks &amp; External Tools</h2></header><section class="lesson-section" id="module-extensions-p1-panel-A"><h3>1. Starting Problem: Why Must Different Extension Mechanisms Not Be Conflated into a Single "Plugin Function"?</h3><div class="lesson-body"><div class="am-md"><p>When extending an Agent system, five common extension mechanisms serve fundamentally different responsibilities:</p>
+<ul>
+<li><strong>Skill (procedural guide)</strong>: Provides step-by-step instructions and reference materials for a specific task type, loaded on demand into the model's input (Context).</li>
+<li><strong>Hook (lifecycle callback)</strong>: Triggers observability or interception logic at fixed lifecycle points such as run start or before/after tool execution.</li>
+<li><strong>Middleware</strong>: Wraps model requests or tool calls to uniformly transform inputs, handle retries, or log execution.</li>
+<li><strong>MCP (Model Context Protocol)</strong>: Connects external tool servers, resources, and prompt templates through a standardized wire protocol.</li>
+<li><strong>Plugin (distribution bundle)</strong>: Packages Skills, Hooks, and tool declarations together for unified versioning, integrity verification, and distribution.</li>
+</ul>
+<p><strong>Core security boundary: Discovering or loading an extension never automatically grants execution permissions.</strong></p>
+</div>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../../assets/diagrams/diagram-module-extensions-1-panel-A-1.svg" width="573" height="306" alt="Flowchart: Extension bundle and config, verify metadata and version, load Skill body on demand, instructions and references in Context, register lifecycle callbacks, Loop, model and tool calls, register tool adapters, argument validation, authorization and execution" loading="lazy"></figure>
+</div>
+</section>
+<section class="lesson-section" id="module-extensions-interaction"><h3>2. Module Collaboration: Which Core Module Does Each Extension Type Plug Into?</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Skills → Context Manager</strong>: Procedural instructions and reference materials are handed to <a href="context.html#module-context">Context Manager</a> to be selected on demand into the current turn's input, without automatically executing any scripts mentioned inside them.</li>
+<li><strong>Hooks / Middleware → Runner</strong>: Lifecycle callbacks register at designated points in <a href="loop.html#module-loop">Runner</a>; if a callback rewrites tool arguments, those arguments must pass through schema validation and <a href="policy.html#module-policy">Policy</a> authorization again.</li>
+<li><strong>MCP External Tools → Tools</strong>: Adapted by <a href="tools.html#module-tools">Tools</a> into unified internal <code>ToolSpec</code> declarations and subjected to the exact same Policy permission checks before execution.</li>
+<li><strong>Failure isolation posture</strong>: Ordinary observability callbacks can degrade with a warning on failure, whereas control callbacks that guard against dangerous actions must fail closed (block execution) if they error out.</li>
+</ul><figure class="am-diagram am-seq"><img class="lesson-svg" src="../../assets/diagrams/module-extensions-collaboration.svg" width="1000" height="622" alt="Future extension collaboration example: skills, callbacks, and external tools plug into their respective core modules; dynamic loaders are not yet implemented." loading="lazy"><figcaption>Future extension collaboration example: skills, callbacks, and external tools plug into their respective core modules; dynamic loaders are not yet implemented.</figcaption></figure></div></div></section>
+
+<section class="lesson-section" id="module-extensions-p1-panel-C"><h3>3. Comparing 3 Loading Approaches for Skills</h3><div class="lesson-body"><div class="am-md"><h4>A. Always-On Full Skill Bodies</h4>
+<ul>
+<li><strong>How it works</strong>: Read the full text of every Skill at startup and concatenate all of them into the system prompt on every turn.</li>
+<li><strong>Best for</strong>: Systems with very few, very short, static instructions; as the Skill library grows, this quickly bloats the context window and causes conflicting instructions.</li>
+</ul>
+<h4>B. Metadata Discovery + On-Demand Body Loading (Recommended Baseline)</h4>
+<ul>
+<li><strong>How it works</strong>: Keep only each Skill's name and short description (Metadata) in context by default; read the full Skill body within size limits only when it matches the current task or is explicitly activated by the user or model (see the <a href="https://agentskills.io/specification">Agent Skills Specification</a>).</li>
+<li><strong>Best for</strong>: Small-to-medium Skill libraries—saves substantial always-on tokens while clearly recording which Skill version was activated on a given turn.</li>
+</ul>
+<h4>C. Retrieval-Driven Skill Library</h4>
+<ul>
+<li><strong>How it works</strong>: For large Skill collections, retrieve candidate Skills by task query first, then verify applicability, version, and dependencies before loading.</li>
+<li><strong>Best for</strong>: Large domain Skill repositories; requires maintaining a search index and preventing near-duplicate Skills from injecting contradictory rules.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-extensions-p1-panel-D"><h3>4. Comparing 3 Implementation Patterns for Hooks &amp; Middleware</h3><div class="lesson-body"><div class="am-md"><h4>A. In-Process Function Callbacks</h4>
+<ul>
+<li><strong>How it works</strong>: Invoke registered in-process Python functions directly at lifecycle points such as <code>run.start</code>, <code>model.before</code>, <code>tool.before</code>, and <code>tool.after</code>.</li>
+<li><strong>Pros &amp; cons</strong>: Clean typing and minimal latency for trusted built-in logic; however, callbacks share memory and permissions with the host process, and a blocking callback stalls the main loop.</li>
+</ul>
+<h4>B. Out-of-Process Event Protocol (Subprocess Hooks)</h4>
+<ul>
+<li><strong>How it works</strong>: Pass event JSON via <code>stdin</code>, read control decisions from <code>stdout</code>, and capture diagnostics from <code>stderr</code>, managed with timeouts and exit codes.</li>
+<li><strong>Pros &amp; cons</strong>: Language-agnostic, process-isolated, and easy to kill on timeout; ideal for integrating external policy or lint scripts.</li>
+</ul>
+<h4>C. Call-Wrapping Middleware</h4>
+<ul>
+<li><strong>How it works</strong>: Wrap model or tool calls in an onion pipeline (outer pre-processing → inner pre-processing → actual call → inner post-processing → outer post-processing).</li>
+<li><strong>Caveats</strong>: Execution ordering directly affects correctness—for example, wrapping a retry middleware around a non-idempotent write tool causes duplicate writes, and computing the token budget before an inner middleware injects extra tool definitions causes budget undercounting.</li>
+</ul>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Extension Mechanism</th>
+<th>Best For</th>
+<th>Core Benefit</th>
+<th>Main Implementation Cost</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>In-process callbacks</td>
+<td>Trusted, lightweight internal event handling</td>
+<td>Simple, direct, zero serialization overhead</td>
+<td>Shares memory and permissions; crashes can take down the host process</td>
+</tr>
+<tr>
+<td>Out-of-process Hooks</td>
+<td>External scripts &amp; independent timeout enforcement</td>
+<td>Process isolation, easy output caps and timeouts</td>
+<td>Requires maintaining JSON wire schema, exit codes, and subprocess cleanup</td>
+</tr>
+<tr>
+<td>Middleware</td>
+<td>Reusable cross-cutting transforms, logging &amp; control</td>
+<td>Decouples cross-cutting concerns cleanly</td>
+<td>Debugging ordering and side effects across deep middleware stacks</td>
+</tr>
+</tbody></table></div>
+</div></div>
+</section>
+<section class="lesson-section" id="module-extensions-p1-panel-E"><h3>5. Where Should MCP External Tools Plug In?</h3><div class="lesson-body"><div class="am-md"><p><strong>MCP: Plugging into the Unified Execution Pipeline via Tool Adapters (Not Yet Wired Up)</strong></p>
+</div>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../../assets/diagrams/diagram-module-extensions-1-panel-E-1.svg" width="786" height="151" alt="Flowchart: Runner, Unified Tool Execution Pipeline, Local Tool Adapter, MCP_Client, MCP_Server" loading="lazy"></figure>
+<div class="am-md"><ul>
+<li><strong>Adapt uniformly into internal contracts</strong>: After connecting to an MCP Server and discovering tools, convert them into unified internal <code>ToolSpec</code> definitions and pin their versions for the duration of a Run (see the <a href="https://modelcontextprotocol.io/specification/2025-11-25/architecture">MCP 2025-11-25 Architecture Spec</a>).</li>
+<li><strong>Reuse the validation &amp; authorization pipeline</strong>: Model-proposed MCP tool calls must still pass through registry argument validation, Policy permission checks, output size limits, and error routing; an external server claiming its tool is "read-only" never replaces host Policy authorization.</li>
+<li><strong>Manage connection lifecycles</strong>: Local <code>stdio</code> subprocesses must restrict inherited environment variables and clean up child processes; remote HTTP servers must handle authentication, timeouts, and disconnect errors.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-extensions-p1-panel-F"><h3>6. Open-Source &amp; Industry Implementation Comparison</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Deep Agents (Source Verified)</strong>: <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/skills.py">SkillsMiddleware</a> separates Skill discovery from request-time injection and assembles the middleware stack in a fixed order in <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/graph.py">graph.py</a>.</li>
+<li><strong>Claude Code (Official Docs)</strong>: Its <a href="https://code.claude.com/docs/en/hooks">Hooks guide</a> explicitly defines trigger points (such as pre/post tool call) along with the bounded set of control decisions each hook event may return.</li>
+<li><strong>pi (Source Verified)</strong>: <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/agent-session.ts">agent-session.ts</a> exposes well-defined single-step extension callbacks before and after context compaction rather than letting plugins arbitrarily replace the core state machine.</li>
+<li><strong>AgentScope Java (Official Docs)</strong>: <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/skill.md">Skill assembly</a> supports loading Skill materials from workspaces and repositories while decoupling material loading from runtime component configuration.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-extensions-p1-panel-G"><h3>7. How Are Plugin Bundles Packaged and Upgraded?</h3><div class="lesson-body"><div class="am-md"><p>When distributing Skills, Hooks, and tool declarations together, package them in a directory structure with a manifest file:</p>
+</div>
+<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">plugin/
+  manifest.json       Name, version, host interface version, content hashes
+  skills/             Skill instruction files
+  hooks/              Hook declarations
+  tools/              Tool or MCP connection declarations
+</code></pre></figure>
+<div class="am-md"><ul>
+<li><strong>Install-time verification</strong>: Check for path traversal, verify content hashes, and validate compatibility with the host interface version.</li>
+<li><strong>Pin versions during a Run</strong>: Keep the active plugin version fixed throughout a single Run and apply upgrades starting on the next Run, preventing mid-run version switches from causing inconsistent tool receipts.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-extensions-p2-panel-A"><h3>8. Current Implementation &amp; Unimplemented Scope</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Implemented (as of Stage 3: Explicit Function Registration)</strong>: Local Python functions are registered explicitly with permission declarations via <code>ToolRegistry.register()</code> (e.g., <code>examples/count_lines.py</code>; see <a href="../stages/stage-1.html#stage-1">Stage 1</a>).</li>
+<li><strong>Not Yet Implemented (deferred to <a href="../stages/stage-7.html#stage-7">Stage 7 On-Demand Extensions</a>)</strong>: Skill directory scanning and on-demand injection, Hook callback protocol, Middleware stack, MCP client integration, and Plugin bundle management.</li>
+</ul></div></div></section>
+<section class="lesson-section" id="module-extensions-p2-panel-B"><h3>9. Expected Outcomes (Future Extension Integration Exercise)</h3><div class="lesson-body"><div class="am-md"><p>When integrating on-demand Skill loading and read-only MCP tools in a later stage, verify against these criteria:</p>
+<p><strong>Expected Outcomes:</strong></p>
+<ul>
+<li><strong>Zero context injection for inactive Skills</strong>: Only Skill metadata is loaded by default; unactivated Skill bodies consume zero model context budget.</li>
+<li><strong>Loading never auto-executes scripts</strong>: Reading a Skill body strictly enforces path-traversal and size limits and never automatically executes external scripts mentioned in the text.</li>
+<li><strong>Controlled degradation on MCP errors</strong>: When a local read-only MCP server disconnects, changes its schema, or returns an oversized payload, the adapter intercepts it cleanly and converts it into a structured error receipt.</li>
+<li><strong>Permission boundaries cannot be bypassed</strong>: No extension (Skill, Hook, or MCP tool) can bypass Policy to perform unauthorized write operations.</li>
+</ul>
+</div></div>
+</section><nav class="chapter-nav" aria-label="Chapter navigation"><a href="memory.html#module-memory">← Memory: Select Knowledge Retained Across Sessions</a><a href="orchestration.html#module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor →</a></nav></article><footer class="footer"><p>Maintain this HTML page directly; general principles and stage practices are linked together.</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

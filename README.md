@@ -1,6 +1,6 @@
 # Learn Agent：从独立 Loop 到受控工具执行
 
-教程入口：[模块职责图](docs/tutorial.html#system-map)。阶段 0–3 已实现；[阶段 3：会话与记录](docs/stages/stage-3.html#stage-3) 从纯对话推导保存、查询与续接，[阶段 4：上下文管理与预算](docs/stages/stage-4.html#stage-4) 为后续设计。
+教程入口：[模块职责图](docs/tutorial.html#system-map)。阶段 0–4 已实现；[阶段 3：会话与记录](docs/stages/stage-3.html#stage-3) 从纯对话推导保存、查询与续接，[阶段 4：上下文管理与预算](docs/stages/stage-4.html#stage-4) 已实现按完整任务裁剪与每步预算检查。
 
 模块教程结合 pi、Codex 等 Agent 的源码比较实现原理；阶段实践只选择当前需要的一种方案，逐步完成各核心模块的 MVP。先让选定的核心模块串成端到端 Agent，整体跑通后再按真实问题做局部优化。参考方案用于理解与取舍，不要求全部实现。
 
@@ -38,9 +38,18 @@ uv run python -m learn_agent
 uv run python -m learn_agent "看看有哪些资料，整理成一份摘要并保存"
 ```
 
-每次启动执行一个用户任务，默认新建会话，将任务边界、完整消息与工具回执保存到 `.learn-agent/sessions/` 的 JSONL 文件中。使用 `--session ID` 在同一会话中继续追问，Runner 会自动加载已完成的历史消息。默认输出上限为 512 Token、每个任务最多请求模型四次。
+每次启动执行一个用户任务，默认新建会话，将任务边界、完整消息与工具回执保存到 `.learn-agent/sessions/` 的 JSONL 文件中。使用 `--session ID` 在同一会话中继续追问，Runner 会加载已完成历史，在每次请求前按预算选择完整任务块。默认输出上限为 512 Token、每个任务最多请求模型四次。
 
-[阶段 3：会话与记录](docs/stages/stage-3.html#stage-3) 通过多轮对话验证会话持久化与上下文自动延续：`--list-sessions` 列出会话，`--show-session ID` 查询完整历史记录；这两个只读查询直接读取本地存储，不创建模型连接，也不执行工具。输入预算、裁剪与中断自动恢复尚未实现。
+[阶段 3：会话与记录](docs/stages/stage-3.html#stage-3) 通过多轮对话验证会话持久化与上下文自动延续：`--list-sessions` 列出会话，`--show-session ID` 查询完整历史记录；这两个只读查询直接读取本地存储，不创建模型连接，也不执行工具。输入预算与整块裁剪已接入；中断自动恢复尚未实现。
+
+阶段 4 默认应用窗口额度为 32768，输出预留 512，安全余量 1024；可用输入预算为 31232。离线计量复用 SDK 的消息与工具编码，以输入 JSON 的 UTF-8 字节数保守估算 Token，包含工具调用、回执、Schema 与原生续接字段；它不是供应商精确 Token 数。窗口额度需按实际模型设置，不自动推断。可通过以下参数调整：
+
+```sh
+uv run python -m learn_agent --context-window 32768 --max-output-tokens 512 --safety-margin 1024 --max-input-tokens 6000 "整理资料"
+uv run python -m learn_agent --session SESSION_ID --pin-turn TURN_ID "沿用之前的要求继续"
+```
+
+将 `SESSION_ID` 和 `TURN_ID` 替换为已有 ID；`--pin-turn` 可重复指定，仅对本次运行生效。未超预算时保留全部历史；超限时从最旧的可选任务开始整块省略。系统指令、工具定义、必需历史和当前任务不裁剪；仅必需内容超限时停止请求并保存失败原因。每步输出 `budget`、`used`、`unit`、`kept`、`dropped`，成功时也通过 `RunResult.context_decisions` 返回。原始 JSONL 始终保留完整内容。
 
 工作目录和权限在 [入口](learn_agent/__main__.py) 设置，工具清单写在 [application.py](learn_agent/application.py) 的 DEFAULT_TOOLS 中，不随问题变化。默认工作目录是 `examples/workspace`，启动时会显示；启用 `list_files`、`read_file`、`search_text`、`write_file`，由模型选择调用。通用入口允许在工作目录内读取、新建文件，禁止隐藏路径、越界和覆盖已有文件。写入仅支持 macOS / Linux，父目录须存在，正文最多 16,000 个 UTF-8 字节。
 
@@ -73,7 +82,7 @@ uv run python examples/00_plain_loop.py
 
 阶段 2 先读 [Tools ↔ Policy 协议](docs/modules/policy.html#module-policy-interface)：工具识别动作，注册表以 `ActionRequest(operation, resource)` 统一询问 `Policy.evaluate()`，取得 `PolicyDecision(allowed, reason)`。拒绝返回 `policy_denied`；允许后才执行。[禁止覆盖实验](examples/policy_no_overwrite.py) 和 [Policy 测试](tests/test_policy.py) 验证权限是否生效，不涉及成果验收。
 
-当前代码实现到阶段 3。可直接读 [阶段 3：会话与记录](docs/stages/stage-3.html#stage-3)，从要记住什么逐步推导消息、任务、保存与读取，再对照 [session.py](learn_agent/session.py)。[Session / State 模块原理](docs/modules/state.html#session-purpose) 补充 pi / Codex 的方案比较；[阶段 4](docs/stages/stage-4.html#stage-4) 尚未接入。
+当前代码实现到阶段 4。可直接读 [阶段 3：会话与记录](docs/stages/stage-3.html#stage-3)，从要记住什么逐步推导消息、任务、保存与读取，再对照 [session.py](learn_agent/session.py)。[Session / State 模块原理](docs/modules/state.html#session-purpose) 补充 pi / Codex 的方案比较；[阶段 4](docs/stages/stage-4.html#stage-4) 对照 [context.py](learn_agent/context.py) 理解预算、历史块、必需内容保护与选择清单。
 
 普通函数注册时直接声明所需权限，例如 `tools.register(count_lines, ReadFileArguments, permission="read", path_parameter="path")`。路径来自本次调用的 path 参数；不再传动作说明函数。注册表统一生成动作、调用 Policy，允许才执行。声明需求不代表获得授权；write 会根据目标是否存在区分新建与覆盖。新增工具复用已有权限即可，不改 registry.py 或 Runner。
 
@@ -97,7 +106,7 @@ uv run pytest
 uv run python scripts/check_docs.py
 ```
 
-测试操作真实临时文件，并让实际 SDK 请求本机 HTTP 服务；覆盖不提供文件名的自然语言任务、按配置注册工具、目录发现、授权与拒绝、禁止覆盖、并发与符号链接，以及工具注册、资源边界、消息关联和模型协议。另检查独立任务的模型输入不会自动混入前一次调用的消息。[会话测试](tests/test_session.py) 另覆盖关闭重开、纯对话续接、完整工具消息、失败片段、文件损坏、锁与只读查询。固定协议响应不证明真实模型的任务能力；真实模型在连续任务中的表现需单独运行观察。
+测试操作真实临时文件，并让实际 SDK 请求本机 HTTP 服务；覆盖不提供文件名的自然语言任务、按配置注册工具、目录发现、授权与拒绝、禁止覆盖、并发与符号链接，以及工具注册、资源边界、消息关联和模型协议。另检查独立任务的模型输入不会自动混入前一次调用的消息。[会话测试](tests/test_session.py) 另覆盖关闭重开、纯对话续接、完整工具消息、失败片段、文件损坏、锁与只读查询。[上下文测试](tests/test_context.py) 覆盖整块裁剪、必需历史、输出预留、真实 SDK 输入与循环内超限。固定协议响应不证明真实模型的任务能力；真实模型在连续任务中的表现需单独运行观察。
 
 教程以 `docs/tutorial.html` 为总目录，阶段与模块分别在 `docs/stages/`、`docs/modules/` 中直接维护 HTML；共享样式、交互与复用 SVG 在 `docs/assets/`。浏览器可直接打开，不需要文档构建。编辑时按章节读取，避免把全书及图源一起带入上下文。
 

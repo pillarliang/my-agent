@@ -89,9 +89,27 @@ def check_tutorial(errors: list[str]) -> dict[Path, TutorialParser]:
         parser = TutorialParser()
         parser.feed(path.read_text(encoding="utf-8"))
         pages[path.resolve()] = parser
-    stages = [stage for parser in pages.values() for stage in parser.stage_ids]
-    if not stages or sorted(stages) != [f"stage-{index}" for index in range(len(stages))]:
+    zh_stages = [
+        stage
+        for path, parser in pages.items()
+        if not path.is_relative_to((ROOT / "docs/en").resolve())
+        for stage in parser.stage_ids
+    ]
+    if not zh_stages or sorted(zh_stages) != [f"stage-{index}" for index in range(len(zh_stages))]:
         errors.append("tutorial: stages must appear once each, starting at 0 without gaps")
+    if (ROOT / "docs/en").exists():
+        if not (ROOT / "docs/en/tutorial.html").exists():
+            errors.append("Missing docs/en/tutorial.html")
+        en_stages = [
+            stage
+            for path, parser in pages.items()
+            if path.is_relative_to((ROOT / "docs/en").resolve())
+            for stage in parser.stage_ids
+        ]
+        if not en_stages or sorted(en_stages) != [
+            f"stage-{index}" for index in range(len(en_stages))
+        ]:
+            errors.append("tutorial (en): stages must appear once each, starting at 0 without gaps")
     for path, parser in list(pages.items()):
         for identifier, count in Counter(parser.ids).items():
             if count > 1:
@@ -124,6 +142,8 @@ def check_tutorial(errors: list[str]) -> dict[Path, TutorialParser]:
         else:
             for target in json.loads(match.group(1)).values():
                 check_link(ROOT / "docs/tutorial.html", target, pages, errors)
+                if (ROOT / "docs/en/tutorial.html").exists():
+                    check_link(ROOT / "docs/en/tutorial.html", target, pages, errors)
     print(f"Checked {len(pages)} tutorial pages and {len(diagrams)} SVG files.")
     return pages
 

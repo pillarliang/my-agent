@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Memory: Select Knowledge Retained Across Sessions · Learn Agent</title>
+<link rel="stylesheet" href="../../assets/tutorial.css">
+<script src="../../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Choose Long-Task Mechanisms from Real Failures</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Application &amp; Behavior Config</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><div class="nav-group-title">3. Harness Core</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality: Observability &amp; Evaluation</a><div class="nav-group-title">4. On-Demand Capabilities</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">Long Tasks &amp; Knowledge Reuse</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">Reliable Execution &amp; Isolation</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">5. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">6. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/memory.html#module-memory">中文版</a></p><article class="chapter" id="module-memory"><header class="chapter-header"><span class="kind">Module Principles &amp; Design Options</span><h2>Memory: Select Knowledge Retained Across Sessions</h2></header><section class="lesson-section" id="module-memory-p1-panel-A"><h3>1. Starting Problem: What Information Is Worth Remembering Across Sessions?</h3><div class="lesson-body"><div class="am-md"><p>Within a single session, <a href="state.html#module-state">Session / State</a> preserves the complete conversation and tool transcript; however, when starting a brand-new session, we want the system to remember stable project facts and user preferences without carrying over transient errors from a previous task as permanent facts:</p>
+<ul>
+<li><strong>Knowledge worth retaining across sessions</strong>: E.g., "This project uses <code>uv</code> for dependency management" or "The user prefers data sources listed at the end of reports."</li>
+<li><strong>Transient state unsuitable as long-term memory</strong>: E.g., "A test failed a moment ago" or "Line 10 of a file has a temporary syntax error" (these are tightly bound to a specific moment and file revision and become stale as soon as code changes).</li>
+</ul>
+<p><strong>Memory: Controlled Writing, On-Demand Reading &amp; Explicit Forgetting (Future Capability, Not Yet Implemented)</strong></p>
+</div>
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../../assets/diagrams/diagram-module-memory-1-panel-A-1.svg" width="403" height="563" alt="Flowchart: History and explicit input, candidate extraction, verify source/scope/conflicts, save versioned entry after confirmation, active entries and index, current task and user info, scope filtering and retrieval, source-attributed Context snippets" loading="lazy"></figure>
+<div class="am-md"><ul>
+<li><strong>The write path decides "Is this worth remembering long-term?"</strong>: Verifies provenance, applicable scope (user-level / project-level), and conflicts against existing entries before saving a versioned record after confirmation.</li>
+<li><strong>The read path decides "Does this apply to the current task?"</strong>: Filters by user and project scope first, then retrieves relevant entries for Context Manager to assemble.</li>
+<li><strong>Lifecycle maintenance</strong>: Long-term memory must support superseding updates, expiration, and explicit deletion (forgetting); high vector similarity only indicates semantic closeness, not that an entry is still valid or authorized.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-interaction"><h3>2. Module Collaboration: How Do State, Memory, and Context Divide Responsibilities?</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Write path (State → Memory)</strong>: When the user explicitly states "Always attach sources to reports from now on," or when candidate items are extracted from historical messages in <a href="state.html#module-state">State</a>, Memory verifies the source record ID, scope, and confirmation criteria before persisting (model-extracted candidates must never be treated as established facts without verification).</li>
+<li><strong>Read path (Memory → Context Manager)</strong>: When a new task starts, Memory returns candidate entries carrying provenance, version, and active status based on the current project and task cues, and <a href="context.html#module-context">Context Manager</a> filters them within the token budget for the current turn's input.</li>
+<li><strong>Permission &amp; error boundaries</strong>: If the model is allowed to call a tool to write memories, that call must still pass through <a href="tools.html#module-tools">Tools</a> and <a href="policy.html#module-policy">Policy</a> checks, and memory contents can never expand tool execution permissions; furthermore, the system must clearly distinguish between "no retrieval hits," "memory expired," and "storage query failed."</li>
+</ul><figure class="am-diagram am-seq"><img class="lesson-svg" src="../../assets/diagrams/module-memory-collaboration.svg" width="1000" height="494" alt="Future collaboration example: writes verify provenance first, and reads return candidates for Context Manager to select; this Memory flow is not yet implemented." loading="lazy"><figcaption>Future collaboration example: writes verify provenance first, and reads return candidates for Context Manager to select; this Memory flow is not yet implemented.</figcaption></figure></div></div></section>
+
+<section class="lesson-section" id="module-memory-p1-panel-C"><h3>3. Decoupling Concepts: Separate "Knowledge Type" from "Storage Medium"</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>By knowledge type (governs lifecycle &amp; reuse pattern)</strong>:
+  <ul>
+  <li><strong>Facts &amp; preferences</strong>: Project environment conventions or user formatting rules; require provenance and scope tracking.</li>
+  <li><strong>Episodic cases (Episodic)</strong>: Past debugging successes or failure postmortems used as reference for similar future problems.</li>
+  <li><strong>Reusable procedures (Procedural)</strong>: Fixed multi-step workflows, which are usually better packaged as standalone Skills (see <a href="extensions.html#module-extensions">Extensions</a>).</li>
+  </ul>
+</li>
+<li><strong>By storage &amp; retrieval medium (governs engineering implementation; composable)</strong>:
+  <ul>
+  <li><strong>Markdown files</strong>: Ideal for direct human review, editing, and Git version control.</li>
+  <li><strong>Relational database (SQLite)</strong>: Ideal for structured metadata, versioning, scope filtering, and exact keyword search (FTS).</li>
+  <li><strong>Vector index (Embeddings)</strong>: Ideal for recalling semantically related candidates across large collections.</li>
+  </ul>
+</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-D"><h3>4. Comparing Core Approaches: 4 Memory Implementation Patterns</h3><div class="lesson-body"><div class="am-md"><p>The approaches below cover storage/retrieval patterns (A–C) and write patterns (D), which can be combined on demand (none are wired up yet):</p><h4>A. User-Maintained Index + Markdown Memory Files</h4>
+<ul>
+<li><strong>How it works</strong>: List topics in a concise index file while storing full notes in Markdown files; load only the index overview on each run and read specific topic files on demand.</li>
+<li><strong>Best for</strong>: Single-user local development with a small number of memory entries that humans want to inspect and edit directly.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Concurrent writes across sessions, scope isolation, and expiration cleanup require extra conventions; loading every file in full on every turn quickly crowds out the context window.</li>
+</ul>
+<h4>B. Structured SQLite Entries + Keyword Search (SQL / FTS)</h4>
+<ul>
+<li><strong>How it works</strong>: Store entry ID, kind, scope, source references, version number, and status in relational tables, filtering by project, timestamp, and keywords (or full-text search FTS).</li>
+<li><strong>Best for</strong>: Scenarios requiring strict scope isolation, versioned updates, audit/undo trails, and exact terminology matching.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Requires maintaining table schemas; pure keyword search may miss relevant entries when the user phrases a question with synonyms.</li>
+</ul>
+<h4>C. Vector or Hybrid Retrieval (Hybrid Search)</h4>
+<ul>
+<li><strong>How it works</strong>: Generate embedding vectors for memory entries and combine scope filtering, recency filtering, keyword matching, and semantic search to recall candidates.</li>
+<li><strong>Best for</strong>: Large memory stores where the same concept may be phrased in many different ways.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Adds embedding API calls, index rebuild overhead, and retrieval quality evaluation costs; furthermore, <strong>scope and permission filters must be applied before or during vector recall</strong>—never recall a global Top-K across projects first and filter afterward.</li>
+</ul>
+<h4>D. Model-Driven Extraction &amp; Background Consolidation</h4>
+<ul>
+<li><strong>How it works</strong>: At the end of a task or before context compaction, invoke a model to extract candidate memories from the conversation, updating the memory store after deduplication, conflict checks, and confirmation.</li>
+<li><strong>Best for</strong>: High-frequency conversation workflows where relying purely on manual human maintenance is impractical.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Models can mistake guesses for facts or treat a one-off request as a permanent preference; record extraction versions and source IDs, start with human confirmation or easy rollback, and increase automation gradually.</li>
+</ul>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Best For</th>
+<th>Core Benefit</th>
+<th>Main Challenge</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>File index &amp; Markdown body</td>
+<td>Small knowledge base reviewed directly by humans</td>
+<td>Transparent, intuitive, easy to migrate</td>
+<td>Concurrent merges and scope management</td>
+</tr>
+<tr>
+<td>SQL entries &amp; keyword search</td>
+<td>Versioned updates, undo trails &amp; strict isolation</td>
+<td>Precise filtering and explainable behavior</td>
+<td>Misses synonyms with different wording</td>
+</tr>
+<tr>
+<td>Hybrid search</td>
+<td>Large entry count with varied phrasing</td>
+<td>Higher semantic recall</td>
+<td>Index maintenance and evaluation cost</td>
+</tr>
+<tr>
+<td>Automated extraction &amp; consolidation</td>
+<td>Reducing manual maintenance burden</td>
+<td>Automatically captures preferences and facts</td>
+<td>Risk of persisting wrong guesses or stale conflicts</td>
+</tr>
+</tbody></table></div>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-E"><h3>5. Open-Source &amp; Industry Implementation Comparison</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Claude Code (Official Docs)</strong>: Its <a href="https://code.claude.com/docs/en/memory">memory documentation</a> distinguishes user-maintained rule files from auto-memory; auto-memory maintains a size-bounded <code>MEMORY.md</code> index while reading detailed topic files on demand so users can inspect and edit them at any time.</li>
+<li><strong>Deep Agents (Source Verified)</strong>: <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py">MemoryMiddleware</a> loads memory files for a specified scope (user-level or agent-level) at startup and injects them at request time (see the <a href="https://docs.langchain.com/oss/python/deepagents/memory">official memory docs</a>).</li>
+<li><strong>AgentScope Java (Official Docs)</strong>: Its <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/memory.md">Memory design</a> uses a two-stage flow—"append daily raw logs + periodically consolidate into long-term memory files"—and injects long-term memory into Context as reference material.</li>
+<li><strong>LangChain Store (Official Docs)</strong>: <a href="https://docs.langchain.com/oss/python/langchain/long-term-memory">Long-Term Memory Store</a> organizes items by <code>namespace</code> (such as user ID and project ID) and <code>key</code>, supporting scoped search within a target namespace.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-F"><h3>6. Recommended Data Schema</h3><div class="lesson-body"><div class="am-md"><p>When implementing structured memory entries later, include scope, provenance tracking, version superseding, and confirmation status fields (design sketch; not yet created in code):</p>
+</div>
+<figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">json</span></figcaption><pre class="am-code"><code data-lang="json">{
+  "id": "memory_001",
+  "scope": {"user_id": "local", "project_id": "learn-agent"},
+  "kind": "project_fact",
+  "text": "The project uses uv for dependency management.",
+  "source_ids": ["run_x/message_1"],
+  "version": 1,
+  "status": "active",
+  "supersedes": null,
+  "created_at": "2026-10-18T00:00:00Z",
+  "expires_at": null,
+  "confirmed_by": "user"
+}
+</code></pre></figure>
+<div class="am-md"><ul>
+<li><strong>Program-managed metadata</strong>: <code>id</code>, <code>scope</code>, and <code>version</code> are generated by code, and <code>source_ids</code> point back to traceable session records.</li>
+<li><strong>Preventing model-forged confirmation</strong>: <code>confirmed_by</code> can only be populated by the application from genuine user interaction, never emitted freely by an extraction model.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p1-panel-G"><h3>7. Lifecycle Management: Updates, Forgetting &amp; Expiration</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Versioned updates (Supersede)</strong>: When a fact or preference changes, mark the old entry's <code>status</code> as superseded and write a new version pointing to the old entry ID; read queries load only <code>active</code> entries.</li>
+<li><strong>Complete forgetting (Forget)</strong>: Deleting a memory must simultaneously clean up <strong>primary storage, search indexes, and extraction watermarks</strong>. If you only delete the index entry without marking the source transcript, a background extractor may re-extract the deleted fact from old conversation history.</li>
+<li><strong>Expiration &amp; permission boundaries</strong>: Set expiration timestamps (<code>expires_at</code>) on temporary facts; even if a memory entry says "the user previously approved overwriting files," it can never bypass runtime permission checks—all tool actions are still judged live by <a href="policy.html#module-policy">Policy</a>.</li>
+</ul>
+</div></div>
+</section>
+<section class="lesson-section" id="module-memory-p2-panel-A"><h3>8. Current Implementation &amp; Unimplemented Scope</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Implemented (as of Stage 3)</strong>: Single-session JSONL persistent records and history continuation by session ID (see <a href="../stages/stage-3.html#stage-3">Stage 3</a>).</li>
+<li><strong>Not Yet Implemented (deferred to <a href="../stages/stage-5.html#stage-5">Stage 5 On-Demand Extensions</a>)</strong>: Cross-session knowledge extraction, structured or vector memory stores, scoped retrieval, and memory update/forgetting interfaces.</li>
+</ul></div></div></section>
+<section class="lesson-section" id="module-memory-p2-panel-B"><h3>9. Expected Outcomes (Future Long-Term Memory Exercise)</h3><div class="lesson-body"><div class="am-md"><p>When integrating the Memory module in a later stage, verify it through cross-session and cross-project experiments.</p>
+<p><strong>Expected Outcomes:</strong></p>
+<ul>
+<li><strong>Accurate cross-session reuse</strong>: A project preference saved in Session A automatically takes effect with source citations when starting Session B in the same project.</li>
+<li><strong>Strict cross-project isolation</strong>: Switching to another project workspace never leaks memory entries belonging to the previous project.</li>
+<li><strong>Superseded values stop taking effect</strong>: After a user updates a preference, new sessions inject only the latest version and never surface the superseded rule.</li>
+<li><strong>Forgotten entries stay forgotten</strong>: After executing a forget operation, both the primary entry and index are cleared, and subsequent auto-extraction does not resurrect it from old transcripts.</li>
+<li><strong>Permission boundaries remain intact</strong>: No memory content can enable write permissions that are disallowed by Policy.</li>
+</ul>
+</div></div>
+</section><nav class="chapter-nav" aria-label="Chapter navigation"><a href="quality.html#module-quality">← Quality: Observability &amp; Evaluation</a><a href="extensions.html#module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools →</a></nav></article><footer class="footer"><p>Maintain this HTML page directly; general principles and stage practices are linked together.</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>
