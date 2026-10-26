@@ -3,6 +3,12 @@
  const navLinks=[...document.querySelectorAll('[data-chapter]')];
  const search=document.getElementById('chapter-search');
  const count=document.getElementById('search-count');
+ const menu=document.getElementById('chapter-menu');
+ const narrowLayout=matchMedia('(max-width:720px)');
+ // 桌面布局隐藏折叠按钮，因此从窄屏切回时必须重新展开目录。
+ const expandDesktopMenu=()=>{if(!narrowLayout.matches)menu.open=true;};
+ narrowLayout.addEventListener('change',expandDesktopMenu);
+ expandDesktopMenu();
  const corpus=new Map(navLinks.map(a=>[a.dataset.chapter,a.textContent.toLowerCase()]));
  search.addEventListener('input',()=>{
   const term=search.value.trim().toLowerCase();let found=0;
@@ -15,7 +21,7 @@
   if(target.pathname===here && document.getElementById(a.dataset.chapter)){
    a.classList.add('active');a.setAttribute('aria-current','page');
   }
-  a.addEventListener('click',()=>{if(matchMedia('(max-width:720px)').matches)document.getElementById('chapter-menu').open=false;});
+  a.addEventListener('click',()=>{if(narrowLayout.matches)menu.open=false;});
  }
  const dialog=document.getElementById('diagram-view');
  const canvas=document.getElementById('diagram-canvas');
