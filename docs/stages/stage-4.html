@@ -1,21 +1,114 @@
 <!doctype html>
 <html lang="zh-CN" data-theme="shadcn" data-mode="light">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>阶段 4：根据真实失败选择长任务机制 · Learn Agent</title>
+<title>阶段 4：上下文管理与预算 · Learn Agent</title>
 <link rel="stylesheet" href="../assets/tutorial.css">
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
-<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="../modules/interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="../modules/loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="../modules/model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="../modules/context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="../modules/tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="../modules/policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="../modules/state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="../modules/quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="../modules/memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="../modules/extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="../modules/orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
-<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="stage-4"><header class="chapter-header"><span class="kind">后续阶段 · 尚未实现</span><h2>阶段 4：根据真实失败选择长任务机制</h2></header><div class="am-md"><p>根据任务中遇到的问题选择一种方法，无需先把摘要、检索和记忆全部实现。</p></div><section class="lesson-section" id="stage-4-p1-panel-A"><h3>1. 建立基线</h3><div class="lesson-body"><div class="am-md"><p>固定任务、资料、模型配置和验收条件，记录遗漏、用量、延迟与失败。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-B"><h3>2. 选择机制</h3><div class="lesson-body"><div class="am-md"><p>工具结果过大时，先尝试只显示部分内容，并提供原文链接；裁剪历史导致早先的要求丢失时，考虑单独保存任务要求或生成摘要；材料较多时考虑检索；跨会话复用时再考虑长期记忆。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-C"><h3>3. 实现与比较</h3><div class="lesson-body"><div class="am-md">
-<h4 id="stage-4-code-structure">3.1 现有代码基础与候选关系图</h4>
-<p><strong>本阶段尚未实现摘要、检索或长期记忆。</strong>现有基础是 <a href="../../learn_agent/runner.py">run_agent()</a>、<a href="../../learn_agent/tools/registry.py">ToolRegistry</a> 与 <a href="../../learn_agent/models/contracts.py">ModelRequest / ModelResponse</a>。Runner 只保留本次任务消息；会话记录仍待实现。</p>
-<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/stage-4-code-structure.svg" width="1000" height="760" alt="阶段 4 现有 Runner、工具和模型基础，与尚未实现的结果处理、资料组织和输入选择职责的关系" loading="lazy"><figcaption>后续关系设计：根据失败选择一种机制，并由输入管理决定本次加载的内容。虚框不是已有函数或类。</figcaption></figure>
-<h4 id="stage-4-call-flow">3.2 选择一种机制后，再落实调用过程</h4>
-<ol><li>用现有 CLI 固定任务与资料，查询 3A 保存的请求、响应与工具结果，定位是资料缺失、内容过多还是较早要求被省略。用量取自模型响应；延迟比较需另行测量。</li><li>若选择结果预览，在工具生成结果时提供可重新读取的原文位置；若选择摘要或检索，新增对应的资料处理职责，并保留来源与版本。只实现本次要比较的一种方案。</li><li>在未来 3B 的输入选择步骤加载所需原文、摘要或检索结果，明确预算和失败行为，再得到实际 <code>ModelRequest</code>。</li><li>沿现有 Runner 调用模型并保存结果，使用相同任务比较遗漏、用量和耗时，再决定是否保留新机制。</li></ol>
-<h4 id="stage-4-data">3.3 表结构现状与后续存储选择</h4>
-<p>当前没有会话数据库、摘要、文档分块或长期记忆表。工具结果只进入本次内存消息；先按<a href="stage-3a.html#stage-3a">3A</a>设计持久材料，再按实际失败决定是否增加摘要或检索。</p>
-<p>后续若选摘要，需要设计原文引用、版本与更新方式；若选检索，需要设计资料 ID、分块、索引及删除同步；若选长期记忆，需要设计适用范围、来源和更正规则。可以使用文件、SQLite 或独立索引服务；尚未选择方案，因此本页不预先定义这些表的字段。实现时把真实字段与关联补在这里。</p>
-<h4>3.4 比较要求</h4>
-<p>为输入保留来源、版本、包含与省略清单。每次只尝试一种方法，用相同任务比较改进效果和新增问题。</p></div></div></section><section class="lesson-section" id="stage-4-p1-panel-D"><h3>4. 验收</h3><div class="lesson-body"><div class="am-md"><p>能解释模型实际看到了什么，说明错误来自哪里、怎样更正或删除记忆，并记录尚未解决的问题。</p></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="stage-3b.html#stage-3b">← 阶段 3B：上下文管理与预算</a><a href="stage-5.html#stage-5">阶段 5：中断后怎样安全继续 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算（后续）</a><a class="chapter-link" href="stage-5.html#stage-5" data-chapter="stage-5">阶段 5：根据真实失败选择长任务机制</a><a class="chapter-link" href="stage-6.html#stage-6" data-chapter="stage-6">阶段 6：中断后怎样安全继续</a><a class="chapter-link" href="stage-7.html#stage-7" data-chapter="stage-7">阶段 7：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="../modules/interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="../modules/loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="../modules/model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="../modules/context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="../modules/tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="../modules/policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="../modules/state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="../modules/quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="../modules/memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="../modules/extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="../modules/orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="stage-4">
+<header class="chapter-header"><span class="kind">从需求推导 · 后续设计，尚未实现</span><h2>阶段 4：上下文管理与预算</h2></header>
+<section class="lesson-section" id="stage-3-context"><h3>1. 问题起点：历史越来越长，每次都要全部发给模型吗？</h3><div class="lesson-body"><div class="am-md">
+<p>在多轮对话中，历史记录会随着交流不断累积。考虑以下场景：</p>
+<ul>
+<li><strong>用户（第 1 轮）</strong>：“帮我写一份活动通知，用中文，时间统一写 UTC。”</li>
+<li><strong>模型</strong>：给出初稿。</li>
+<li><em>（中间经过多轮标题、语气与版本调整，产生大量已废弃的草稿）</em></li>
+<li><strong>用户（当前轮）</strong>：“沿用前面的时间规则，把通知缩成两句。”</li>
+</ul>
+<p>此时程序面临两难：</p>
+<ol>
+<li><strong>如果只发最后这句话</strong>：模型不知道“前面的时间规则”是什么，也拿不到要修改的通知草稿。</li>
+<li><strong>如果把全部历史原样发过去</strong>：早已废弃的草稿会反复占用上下文窗口、增加耗时与费用，甚至直接触发模型输入超限（Context Limit）。</li>
+</ol>
+<p>“磁盘保存了多少历史”和“本次请求要发送多少内容”是两个独立的问题。本阶段的核心任务是：<strong>在有限的输入预算内，为当前请求挑选必要的上下文数据，并清晰记录保留与省略了什么。</strong></p>
+<p><strong>期望达到的效果：</strong></p>
+<ul>
+<li><strong>短对话原样通过</strong>：候选输入未超出预算时，完整保留全部可用历史。</li>
+<li><strong>超预算按规则裁剪</strong>：输入超出预算时，按既定规则优先省略非必需的旧任务块。</li>
+<li><strong>必需内容超限直接拦截</strong>：若仅系统指令、必需历史与当前问题就已超出预算，在请求模型前明确报错停止，绝不静默删减必需内容。</li>
+<li><strong>裁剪可追溯且不改原记录</strong>：返回本次保留与省略的明细清单；裁剪只作用于本次模型请求，磁盘上的原始会话记录保持完整。</li>
+</ul>
+</div></div></section>
+<section class="lesson-section" id="stage-4-materials"><h3>2. 一次模型请求包含哪些上下文数据？</h3><div class="lesson-body"><div class="am-md">
+<p id="stage-3-model-input">把为单次模型请求组织的所有输入统称为<strong>上下文（Context）</strong>。它不仅包含屏幕上可见的聊天文字，通常由以下四部分组成：</p>
+<ul>
+<li><strong>系统指令（System Prompt）</strong>：应用配置的全局行为规则。</li>
+<li><strong>候选历史消息</strong>：此前已完成任务的消息序列（可直接来自内存，或来自<a href="stage-3.html#stage-3-reading">阶段 3 的会话历史重建</a>）。</li>
+<li><strong>当前任务消息</strong>：本轮用户提问，以及本轮循环内已产生的模型响应与工具回执。</li>
+<li><strong>工具定义与协议续接数据</strong>：即使本轮未调用工具，可用工具的 Schema 也会随请求发送；模型响应中的原生 continuation 数据同样会参与协议编码并占用空间。</li>
+</ul>
+<p>在筛选和组装上下文时，必须保持每份数据的<strong>原始角色与来源属性</strong>：用户早先提出的 UTC 要求依然是用户消息，工具返回的文本依然是工具结果。不能因为保留了某段历史就将其升级为系统指令，更不能改变 Policy 对后续动作的权限判断。</p>
+</div></div></section>
+<section class="lesson-section" id="stage-4-budget"><h3>3. 如何计算输入体积与分配预算？</h3><div class="lesson-body"><div class="am-md">
+<p>“只保留最近 5 轮对话”并不能真正控制请求体积——一轮对话可能只有十几个字，也可能包含上万字的文件内容或日志。要判断内容是否放得下，必须先定义<strong>计量口径与输入预算</strong>：</p>
+<ul>
+<li><strong>对编码后的整体请求计量</strong>：模型按 Token（分段后的计量单位，不等于字符数或字节数）处理输入。计量范围必须覆盖实际编码后的消息、工具 Schema 和协议续接数据，不能只把各条纯文本长度简单相加。</li>
+<li><strong>为回答预留输出空间</strong>：当输入与输出共用上下文窗口时，需满足：<code>输入估算量 + 最大输出预留 + 安全余量 ≤ 模型可用窗口</code>（若服务商另设最大输入上限，需同时满足）。</li>
+<li><strong>区分三类不同的上限控制</strong>：
+  <ul>
+  <li><strong>单次输出上限（<code>max_tokens</code>）</strong>：限制模型单次回答能生成多少内容。</li>
+  <li><strong>循环步数上限（<code>max_steps</code>）</strong>：限制一次任务最多请求几次模型。</li>
+  <li><strong>输入预算（Input Budget）</strong>：限制单次请求发给模型的上下文总大小。计量失败或配置缺失时应明确报错，绝不能把未知体积当成 0。</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+<section class="lesson-section" id="stage-4-required"><h3>4. 裁剪前如何区分“必需内容”与“可移除块”？</h3><div class="lesson-body"><div class="am-md">
+<p>回到活动通知的例子：第 1 轮提出的“UTC 时间规则”比最近几轮的标题讨论更重要。<strong>“时间最近”只是排序规则，不代表内容最重要。</strong>在没有引入复杂的自动语义提炼前，首版将候选内容划分为三类：</p>
+<ul>
+<li><strong>本轮固定必需内容</strong>：系统指令、工具定义、当前用户提问，以及当前 Turn 内已产生的模型响应与工具回执（当前任务尚未结束时，不对其内部过程做局部删减）。</li>
+<li><strong>显式指定的必需历史</strong>：由调用方明确标记必须保留的历史任务（例如标记包含有效 UTC 要求的 <code>T1</code>），其余已完成任务作为可裁剪的候选历史。</li>
+<li><strong>按完整 Turn 归组的可移除块</strong>：如果一次模型响应发起了两个工具调用并收到两个回执，只截掉其中一半会导致 <code>call_id</code> 配对断裂、触发协议报错。因此首版以<strong>已完成的单个用户任务（Turn）</strong>作为最小裁剪单元——该任务内的用户提问、模型响应、工具调用与回执要么一起保留，要么一起省略。</li>
+</ul>
+</div></div></section>
+<section class="lesson-section" id="stage-4-choice"><h3>5. 首版裁剪策略：按时间顺序整块省略旧任务</h3><div class="lesson-body"><div class="am-md">
+<p>明确了计量方法、必需内容与最小裁剪单元后，首版采用确定性的裁剪规则：<strong>未超预算时保留全部候选内容；超出预算时，从最旧的可移除任务（Turn）开始整块省略，每次移除后重新计量，直到满足预算为止。</strong>保留下来的消息依然按原有先后顺序排列。</p>
+<h4>用一组可手算的数据验证裁剪过程</h4>
+<p>假设本地测试采用可相加的计量单位（仅用于演示算法逻辑，非真实模型 Token）：</p>
+<ul>
+<li><strong>预算与候选体积</strong>：输入预算上限为 <code>30</code>；当前必需内容占 <code>8</code>，显式标记必需的 <code>T1</code> 占 <code>4</code>，可移除的旧任务 <code>T2</code> 占 <code>12</code>、<code>T3</code> 占 <code>7</code>，总计 <code>31</code>（超出预算 <code>1</code> 单位）。</li>
+<li><strong>执行整块裁剪</strong>：虽然只差 <code>1</code> 单位，也必须将最旧的可移除任务 <code>T2</code>（占 <code>12</code>）整体省略，绝不能为了凑满 <code>30</code> 而去截断 <code>T2</code> 内部的一半草稿或工具回执。</li>
+<li><strong>最终发送结果</strong>：保留 <code>[T1, T3, 当前必需内容]</code>，总体积为 <code>19</code>（<code>≤ 30</code>），消息顺序保持不变。</li>
+</ul>
+<p>接入真实分词或协议计量时，每次移除候选块后都对完整候选请求重新计量，不假设分块计数简单相加一定等于整体编码大小。</p>
+</div></div></section>
+<section class="lesson-section" id="stage-4-failure"><h3>6. 超限拦截、每次请求前复核与取舍记录</h3><div class="lesson-body"><div class="am-md">
+<p id="stage-4-data">在把裁剪逻辑接入运行循环时，还必须处理三个关键边界：</p>
+<ul>
+<li><strong>必需内容超限直接停止</strong>：如果省略了所有可移除历史后，仅系统指令、必需历史与当前任务内容依然超出预算，Runner 必须在发起模型请求前停止并返回明确错误（包含必需内容体积、预算上限与计量口径），绝不静默删减必需内容。</li>
+<li><strong>每次请求模型前重新复核</strong>：只在收到用户提问时检查一次是不够的——工具执行返回的大段结果会让同一任务内的下一轮请求体积激增。因此<strong>每次调用 <code>model.invoke()</code> 前都必须重新计量与筛选</strong>；若因工具回执过大导致下一轮超限，则在请求模型前报错停止（已执行的工具动作本身不会被撤销）。</li>
+<li><strong>返回选择说明且不改动原始记录</strong>：每次构建上下文时，一并返回本次采用的预算、保留的任务列表、省略的任务列表及最终计量值。这能帮助开发者一眼分清“模型漏掉要求是因为根本没发过去，还是发了但模型没遵守”。同时，上下文构建始终返回新列表，绝不原地删改会话历史。</li>
+</ul>
+<details><summary>什么需求会触发摘要、预览或检索</summary>
+<p>完整块裁剪跑通后，再按暴露的问题加能力。若主要是当前工具结果太大，可以设计限量读取、分页或另存后提供预览与补读方式；原记录仍需保留真实结果，不能把预览冒充完整回执。</p>
+<p>若长期修改同一份通知，早期有效要求越来越多，可以先明确维护当前要求；确实需要概括长过程时，再考虑摘要。摘要可能漏掉 UTC 或错误理解用户更正，还会增加模型调用、延迟和用量，所以要保留来源并单独验证质量。</p>
+<p>若候选资料很多而每次只需要少量内容，再考虑检索；它需要验证相关性、来源和资料更新。<a href="../modules/context.html#module-context-p1-panel-D">上下文方案与取舍</a>比较这些机制；它们分别解决不同问题，不要求首版一次实现。</p>
+</details>
+</div></div></section>
+<section class="lesson-section" id="stage-4-implementation"><h3>7. 落地实现步骤（后续设计）</h3><div class="lesson-body"><div class="am-md">
+<p id="stage-4-code-structure"><strong>当前源码接入位置：</strong>目前 <a href="../../learn_agent/runner.py">run_agent()</a> 直接将系统指令、已完成历史和本次消息组装为 <a href="../../learn_agent/models/contracts.py">ModelRequest</a> 并调用 <code>model.invoke()</code>，尚无输入计量与裁剪步骤。后续按以下顺序分步实现：</p>
+<ol id="stage-4-call-flow">
+<li><strong>按 Turn 归组历史消息</strong>：当前 <a href="../../learn_agent/session.py">SessionLog.history()</a> 只返回平铺的消息列表，不含 <code>turn_id</code>。实现时需从会话记录的任务起止条目提取按 Turn 归组的历史块，连同当前任务消息与必需标记一起作为候选输入。</li>
+<li><strong>实现离线可复现的计量函数</strong>：让计量逻辑与<a href="../../learn_agent/models/openai_chat.py">模型适配器</a>的协议编码保持一致，覆盖消息、工具定义与 continuation 数据。单元测试可先注入可手算的计量函数，再验证真实编码与计量的对应关系。</li>
+<li><strong>编写独立的上下文选择函数</strong>：接收有序历史块、当前任务消息、必需标记、输入预算与计量函数，返回筛选后的消息序列与选择说明（或超限错误）。该函数保持纯逻辑：不发起网络请求、不执行工具、也不读写会话文件。</li>
+<li><strong>通过运行配置注入预算参数</strong>：由应用层配置模型窗口上限、输出预留、安全余量与可选的自定义输入上限，无需用户每次提问手动指定，更不能交由模型自行审批超限。</li>
+<li><strong>接入每次模型调用前</strong>：Runner 在每轮调用 <code>model.invoke()</code> 前先执行上下文选择，用筛选后的消息构造 <code>ModelRequest</code>；超限则按任务异常路径记录并报错停止，正常返回则继续沿用现有的响应保存与工具执行流程。</li>
+</ol>
+<p>各模块职责边界见<a href="../modules/context.html#module-context-interface">模块间的数据交互</a>。</p>
+</div></div></section>
+<section class="lesson-section" id="stage-4-run"><h3>8. 验证方案与期望达到的效果</h3><div class="lesson-body"><div class="am-md">
+<p>完成上下文管理模块实现后，按由浅入深的顺序验证，<strong>期望达到的效果：</strong></p>
+<ul>
+<li><strong>纯对话整块裁剪正确</strong>：短输入与恰好等于预算的输入原样通过；超出预算时按从旧到新的顺序整块省略可选任务，显式标记的必需历史（如 <code>T1</code>）与消息先后顺序始终不变。</li>
+<li><strong>必需内容超限零请求拦截</strong>：当预算小于必需内容体积时，直接返回包含计量明细的超限错误，模型调用次数为 <code>0</code>，且原始输入与会话文件未被修改。</li>
+<li><strong>工具调用链与协议完整性</strong>：包含多工具调用、权限拒绝、错误回执与 continuation 数据的可选任务，始终整块保留或整块省略，绝不出现孤立的 <code>ToolCall</code> 或 <code>ToolResult</code>；工具 Schema 体积一并计入预算。</li>
+<li><strong>循环内大回执超限可拦截</strong>：当工具返回大段结果导致下一轮请求超出预算时，在下一次请求模型前准确停止报错，且此前已执行的工具回执仍可在会话记录中查到。</li>
+<li><strong>实际发送内容与选择说明一致</strong>：通过本机测试服务抓取真实发出的 SDK 请求，确认实际发送的是裁剪后的消息列表而非全量历史，且输出上限预留与请求参数一致。</li>
+<li><strong>真实任务关键要求不丢失</strong>：在真实模型上对比裁剪前后的回答，验证保留 `T1` 时生成的两句通知仍严格遵循“中文、UTC 时间”要求。</li>
+</ul>
+</div></div></section>
+<nav class="chapter-nav" aria-label="章节导航"><a href="stage-3.html#stage-3">← 阶段 3：会话与记录</a><a href="stage-5.html#stage-5">阶段 5：根据真实失败选择长任务机制 →</a></nav>
+</article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 </body></html>

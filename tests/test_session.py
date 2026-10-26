@@ -175,23 +175,50 @@ def test_cli_queries_need_no_model_and_follow_up_uses_saved_history(tmp_path, mo
     from learn_agent import __main__ as entry
 
     monkeypatch.setattr(entry, "WORKSPACE", tmp_path)
-    with local_api([completion(text="第一问结束"), completion(text="第二问结束")]) as (
+    monkeypatch.setattr(
+        ToolRegistry, "execute", lambda *args: pytest.fail("纯对话和查询不应执行工具")
+    )
+    question = "这段对话里，请叫我星河。"
+    follow_up = "我刚才让你怎么称呼我？"
+    with local_api(
+        [
+            completion(text="好的，星河。"),
+            completion(text="你让我叫你星河。"),
+            completion(text="这是新会话，没有之前的称呼记录。"),
+        ]
+    ) as (
         client,
         requests,
     ):
         configure_local_model(monkeypatch, client)
-        entry.main(["第一问"])
+        entry.main([question])
         session_id = list_sessions(entry.SESSIONS_DIRECTORY)[0]["session_id"]
-        entry.main(["--session", session_id, "第二问"])
-    assert len(requests[1]["messages"]) == 4
+        entry.main(["--session", session_id, follow_up])
+        entry.main([follow_up])
+    assert [message["role"] for message in requests[1]["messages"]] == [
+        "system",
+        "user",
+        "assistant",
+        "user",
+    ]
+    assert [message["content"] for message in requests[1]["messages"][1:]] == [
+        question,
+        "好的，星河。",
+        follow_up,
+    ]
+    assert [message["role"] for message in requests[2]["messages"]] == ["system", "user"]
+    assert requests[2]["messages"][-1]["content"] == follow_up
+    assert len(list_sessions(entry.SESSIONS_DIRECTORY)) == 2
     capsys.readouterr()
+    original = {path: path.read_bytes() for path in entry.SESSIONS_DIRECTORY.glob("*.jsonl")}
     monkeypatch.setattr(
         "learn_agent.application.LLMService", lambda: pytest.fail("查询不能创建模型")
     )
     assert entry.main(["--list-sessions"]) == 0
-    assert json.loads(capsys.readouterr().out)[0]["session_id"] == session_id
+    assert session_id in {item["session_id"] for item in json.loads(capsys.readouterr().out)}
     assert entry.main(["--show-session", session_id]) == 0
     assert len(json.loads(capsys.readouterr().out)["records"]) == 8
+    assert {path: path.read_bytes() for path in original} == original
 
 
 def test_write_failure_stops_tools_and_does_not_append_completion(tmp_path, monkeypatch):

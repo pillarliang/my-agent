@@ -1,29 +1,160 @@
 <!doctype html>
 <html lang="zh-CN" data-theme="shadcn" data-mode="light">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>阶段 3 导读：先实现会话与记录 · Learn Agent</title>
+<title>阶段 3：会话与记录 · Learn Agent</title>
 <link rel="stylesheet" href="../assets/tutorial.css">
-<script src="../assets/legacy-links.js" defer></script>
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
-<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="../modules/interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="../modules/loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="../modules/model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="../modules/context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="../modules/tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="../modules/policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="../modules/state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="../modules/quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="../modules/memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="../modules/extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="../modules/orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
-<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="stage-3"><header class="chapter-header"><span class="kind">设计导读 · 尚未实现</span><h2>阶段 3 导读：先实现会话与记录</h2></header>
-<section class="lesson-section" id="stage-3-task"><h3>1. 先完成什么</h3><div class="lesson-body"><div class="am-md">
-<p>先完成“退出程序后仍能接着聊”：保存消息与工具回执，让同一会话的新任务使用历史。当前代码到阶段 2；3A 先明确数据、保存与查询契约，再动手实现。预算与裁剪留到 3B。</p>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算（后续）</a><a class="chapter-link" href="stage-5.html#stage-5" data-chapter="stage-5">阶段 5：根据真实失败选择长任务机制</a><a class="chapter-link" href="stage-6.html#stage-6" data-chapter="stage-6">阶段 6：中断后怎样安全继续</a><a class="chapter-link" href="stage-7.html#stage-7" data-chapter="stage-7">阶段 7：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="../modules/interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="../modules/loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="../modules/model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="../modules/context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="../modules/tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="../modules/policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="../modules/state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="../modules/quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="../modules/memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="../modules/extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="../modules/orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="stage-3">
+<header class="chapter-header"><span class="kind">从需求推导 · 已有最小实现</span><h2>阶段 3：会话与记录</h2></header>
+<span id="stage-3-task"></span><section class="lesson-section" id="stage-3-state"><h3>1. 问题起点：如何让程序记住聊过的内容？</h3><div class="lesson-body"><div class="am-md">
+<p>默认情况下，无论是模型接口还是单次运行的程序，都是“无状态”的。考虑以下场景：</p>
+<ul>
+<li><strong>用户</strong>：“这段对话里，请叫我星河。”</li>
+<li><strong>模型</strong>：“好的，星河。”</li>
+<li><em>（退出程序，重新打开）</em></li>
+<li><strong>用户</strong>：“我刚才让你怎么称呼我？”</li>
+</ul>
+<p>如果此时只把最后这句话发给模型，模型没有任何前文依据，根本不知道“刚才”发生了什么。</p>
+<p>要解决这个问题，系统必须满足两个核心诉求：</p>
+<ol>
+<li><strong>给模型提供上下文</strong>：同一会话后续提问时，自动带入前面的历史消息。</li>
+<li><strong>供用户回溯历史</strong>：程序退出重进后，依然能查到已经发生过的对话。</li>
+</ol>
+<p>因此，程序不能只做“传话筒”，还必须负责<strong>将对话记录持久化保存，并在需要时按会话加载</strong>。</p>
+<p><strong>期望达到的效果：</strong></p>
+<ul>
+<li><strong>记录可持久化</strong>：退出程序后再打开，之前的问答记录依然可以查询。</li>
+<li><strong>上下文自动延续</strong>：在同一会话中追问时，程序会自动把历史消息一并传给模型。</li>
+<li><strong>会话相互隔离</strong>：新建会话时，绝不会混入其他会话的历史消息。</li>
+<li><strong>查询不消耗算力</strong>：仅查看历史记录时，直接读取本地存储，不请求模型、也不执行工具。</li>
+</ul>
 </div></div></section>
-<section class="lesson-section" id="stage-3-choice"><h3>2. 两部分的分工</h3><div class="lesson-body"><div class="am-md">
-<div class="am-table-wrap"><table><thead><tr><th>部分</th><th>状态</th><th>解决的问题</th></tr></thead><tbody>
-<tr><td>3A：会话与记录</td><td>设计练习</td><td>记录怎样保存、查询和用于追问</td></tr>
-<tr><td>3B：上下文管理与预算</td><td>后续设计</td><td>历史太长时，本次选择哪些内容发送</td></tr>
-</tbody></table></div>
-<p>存储与输入选择可以分开实现：3B 可以先处理内存消息；裁剪本次输入不应删除原始记录。</p>
+<section class="lesson-section" id="stage-3-content"><h3>2. 需要保存哪些对话数据？</h3><div class="lesson-body"><div class="am-md">
+<p>要完整还原一段对话，不能只记用户的问题（否则查不到当时的回答），也不能只记最后答案（否则丢了最初的前提要求）。起步至少需要按顺序保存以下内容：</p>
+<ul>
+<li><strong>用户输入（<code>TextMessage</code>）</strong>：记录每次提问的原始文本与角色。</li>
+<li><strong>模型完整响应（<code>ModelResponse</code>）</strong>：不仅包含回答文字，还包含工具调用请求、停止原因、Token 用量及协议续接数据（continuation data），不能简单压成一个纯文本字符串。</li>
+<li><strong>严格的先后顺序</strong>：先说“请叫我星河”再说“改叫我小河”，颠倒后结果完全不同。时间戳仅作参考，必须用递增序号保证顺序确定。</li>
+</ul>
+<h4 id="stage-3-message-types">包含工具调用的对话还需要存什么？</h4>
+<p>当对话中触发了工具调用时，交互过程会变成多步：</p>
+<ul>
+<li><strong>用户</strong>：“当前工作目录有哪些文件？”</li>
+<li><strong>模型</strong>：发起 <code>list_files</code> 工具调用（包含工具名、参数与 <code>call_id</code>）。</li>
+<li><em>（工具在本地执行，返回真实文件列表或失败原因）</em></li>
+<li><strong>模型</strong>：根据工具回执给出最终回答。</li>
+</ul>
+<p>为了核对“模型打算做什么”与“工具实际执行了什么”，还必须原样保存<strong>真实工具回执（<code>ToolResult</code>）</strong>，并通过 <code>call_id</code> 与对应的工具调用关联。权限拒绝或执行报错也是真实发生的结果，必须如实记录，绝不能用模型口头回答的“已成功”代替真实回执。具体数据结构见<a href="../../learn_agent/models/contracts.py">模型契约</a>与<a href="../../learn_agent/tools/contracts.py">工具契约</a>。</p>
 </div></div></section>
-<section class="lesson-section" id="stage-3-run"><h3>3. 阅读入口</h3><div class="lesson-body"><div class="am-md">
-<p>先读<a href="../modules/state.html#session-purpose">模块原理与 pi / Codex 对照</a>，再看 <a href="stage-3a.html#stage-3a-choice">3A 的拟选方案</a>、<a href="stage-3a.html#stage-3a-message-example">读取与追问设计</a>和<a href="stage-3a.html#stage-3a-loop-integration">接入位置</a>。出现长对话需求后，再看 <a href="stage-3b.html#stage-3b">3B</a>。</p>
+<section class="lesson-section" id="stage-3-choice"><h3>3. 如何归组多次提问并判断任务是否结束？</h3><div class="lesson-body"><div class="am-md">
+<p>仅有消息列表还不够，系统还需要通过两层边界来组织记录：</p>
+<ul>
+<li><strong>会话（Session）——隔离不同对话</strong>：如果把所有提问混在同一条历史里，新话题就会被旧对话干扰。因此为每段连续对话分配唯一标识（<code>session_id</code>），同一 ID 追加并读取同一份记录，新建会话则从空白历史开始。</li>
+<li><strong>单次任务（Turn）——标记一次提问的起止状态</strong>：考虑程序运行到一半意外退出的场景——用户问题已落盘，但模型还没回答。下次重开时，不能因为文件里有几条记录就误以为上次提问已经完成。因此将“从接收一次用户提问，到完成回答或报错停止”的过程定义为一个 <strong>Turn</strong>。</li>
+</ul>
+<p>每个 Turn 显式记录开始与结束状态：</p>
+<ul>
+<li><strong><code>completed</code>（正常完成）</strong>：本次提问的消息与工具调用链已完整闭合（注：若工具被 Policy 拒绝，模型如实告知用户并结束回答，对话过程本身依然完整，状态同样记为 <code>completed</code>）。</li>
+<li><strong><code>failed</code>（执行失败）</strong>：执行途中发生异常并中止。</li>
+<li><strong>未结束（仅有开始、无结束记录）</strong>：进程中途中断，留存记录供排查，但不会混入后续模型上下文。</li>
+</ul>
+<p><strong>本项目当前选择：<code>Session</code> + 用户任务 <code>Turn</code> + 有序记录。</strong>这一结构直接满足对话隔离、消息归组和未完成任务识别的需求，无需额外引入 <code>Run</code>、<code>Step</code> 或独立事件表。</p>
+<details><summary>其他 Agent 的命名是否一样</summary><p>不一定。pi 的 turn 接近一次助手响应及其工具结果，Codex 的 turn 接近一次用户任务。本项目采用后者的尺度。<a href="../modules/state.html#session-granularity">固定版本源码中的术语对照</a>说明了区别；名称相同不代表数据范围相同。</p></details>
 </div></div></section>
-<section class="lesson-section" id="stage-3-checks"><h3>4. 验证入口</h3><div class="lesson-body"><div class="am-md">
-<p>当前单次循环命令与未来验收要求集中在 <a href="stage-3a.html#stage-3a-run">3A：运行与验证</a>。会话保存、跨任务历史与自动恢复均未实现。</p>
+<span id="stage-3-implementation"></span><span id="stage-3-database"></span><span id="stage-3-field-reference"></span><span id="stage-3-message-json"></span><span id="stage-3-events-purpose"></span><span id="stage-3-message-rows"></span><span id="stage-3-first-events"></span><span id="stage-3-first-events-rows"></span><span id="stage-3-final-sessions-json"></span><span id="stage-3-final-runs-json"></span><span id="stage-3-final-steps-json"></span><span id="stage-3-final-messages-json"></span><span id="stage-3-final-events"></span><span id="stage-3-final-events-json"></span><span id="stage-3-final-events-rows"></span><section class="lesson-section" id="stage-3-contracts"><h3>4. 持久化格式：为什么选择单会话 JSONL 文件？</h3><div class="lesson-body"><div class="am-md">
+<p>进程退出后内存数据会清空，因此必须将记录写入持久化存储。<strong>本项目当前选择“一个会话对应一个 JSONL 文件”</strong>（默认路径为 <code>.learn-agent/sessions/&lt;session_id&gt;.jsonl</code>），每行一个 JSON 对象，新记录直接追加到文件末尾。相比一开始就引入数据库，纯文本 JSONL 零外部依赖、方便直接打开核对顺序与内容；待后续遇到海量会话筛选或并发写入需求时，再演进到 SQLite。</p>
+<h4 id="stage-3-record-types">JSONL 文件的记录结构</h4>
+<ul>
+<li><strong>首行文件头（<code>SessionHeader</code>）</strong>：记录格式版本、<code>session_id</code>、绑定工作目录 <code>workspace</code> 与创建时间。绑定工作目录是为了防止续接会话时误切到另一个目录环境。</li>
+<li><strong>后续有序条目（<code>Record</code>）</strong>：每行通过 <code>seq</code> 固定递增顺序，<code>turn_id</code> 标记所属任务，<code>time</code> 记录时间，<code>type</code> 区分三类条目：
+  <ul>
+  <li><code>turn_started</code>：标记一次用户提问开始。</li>
+  <li><code>message</code>：在 <code>payload</code> 中用 <code>kind</code>（<code>user</code> / <code>assistant</code> / <code>tool_result</code>）和 <code>value</code> 保存完整消息或回执。</li>
+  <li><code>turn_finished</code>：记录任务结束状态（<code>completed</code> / <code>failed</code>）及失败原因。</li>
+  </ul>
+</li>
+</ul>
+<details><summary>一条用户消息的包装示例</summary><pre class="am-code"><code>{
+  "seq": 2,
+  "turn_id": "T1",
+  "type": "message",
+  "time": "2026-10-25T01:00:00Z",
+  "payload": {
+    "kind": "user",
+    "value": {"role": "user", "content": "这段对话里，请叫我星河。"}
+  }
+}</code></pre><p><code>T1</code> 只是便于阅读的代号，实际任务 ID 由程序生成。会话 ID 位于首行文件头，不在每条记录里重复。</p></details>
+<p>系统指令（System Prompt）、模型连接、工具注册表和 Policy 属于当次运行的初始化配置，每次请求模型时动态组装，不重复写入用户历史消息中。</p>
 </div></div></section>
-<nav class="chapter-nav" aria-label="章节导航"><a href="stage-2.html#stage-2">← 阶段 2：用 Policy 控制动作权限</a><a href="stage-3a.html#stage-3a">阶段 3A：会话与记录 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<section class="lesson-section" id="stage-3-saving"><h3>5. 写入时机与异常处理</h3><div class="lesson-body"><div class="am-md">
+<p>如果等到最终回答生成后才一次性保存，中途一旦出错就会丢失已发生的交互过程。因此程序采用<strong>边执行边追加写入（flush）</strong>的策略：</p>
+<ol>
+<li><strong>任务启动时</strong>：立即写入 <code>turn_started</code> 与用户输入消息。</li>
+<li><strong>模型返回时</strong>：先将完整 <code>ModelResponse</code> 写入文件，再检查停止原因（即便遇到拒答或截断，原始响应也已留存供排查，但不会继续执行其中的工具调用）。</li>
+<li><strong>工具执行后</strong>：将真实 <code>ToolResult</code> 写入文件。</li>
+<li><strong>任务结束时</strong>：正常完成写入 <code>completed</code>；捕获到异常时写入 <code>failed</code> 及报错信息，再将原异常继续抛出。</li>
+</ol>
+<p><strong>可靠性与边界约束：</strong></p>
+<ul>
+<li><strong>单写者独占锁</strong>：每个会话文件通过文件锁限制同一时刻只有一个写入者，避免多进程追加导致序号交错。</li>
+<li><strong>损坏立即报错</strong>：读取时若发现未知版本、序号断层或末尾残行，直接抛出明确错误，绝不静默降级为空历史。</li>
+<li><strong>非事务边界</strong>：进程被强杀（如 <code>SIGKILL</code>）时可能来不及写入结束条目，此时该 Turn 保持“未结束”状态；本地文件动作与日志追加也不在同一事务内，断电等极端情况下需在恢复阶段核对外部状态。</li>
+</ul>
+</div></div></section>
+<section class="lesson-section" id="stage-3-reading"><h3>6. 读取路径：如何支撑历史查询与多轮续接？</h3><div class="lesson-body"><div class="am-md">
+<p>保存下来的 JSONL 文件服务于两条不同的读取路径：</p>
+<ul>
+<li><strong>供用户查看历史</strong>：会话列表只需读取每个文件的首行文件头和修改时间，无需加载全部消息；查看单会话详情时，校验版本与序号后原样返回全部记录（包括失败和未结束的任务片段），全程不请求模型、也不重新执行工具。</li>
+<li><strong>供模型续接上下文</strong>：按顺序筛选出状态为 <code>completed</code> 且消息链完整的任务，还原为模型可接收的消息列表。失败或未结束的任务片段仅留存供人工排查，不混入模型后续输入；若某任务标记为 <code>completed</code> 却缺失配对的工具回执或最终回答，则直接报告文件损坏。</li>
+</ul>
+<span id="stage-three-arrow"></span><span id="stage-3-first-sessions"></span><span id="stage-3-first-sessions-rows"></span><span id="stage-3-first-runs"></span><span id="stage-3-first-runs-rows"></span><span id="stage-3-first-steps"></span><span id="stage-3-first-steps-rows"></span><span id="stage-3-first-messages"></span><span id="stage-3-first-messages-rows"></span><span id="stage-3-final-sessions"></span><span id="stage-3-final-sessions-rows"></span><span id="stage-3-final-runs"></span><span id="stage-3-final-runs-rows"></span><span id="stage-3-final-steps"></span><span id="stage-3-final-steps-rows"></span><span id="stage-3-final-messages"></span><span id="stage-3-final-messages-rows"></span><h4 id="stage-3-message-example">完整复现路径：“请叫我星河”的两轮对话</h4>
+<ol><li id="stage-3-first-tables"><strong>第一轮提问（新建会话 <code>S1</code>，创建任务 <code>T1</code>）</strong>：
+<ul>
+<li><strong>发给模型的输入</strong>：<code>[系统指令, 用户："这段对话里，请叫我星河。"]</code></li>
+<li><strong>追加写入文件</strong>：<code>T1 开始</code> → <code>用户消息</code> → <code>助手响应</code> → <code>T1 正常结束</code>。</li>
+</ul>
+</li><li id="stage-3-followup-example"><strong>退出重开并追问（指定会话 <code>S1</code>，创建任务 <code>T2</code>）</strong>：
+<ul>
+<li><em>（系统动作：定位 <code>S1</code> 文件，校验版本与工作目录，提取已完成的 <code>T1</code> 消息）</em></li>
+<li><strong>发给模型的输入</strong>：<code>[系统指令, 第一问, 第一答, 本次追问："我刚才让你怎么称呼我？"]</code>（共 4 项输入）。</li>
+</ul>
+</li><li><strong>取得第二轮回答并结束</strong>：
+<ul>
+<li><strong>追加写入文件</strong>：<code>T2 开始</code> → <code>本次追问</code> → <code>助手第二答</code> → <code>T2 正常结束</code>（<code>T1</code> 的历史仅在请求模型时读取引用，不会重复写入文件）。</li>
+</ul>
+</li></ol>
+<p id="stage-3-final-tables">两轮问答结束后，会话文件内共有 1 个文件头和 8 条记录（其中 4 条是消息记录）。查询会话详情会展示全部 8 条记录，而第二轮发给模型的是筛选还原后的 4 项上下文输入——<strong>磁盘记录格式、查询展示视图与模型请求输入各司其职，不能把文件每一行原封不动直接丢给模型</strong>。</p>
+<p>同理，加载历史中的工具回执只是把过去发生过的观察结果放回上下文，不会重新调用工具；若用户再次询问当前目录状态，模型仍会发起新的工具调用。当历史消息不断累积、接近上下文窗口上限时，则进入<a href="stage-4.html#stage-4">阶段 4：上下文管理与预算</a>。</p>
+</div></div></section>
+<section class="lesson-section" id="stage-3-loop-integration"><h3>7. 源码实现：将 SessionLog 接入 Agent Loop</h3><div class="lesson-body"><div class="am-md">
+<p>会话的保存、查询与历史重建统一封装在 <a href="../../learn_agent/session.py">session.py</a> 中；Loop 继续专注推进当前任务，在关键节点调用会话接口记录数据。</p>
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/stage-3-loop-integration.svg" width="840" height="700" alt="当前实现：入口打开会话，Runner 读取历史并记录交互，模型负责响应，工具注册表负责授权与执行。" loading="lazy"><figcaption>当前实现：初始化时传入会话对象；运行时读取已完成历史并逐步追加记录。</figcaption></figure>
+<h4 id="stage-3-code-structure">沿一次调用对照源码</h4>
+<ol id="stage-3-call-flow"><li><strong>入口分流（<a href="../../learn_agent/__main__.py">main()</a>）</strong>：区分查询与执行。若是查询命令，直接调用 <code>read_session()</code> 或 <code>list_sessions()</code> 打印结果并返回；若是执行任务，则新建或打开指定 <code>SessionLog</code>，传入工作目录与 Policy。</li><li><strong>环境核对（<a href="../../learn_agent/application.py">run_task()</a>）</strong>：核对会话绑定的工作目录与当前配置一致，随后创建 <code>ToolRegistry</code> 和 <code>LLMService</code>，调用 <code>run_agent()</code>，并在退出时关闭模型连接。</li><li><strong>加载历史与启动任务（<a href="../../learn_agent/runner.py">run_agent()</a>）</strong>：先调用 <code>session.history()</code> 取出已完成的历史消息，与系统指令、本次新问题组装成初始上下文；再调用 <code>start_turn()</code> 记录本次任务开始与用户提问（避免把本次问题重复加载两遍）。</li><li><strong>记录模型响应与工具回执</strong>：每次 <code>model.invoke()</code> 返回后，先调用 <code>append_message()</code> 保存完整响应；若需执行工具，经 <code>tools.execute()</code> 完成校验、授权与执行后，再调用 <code>append_message()</code> 保存真实回执。</li><li><strong>记录任务结论（<a href="../../learn_agent/session.py">SessionLog</a>）</strong>：拿到有效最终回答后调用 <code>finish_turn()</code>，校验消息链完整后写入 <code>completed</code> 并更新内存可用历史；若中途抛出异常，则写入 <code>failed</code> 及原因后继续向外抛出。</li></ol>
+<p>阅读源码时，建议先看 <a href="../../learn_agent/session.py">SessionHeader / Record</a> 的数据结构，再看 <code>start_turn()</code>、<code>append_message()</code>、<code>finish_turn()</code> 的写入逻辑，最后看 <code>_history()</code> 如何筛选并还原已完成任务。<a href="../modules/state.html#session-practice">Session / State 模块原理</a>对比了本项目与 pi、Codex 源码的实现取舍。</p>
+</div></div></section>
+<span id="stage-3-checks"></span><section class="lesson-section" id="stage-3-run"><h3>8. 运行与验证</h3><div class="lesson-body"><div class="am-md">
+<p>在项目根目录执行以下命令（前两条会请求真实模型并产生 API 用量，需按 <a href="../../README.md#安装与运行">README</a> 配置环境变量）：</p>
+<pre class="am-code"><code>uv run python -m learn_agent "这段对话里，请叫我星河。"
+uv run python -m learn_agent --session &lt;第一条输出的会话ID&gt; "我刚才让你怎么称呼我？"</code></pre>
+<p>再执行本地只读查询命令（不请求模型、不执行工具、无需配置模型密钥）：</p>
+<pre class="am-code"><code>uv run python -m learn_agent --list-sessions
+uv run python -m learn_agent --show-session &lt;同一个会话ID&gt;</code></pre>
+<p>运行本地自动化测试（使用本机固定协议响应与临时文件，不请求外部模型）：</p>
+<pre class="am-code"><code>uv run pytest tests/test_session.py
+uv run python scripts/check_docs.py</code></pre>
+<h4>期望达到的效果</h4>
+<ul>
+<li><strong>记录可往返还原</strong>：写入一问一答并正常结束后，关闭再重开会话，读取出的消息字段与原内容完全一致。</li>
+<li><strong>追问自动带入历史</strong>：同一会话第二次提问时，实际发给模型的请求按顺序包含 <code>[system, user, assistant, user]</code>；新建会话则从空历史开始，互不混入（见 <a href="../../tests/test_session.py">test_session.py</a>）。</li>
+<li><strong>查询零副作用</strong>：执行 <code>--list-sessions</code> 与 <code>--show-session</code> 时，不创建模型连接、不调用任何工具，且原会话文件内容不会增加。</li>
+<li><strong>工具调用链完整关联</strong>：包含工具调用的对话能完整保存模型调用请求、<code>call_id</code>、真实回执与最终回答；续接历史时直接复用已有记录，不会重复执行旧工具。</li>
+<li><strong>失败与损坏边界清晰</strong>：模型报错、工具拒绝或未结束任务都会留存可查询的记录，但失败或未结束的任务绝不会混入后续模型上下文；遇到未知版本、序号断层或末尾残行时明确报错停止。</li>
+</ul>
+</div></div></section>
+<nav class="chapter-nav" aria-label="章节导航"><a href="stage-2.html#stage-2">← 阶段 2：用 Policy 控制动作权限</a><a href="stage-4.html#stage-4">阶段 4：上下文管理与预算 →</a></nav>
+</article></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 </body></html>

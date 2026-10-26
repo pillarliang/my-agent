@@ -5,82 +5,108 @@
 <link rel="stylesheet" href="../assets/tutorial.css">
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
-<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3a.html#stage-3a" data-chapter="stage-3a">阶段 3A：会话与记录</a><a class="chapter-link" href="../stages/stage-3b.html#stage-3b" data-chapter="stage-3b">阶段 3B：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
-<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-extensions"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Extensions：接入 Skills、Hooks 和外部工具</h2></header><section class="lesson-section" id="module-extensions-p1-panel-A"><h3>1. 实现原理：查找扩展、配置接入和实际执行分开</h3><div class="lesson-body"><div class="am-md"><p><strong>扩展加载：方法、回调与工具分别接入</strong></p>
-<p>加载能力不等于授予执行权限。</p>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算（后续）</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a></p><article class="chapter" id="module-extensions"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Extensions：接入 Skills、Hooks 和外部工具</h2></header><section class="lesson-section" id="module-extensions-p1-panel-A"><h3>1. 问题起点：为什么不同的扩展机制不能混成同一种“插件函数”？</h3><div class="lesson-body"><div class="am-md"><p>当系统需要扩展能力时，常见的五种机制职责截然不同：</p>
+<ul>
+<li><strong>Skill（技能方法）</strong>：提供特定任务的步骤指南与参考资料，按需加载到模型输入（Context）中。</li>
+<li><strong>Hook（生命周期回调）</strong>：在运行开始、工具调用前后等固定节点触发观测或拦截逻辑。</li>
+<li><strong>Middleware（中间件）</strong>：包裹模型请求或工具调用，用于统一转换输入、处理重试或记录日志。</li>
+<li><strong>MCP（Model Context Protocol）</strong>：通过标准协议连接外部工具服务、资源与 Prompt 模板。</li>
+<li><strong>Plugin（插件包）</strong>：将上述 Skills、Hooks 和工具声明打包，统一管理版本、校验与分发。</li>
+</ul>
+<p><strong>核心安全边界：发现或加载扩展，绝不等于自动授予执行权限。</strong></p>
 </div>
 <figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-module-extensions-1-panel-A-1.svg" width="573" height="306" alt="流程图：扩展包与配置、核对元数据与版本、按需加载 Skill 正文、Context 中的方法与资料、注册生命周期回调、Loop、模型与工具调用、注册工具适配器、参数校验、授权与执行" loading="lazy"></figure>
-<div class="am-md"><p><strong>Skill</strong> 主要提供可复用方法；<strong>Hook</strong> 在运行开始、工具调用前后等时刻触发；<strong>中间件</strong>包裹模型或工具调用，可能改写请求或结果；<strong>MCP</strong> 连接外部工具、资源与 Prompt；<strong>Plugin</strong> 管理一组内容的安装、版本和分发。</p>
-<p>发现文件不等于执行脚本，加载方法也不等于增加权限。扩展可以改变模型看见的内容或程序走过的路径，因此需要明确每类接口的影响范围。</p>
-</div></div>
+</div>
 </section>
-<section class="lesson-section" id="module-extensions-interaction"><h3>2. 与相关模块怎样交互</h3><div class="lesson-body"><div class="am-md"><p><strong>应用选择扩展，加载器将不同扩展接到相应模块。</strong>方法资料送给 <a href="context.html#module-context">Context Manager</a> 按需选择；在特定运行步骤触发的回调接到 <a href="loop.html#module-loop">Runner</a> 的指定执行步骤；外部工具定义和调用由 <a href="tools.html#module-tools">Tools</a> 适配。它们不是同一种“插件函数”，不能因为一起安装就获得相同权限。</p><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-extensions-collaboration.svg" width="1000" height="622" alt="未来扩展协作示例：方法、回调和工具接入不同模块；当前尚无动态加载器。" loading="lazy"><figcaption>未来扩展协作示例：方法、回调和工具接入不同模块；当前尚无动态加载器。</figcaption></figure><p>扩展改变工具参数后必须重新校验和授权；观测回调只能在约定范围读取信息。包缺失、版本不兼容或方法加载失败应报告给发起方；普通观测失败可按明确策略处理，用于阻止动作的控制回调失败则应拒绝执行。加载版本与触发证据可以进入 <a href="state.html#module-state">State</a>，但记录不代替权限决定。</p><p><strong>方案按接入对象分别比较：</strong>方法可以常驻、按需加载或检索后加载；Hook 可以进程内或进程外；中间件用于包裹调用；MCP 用于外部能力通信；Plugin 管安装和版本。它们可以组合，当前尚未选定动态扩展体系。</p></div></div></section>
+<section class="lesson-section" id="module-extensions-interaction"><h3>2. 模块协作：各类扩展分别接入哪个核心模块？</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Skills → Context Manager</strong>：方法说明与参考资料交给 <a href="context.html#module-context">Context Manager</a> 按需选入本轮输入，不直接执行其中引用的脚本。</li>
+<li><strong>Hooks / Middleware → Runner</strong>：生命周期回调注册到 <a href="loop.html#module-loop">Runner</a> 的指定步骤；若回调改写了工具参数，必须重新经过参数校验与 <a href="policy.html#module-policy">Policy</a> 授权。</li>
+<li><strong>MCP 外部工具 → Tools</strong>：由 <a href="tools.html#module-tools">Tools</a> 适配为内部统一的 <code>ToolSpec</code>，执行前同样必须通过 Policy 权限检查。</li>
+<li><strong>失败隔离策略</strong>：普通观测类回调失败可按约定降级告警；但用于拦截危险动作的控制类回调一旦失败，必须拒绝执行动作（Fail-closed）。</li>
+</ul><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-extensions-collaboration.svg" width="1000" height="622" alt="未来扩展协作示例：方法、回调和工具接入不同模块；当前尚无动态加载器。" loading="lazy"><figcaption>未来扩展协作示例：方法、回调和工具接入不同模块；当前尚无动态加载器。</figcaption></figure></div></div></section>
 
-<section class="lesson-section" id="module-extensions-p1-panel-C"><h3>3. Skills 有哪些加载方案</h3><div class="lesson-body"><div class="am-md"><h4>A. 全量正文常驻</h4>
-<p>启动时读全部方法，将正文加入每轮输入。实现直接，适合极少、很短且固定的方法。代价是输入随方法库增长，与任务无关的内容和冲突也会增加。</p>
-<h4>B. 元数据发现，正文按需加载</h4>
-<p>先读取名称和用途，匹配任务或由用户选择后，再在长度限制内读取正文；引用资料和脚本继续按需访问。需要索引、选择规则、路径检查和加载记录。</p>
-<p>它能减少常驻内容，也方便说明某个方法为何激活。代价是误触发和遗漏，且正文仍可能很大。应记录内容哈希与版本，让同一次 Run 使用明确的材料。</p>
+<section class="lesson-section" id="module-extensions-p1-panel-C"><h3>3. Skills 的 3 种加载方案对比</h3><div class="lesson-body"><div class="am-md"><h4>A. 全量正文常驻</h4>
+<ul>
+<li><strong>做法</strong>：启动时读取所有 Skill 全文，每轮都拼入系统指令。</li>
+<li><strong>适用场景</strong>：方法极少、极短且固定的系统；一旦方法库增长，会严重挤占上下文窗口并引发规则冲突。</li>
+</ul>
+<h4>B. 元数据发现 + 正文按需加载（推荐基线）</h4>
+<ul>
+<li><strong>做法</strong>：平时只加载各 Skill 的名称与简短描述（Metadata）；当匹配当前任务或由用户/模型显式激活时，才在长度限制内读取正文（参考 <a href="https://agentskills.io/specification">Agent Skills 规范</a>）。</li>
+<li><strong>适用场景</strong>：中小型方法库，既大幅节省常驻 Token，又能清晰记录本轮激活了哪个版本的 Skill。</li>
+</ul>
 <h4>C. 检索驱动的方法库</h4>
-<p>先按任务检索候选，再比较适用条件、版本与依赖。适合大型方法库，但需要检查能否找到相关方法、排序是否合理，并持续维护索引和方法版本；高度相似的方法也可能相互矛盾。</p>
-<p><a href="https://agentskills.io/specification">Agent Skills 规范</a>定义方法目录、元数据与正文，宿主决定加载和执行行为。某个字段出现在规范里，不代表每个宿主采用相同授权规则。</p>
+<ul>
+<li><strong>做法</strong>：针对大型方法库，先按任务检索候选 Skill，再核对适用条件、版本与依赖后加载。</li>
+<li><strong>适用场景</strong>：海量领域技能库；需额外维护检索索引，并防止高度相似的方法给出矛盾指令。</li>
+</ul>
 </div></div>
 </section>
-<section class="lesson-section" id="module-extensions-p1-panel-D"><h3>4. Hooks 和中间件怎样实现</h3><div class="lesson-body"><div class="am-md"><h4>进程内回调</h4>
-<p>程序在 <code>run.start</code>、<code>model.before</code>、<code>tool.before</code> 或 <code>tool.after</code> 等时刻调用已注册的函数。它类型清楚、开销低，适合可信内置逻辑；代价是共享内存和权限，阻塞会影响主流程。</p>
-<h4>进程外事件协议</h4>
-<p>通过 stdin 传事件 JSON，stdout 返回约定的控制结果，stderr 写诊断日志。它便于输出限额、超时和进程终止，也需要接口版本、各退出码的含义与子进程清理。</p>
-<p>不同事件应有不同能力。例如观测事件只读取元数据，工具前事件可以拒绝调用。若允许改写参数，应重新解析、校验和授权，不能先批准旧参数再执行新参数。</p>
-<h4>包裹调用的中间件</h4>
-<p>中间件接收请求和下一层处理函数，可以修改输入、重试或观察结果。嵌套通常形成“外层前处理 → 内层前处理 → 实际调用 → 内层后处理 → 外层后处理”，调用顺序会直接影响最终结果。</p>
-<p>它适合组合日志、重试、输入转换等通用功能，代价是调用链不再直观。一个重试中间件包住工具执行，可能重复副作用；如果摘要中间件先计数，之后才加入工具定义，就可能低估输入大小。需要固定顺序并检查真实输入。</p>
+<section class="lesson-section" id="module-extensions-p1-panel-D"><h3>4. Hooks 与中间件的 3 种实现方式</h3><div class="lesson-body"><div class="am-md"><h4>A. 进程内函数回调</h4>
+<ul>
+<li><strong>做法</strong>：在 <code>run.start</code>、<code>model.before</code>、<code>tool.before</code>、<code>tool.after</code> 等节点直接调用进程内注册的 Python 函数。</li>
+<li><strong>优缺点</strong>：类型清晰、延迟极低，适合可信内置逻辑；但与主程序共享内存与权限，回调阻塞会直接卡住主循环。</li>
+</ul>
+<h4>B. 进程外事件协议（子进程 Hook）</h4>
+<ul>
+<li><strong>做法</strong>：通过 <code>stdin</code> 传入事件 JSON，<code>stdout</code> 返回控制决定，<code>stderr</code> 输出诊断日志，配合超时与退出码管理。</li>
+<li><strong>优缺点</strong>：语言无关、进程隔离、易于强制超时终止；适合接入外部检查脚本。</li>
+</ul>
+<h4>C. 包裹调用的中间件（Middleware）</h4>
+<ul>
+<li><strong>做法</strong>：按洋葱模型（外层前处理 → 内层前处理 → 实际调用 → 内层后处理 → 外层后处理）包裹模型或工具调用。</li>
+<li><strong>注意事项</strong>：执行顺序直接决定结果——例如若把重试中间件包在非幂等写工具外层，会导致重复写入；若先计算 Token 预算再由内层中间件注入工具定义，会导致预算漏算。</li>
+</ul>
 <div class="am-table-wrap"><table>
 <thead>
 <tr>
-<th>扩展点</th>
-<th>适合什么</th>
-<th>收益</th>
-<th>主要代价</th>
+<th>扩展机制</th>
+<th>适用场景</th>
+<th>核心收益</th>
+<th>主要实现代价</th>
 </tr>
 </thead>
 <tbody><tr>
 <td>进程内回调</td>
-<td>可信、轻量事件逻辑</td>
-<td>简单、低延迟</td>
-<td>共享内存、权限与故障影响</td>
+<td>可信、轻量的内部事件处理</td>
+<td>简单直接、零序列化开销</td>
+<td>共享内存与权限，异常易波及主进程</td>
 </tr>
 <tr>
 <td>进程外 Hook</td>
-<td>外部脚本和独立超时</td>
-<td>接口与进程可分离</td>
-<td>协议、清理与部署</td>
+<td>外部语言脚本、需独立超时控制</td>
+<td>进程隔离、易于限制输出与超时</td>
+<td>需维护 JSON 协议、退出码与子进程清理</td>
 </tr>
 <tr>
-<td>中间件</td>
-<td>请求转换和组合控制</td>
-<td>复用多个调用都需要的功能</td>
-<td>调用顺序和重试规则更复杂</td>
+<td>中间件（Middleware）</td>
+<td>跨调用复用的转换、日志与控制</td>
+<td>解耦横切关注点</td>
+<td>多层嵌套时调用顺序与副作用排查复杂</td>
 </tr>
 </tbody></table></div>
-<p>普通观测导出失败可以按明确策略降级；用于阻止未授权动作的控制逻辑失败时应拒绝执行。Hook 返回继续，也不能扩大上层强制授权范围。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-extensions-p1-panel-E"><h3>5. MCP 应接在哪里</h3><div class="lesson-body"><div class="am-md"><p><strong>MCP：通过适配器复用工具执行流程</strong></p>
-<p>执行后端设计 · 当前尚未接入 MCP。</p>
+<section class="lesson-section" id="module-extensions-p1-panel-E"><h3>5. MCP 外部工具应该接在哪里？</h3><div class="lesson-body"><div class="am-md"><p><strong>MCP：通过工具适配器接入统一执行管线（当前尚未接入）</strong></p>
 </div>
 <figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-module-extensions-1-panel-E-1.svg" width="786" height="151" alt="流程图：Runner、统一工具执行流程、本地工具适配器、MCP_Client、MCP_Server" loading="lazy"></figure>
-<div class="am-md"><p>先协商能力并发现工具，把外部定义转换成内部 <code>ToolSpec</code>，在本次 Run 中固定使用同一版本。调用仍经过参数校验、权限检查、预算检查和结果处理；连接失效或 Schema 变化时应明确处理，不能凭旧定义继续猜测。</p>
-<p>stdio 服务器通常是本地子进程，需要限定环境变量和生命周期；远程 HTTP 服务器需要认证、超时与连接管理。外部元数据可以帮助展示，不能独自证明真实效果是只读。</p>
-<p><a href="https://modelcontextprotocol.io/specification/2025-11-25/architecture">MCP 2025-11-25 架构</a>将连接和能力放在 Client / Server，授权与协调留在 Host。业务副作用、幂等、恢复和验收仍需要自己的执行协议。</p>
+<div class="am-md"><ul>
+<li><strong>统一适配为内部契约</strong>：连接 MCP Server 发现工具后，将其转换为内部统一的 <code>ToolSpec</code>，并在同一次 Run 中锁定版本（参考 <a href="https://modelcontextprotocol.io/specification/2025-11-25/architecture">MCP 2025-11-25 架构</a>）。</li>
+<li><strong>复用校验与授权管线</strong>：模型发起的 MCP 工具调用，依然必须经过注册表的参数校验、Policy 权限检查、大小限制与错误分流；外部服务声称自己“只读”不能替代宿主的 Policy 授权。</li>
+<li><strong>连接生命周期管理</strong>：本地 <code>stdio</code> 子进程需限制传入的环境变量并负责进程回收；远程 HTTP 服务需管理鉴权、超时与断连报错。</li>
+</ul>
 </div></div>
 </section>
-<section class="lesson-section" id="module-extensions-p1-panel-F"><h3>6. 真实实现可以借鉴什么</h3><div class="lesson-body"><div class="am-md"><p><strong>Deep Agents，源码核对。</strong> <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/skills.py">SkillsMiddleware</a> 将发现与模型请求处理分开；<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/graph.py">graph.py</a> 装配中间件栈。可借鉴的是明确注册位置与生命周期，而不是让所有模块各自扫描目录。</p>
-<p><strong>Claude Code，官方文档。</strong> <a href="https://code.claude.com/docs/en/hooks">Hooks 说明</a>定义工具前后等事件，以及回调可以返回的有限几种决定，工具前事件发生在模型产生参数之后。它说明事件输入与回调允许返回的结果需要分别定义；具体事件能力应按对应版本核对，不能把所有 Hook 都视为任意控制点。</p>
-<p><strong>pi，指定版本的源码。</strong> <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/agent-session.ts">压缩实现</a>在压缩前后提供扩展回调。可以借鉴的是只允许扩展替换明确的一步处理逻辑，而非一开始允许插件替换整个状态机。</p>
-<p><strong>AgentScope Java，指定版本的官方文档。</strong> <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/skill.md">Skill 装配</a>提供工作区和仓库来源，展示读取资料与配置运行组件的另一种组织方式。本项目无需为第一个保存在本地文件中的方法库立即实现远程仓库。</p>
+<section class="lesson-section" id="module-extensions-p1-panel-F"><h3>6. 开源与工业界实现对照</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Deep Agents（源码核对）</strong>：<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/skills.py">SkillsMiddleware</a> 将方法发现与请求注入分离，在 <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/graph.py">graph.py</a> 中按固定顺序装配中间件栈。</li>
+<li><strong>Claude Code（官方文档）</strong>：<a href="https://code.claude.com/docs/en/hooks">Hooks 说明</a>明确定义了工具调用前后等触发点，以及每个事件允许返回的有限控制决策。</li>
+<li><strong>pi（源码核对）</strong>：<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/agent-session.ts">agent-session.ts</a> 在上下文压缩前后提供明确的单步扩展回调，避免插件随意替换整个核心状态机。</li>
+<li><strong>AgentScope Java（官方文档）</strong>：<a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/skill.md">Skill 装配</a>支持从工作区与仓库加载技能资料，将资料读取与运行组件配置解耦。</li>
+</ul>
 </div></div>
 </section>
-<section class="lesson-section" id="module-extensions-p1-panel-G"><h3>7. Plugin 怎样包装和升级</h3><div class="lesson-body"><div class="am-md"><p>插件可以把方法、回调、工具声明与资源放在一个带版本的包中。例如下面是项目可自行定义的格式，不是跨产品通用标准：</p>
+<section class="lesson-section" id="module-extensions-p1-panel-G"><h3>7. Plugin 插件包如何封装与升级？</h3><div class="lesson-body"><div class="am-md"><p>当需要同时分发 Skills、Hooks 和工具声明时，可用带清单文件（Manifest）的目录结构封装：</p>
 </div>
 <figure class="am-codeblock"><figcaption class="am-code-head"><span class="am-code-title"></span><span class="am-code-lang">text</span></figcaption><pre class="am-code"><code data-lang="text">plugin/
   manifest.json       名称、版本、宿主接口版本、内容哈希
@@ -88,12 +114,24 @@
   hooks/              回调声明
   tools/              工具或 MCP 连接声明
 </code></pre></figure>
-<div class="am-md"><p>安装时检查路径是否越界、包的哈希值是否匹配、版本是否兼容以及依赖是否齐全；依赖安装与脚本启动可能执行代码，应有独立的受控动作。运行中固定包版本，更新后由新 Run 采用；否则同一调用前后可能对应不同实现，回执也难以解释。</p>
+<div class="am-md"><ul>
+<li><strong>安装校验</strong>：检查路径是否越界、内容哈希是否匹配、宿主接口版本是否兼容。</li>
+<li><strong>运行期锁定版本</strong>：同一次 Run 执行期间固定使用同一插件版本，升级后从下一次 Run 生效，防止中途切换导致前后回执不一致。</li>
+</ul>
 </div></div>
 </section>
-<section class="lesson-section" id="module-extensions-p2-panel-A"><h3>8. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><p><strong>截至阶段 2：仅有代码中显式注册的本地工具。</strong>应用选择工具注册项，ToolRegistry 注册普通函数，新增 count_lines 可沿用相同调用与权限流程，见<a href="../stages/stage-1.html#stage-1">阶段 1</a>。这验证了新增工具的接入方式，但不是动态插件加载系统。</p><p><strong>未实现：</strong>Skill 目录发现、方法正文按需注入、Hook、中间件、MCP 客户端和 Plugin 安装管理。当前也没有选定它们的加载方案；本章图示和练习都是未来设计。编写本项目时使用的外部开发助手能力，不代表本项目运行时已经具备同名功能。</p><p>后续先用一个真实方法或外部工具验证需求，再按<a href="../stages/stage-6.html#stage-6">阶段 6 的扩展方向</a>决定是否建设发现、版本与生命周期管理。</p></div></div></section>
-<section class="lesson-section" id="module-extensions-p2-panel-B"><h3>9. 后续练习：按需加载与外部工具接入</h3><div class="lesson-body"><div class="am-md"><p>读取真实方法文件的元数据，由用户选择后才在长度限制内加载正文，不自动执行正文中引用的脚本。检查未激活正文不进入模型输入、版本可追溯、路径逃逸和超大正文被拒绝。</p>
-<p>随后接一个真正只读的本地 MCP 服务，检查断连、工具定义变化和超大结果；不模拟模型返回。最后核对扩展没有获得未授予的写能力，观测日志也没有被当作授权来源。</p>
+<section class="lesson-section" id="module-extensions-p2-panel-A"><h3>8. 本项目当前实现与未实现范围</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>已实现（截至阶段 3：显式函数注册）</strong>：通过 <code>ToolRegistry.register()</code> 显式注册本地 Python 函数并声明权限需求（如 <code>examples/count_lines.py</code>，详见<a href="../stages/stage-1.html#stage-1">阶段 1</a>）。</li>
+<li><strong>未实现（留待<a href="../stages/stage-7.html#stage-7">阶段 7 按需扩展</a>）</strong>：Skill 目录扫描与按需注入、Hook 回调协议、Middleware 栈、MCP 客户端接入以及 Plugin 包管理。</li>
+</ul></div></div></section>
+<section class="lesson-section" id="module-extensions-p2-panel-B"><h3>9. 期望达到的效果（后续扩展接入练习）</h3><div class="lesson-body"><div class="am-md"><p>在后续阶段接入 Skill 按需加载与只读 MCP 工具时，应按以下标准验证：</p>
+<p><strong>期望达到的效果：</strong></p>
+<ul>
+<li><strong>未激活正文零注入</strong>：默认只加载 Skill 元数据，未激活的 Skill 正文绝不占用模型上下文预算。</li>
+<li><strong>加载不自动执行脚本</strong>：读取 Skill 正文时严格检查路径越界与大小上限，且绝不自动执行正文中提及的外部脚本。</li>
+<li><strong>MCP 异常可受控降级</strong>：当本地只读 MCP 服务断连、Schema 变更或返回超大结果时，适配器能准确拦截并转为结构化错误回执。</li>
+<li><strong>权限边界不被绕过</strong>：任何扩展（Skill、Hook 或 MCP）都无法绕过 Policy 执行未授权的写操作。</li>
+</ul>
 </div></div>
 </section><nav class="chapter-nav" aria-label="章节导航"><a href="memory.html#module-memory">← Memory：选择跨会话保留的知识</a><a href="orchestration.html#module-orchestration">Orchestration：安排多个 Agent 分工与协作 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>

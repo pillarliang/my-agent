@@ -2,27 +2,27 @@
 <style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:17px}.head{font-size:20px;font-weight:650}.small{font-size:15px;fill:#526176}.arrow{fill:none;stroke:#40516b;stroke-width:1.6}.future{stroke-dasharray:6 5}</style><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
 <text x="24" y="30" class="head" text-anchor="start">先分清交互尺度，再决定是否创建对象或数据库表</text>
 <rect x="24" y="55" width="792" height="88" rx="8" fill="#eff6ff" stroke="#7ca4d8" stroke-width="1.5"/>
-<text x="40" y="85" class="head" text-anchor="start">整段对话：第一次读取，再接着追问</text>
+<text x="40" y="85" class="head" text-anchor="start">整段对话：先查询目录，再接着追问</text>
 <text x="40" y="114" class="small" text-anchor="start">保存归属与可用历史，生命周期可跨程序启动。</text>
 <path d="M270 143 V185" class="arrow" marker-end="url(#arrow)"/>
 <path d="M680 143 V185" class="arrow" marker-end="url(#arrow)"/>
 <rect x="24" y="188" width="490" height="112" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="40" y="218" class="head" text-anchor="start">用户任务 1：读取 notes.txt 并回答</text>
-<text x="40" y="247" class="small" text-anchor="start">模型请求 1 → 工具读取 → 模型请求 2</text>
+<text x="40" y="218" class="head" text-anchor="start">用户任务 1：查询目录并回答</text>
+<text x="40" y="247" class="small" text-anchor="start">模型请求 1 → 工具列目录 → 模型请求 2</text>
 <text x="40" y="272" class="small" text-anchor="start">一次用户任务中发生两次模型请求。</text>
 <rect x="546" y="188" width="270" height="112" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="562" y="218" class="head" text-anchor="start">用户任务 2：追问标记</text>
+<text x="562" y="218" class="head" text-anchor="start">用户任务 2：追问目录列表</text>
 <text x="562" y="247" class="small" text-anchor="start">读取既有消息，再请求模型</text>
 <text x="562" y="272" class="small" text-anchor="start">不需要自动重做旧工具。</text>
 <path d="M270 300 V323" class="arrow" marker-end="url(#arrow)"/>
 <text x="24" y="347" class="head" text-anchor="start">任务 1 中的具体内容：按产生顺序保留</text>
 <rect x="24" y="370" width="186" height="90" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
 <text x="40" y="400" class="head" text-anchor="start">用户问题</text>
-<text x="40" y="429" class="small" text-anchor="start">读取 notes.txt</text>
+<text x="40" y="429" class="small" text-anchor="start">列出当前目录</text>
 <path d="M210 415 H223" class="arrow" marker-end="url(#arrow)"/>
 <rect x="226" y="370" width="186" height="90" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
 <text x="242" y="400" class="head" text-anchor="start">模型响应</text>
-<text x="242" y="429" class="small" text-anchor="start">含读取调用 c1</text>
+<text x="242" y="429" class="small" text-anchor="start">含目录列表调用 c1</text>
 <path d="M412 415 H425" class="arrow" marker-end="url(#arrow)"/>
 <rect x="428" y="370" width="186" height="90" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
 <text x="444" y="400" class="head" text-anchor="start">工具回执</text>

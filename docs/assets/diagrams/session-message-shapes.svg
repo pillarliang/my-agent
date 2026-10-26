@@ -3,12 +3,12 @@
 <text x="24" y="30" class="head" text-anchor="start">内容回答“说了什么、做了什么”；包装回答“属于谁、怎样排序”</text>
 <rect x="24" y="65" width="416" height="342" rx="8" fill="#eff6ff" stroke="#7ca4d8" stroke-width="1.5"/>
 <text x="40" y="95" class="head" text-anchor="start">内容层：不同类型的消息</text>
-<text x="40" y="124" class="small" text-anchor="start">用户：读取 notes.txt</text>
+<text x="40" y="124" class="small" text-anchor="start">可选工具例子：查询目录</text>
 <text x="40" y="149" class="small" text-anchor="start">助手响应：文字、工具调用、停止原因</text>
-<text x="40" y="174" class="small" text-anchor="start">工具调用：标识 c1，名称 read_file</text>
-<text x="40" y="199" class="small" text-anchor="start">参数：path=notes.txt</text>
+<text x="40" y="174" class="small" text-anchor="start">工具调用：标识 c1，名称 list_files</text>
+<text x="40" y="199" class="small" text-anchor="start">参数：path=.</text>
 <text x="40" y="224" class="small" text-anchor="start">工具回执：call_id=c1</text>
-<text x="40" y="249" class="small" text-anchor="start">内容：真实正文，或明确失败</text>
+<text x="40" y="249" class="small" text-anchor="start">内容：真实目录列表，或明确失败</text>
 <text x="40" y="274" class="small" text-anchor="start">最终响应：根据回执回答</text>
 <rect x="486" y="65" width="330" height="342" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
 <text x="502" y="95" class="head" text-anchor="start">每条消息的记录包装</text>

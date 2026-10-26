@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 700" role="img" aria-labelledby="title desc"><title id="title">阶段 2 已有循环，以及阶段 3A 尚待实现的记录接入</title><desc id="desc">阶段 2 已有循环，以及阶段 3A 尚待实现的记录接入</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 700" role="img" aria-labelledby="title desc"><title id="title">阶段 3 当前实现：会话读写与模型、工具循环</title><desc id="desc">阶段 3 当前实现：会话读写与模型、工具循环</desc>
 <style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:17px}.head{font-size:20px;font-weight:650}.small{font-size:15px;fill:#526176}.arrow{fill:none;stroke:#40516b;stroke-width:1.6}.future{stroke-dasharray:6 5}</style><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
-<text x="24" y="30" class="head" text-anchor="start">实线：当前已有；虚线：阶段 3A 拟增加的调用</text>
+<text x="24" y="30" class="head" text-anchor="start">当前实现：入口提供会话，Runner 读取历史并保存交互</text>
 <rect x="24" y="58" width="418" height="88" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
 <text x="40" y="88" class="head" text-anchor="start">入口 / 应用</text>
 <text x="40" y="117" class="small" text-anchor="start">接收问题、设置目录与权限、创建模型和工具</text>
@@ -10,18 +10,18 @@
 <text x="40" y="258" class="small" text-anchor="start">messages：本次输入与已经返回的内容</text>
 <text x="40" y="283" class="small" text-anchor="start">reply / receipt：模型响应与真实工具回执</text>
 <text x="40" y="308" class="small" text-anchor="start">根据响应继续或结束，返回 RunResult</text>
-<rect x="518" y="199" width="298" height="232" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5" stroke-dasharray="6 5"/>
-<text x="534" y="229" class="head" text-anchor="start">待实现：会话记录读写</text>
+<rect x="518" y="199" width="298" height="232" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="534" y="229" class="head" text-anchor="start">SessionLog：会话读写</text>
 <text x="534" y="258" class="small" text-anchor="start">初始化：新建／定位会话文件</text>
 <text x="534" y="283" class="small" text-anchor="start">读取：还原可用历史消息</text>
 <text x="534" y="308" class="small" text-anchor="start">追加：用户问题、响应、回执</text>
 <text x="534" y="333" class="small" text-anchor="start">追加：用户任务开始与结束</text>
 <text x="534" y="358" class="small" text-anchor="start">存储不调用模型或执行工具</text>
-<path d="M442 265 H515" class="arrow future" marker-end="url(#arrow)"/>
+<path d="M442 265 H515" class="arrow" marker-end="url(#arrow)"/>
 <text x="479" y="247" class="small" text-anchor="middle">保存</text>
-<path d="M518 330 H445" class="arrow future" marker-end="url(#arrow)"/>
+<path d="M518 330 H445" class="arrow" marker-end="url(#arrow)"/>
 <text x="480" y="315" class="small" text-anchor="middle">历史</text>
-<path d="M442 98 H666 V196" class="arrow future" marker-end="url(#arrow)"/>
+<path d="M442 98 H666 V196" class="arrow" marker-end="url(#arrow)"/>
 <text x="585" y="84" class="small" text-anchor="middle">入口提供会话与存储配置</text>
 <rect x="24" y="446" width="190" height="111" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
 <text x="40" y="476" class="head" text-anchor="start">Model</text>
@@ -38,5 +38,5 @@
 <rect x="24" y="596" width="792" height="74" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
 <text x="40" y="626" class="head" text-anchor="start">接入时保持分工</text>
 <text x="40" y="655" class="small" text-anchor="start">消息与回执继续由 Loop 使用；保存方法返回写入结果或错误。</text>
-<text x="24" y="692" class="small" text-anchor="start">这张图是接入设计；当前源码没有存储对象、会话参数或历史查询入口。</text>
+<text x="24" y="692" class="small" text-anchor="start">详情查询直接读取会话，不创建模型，也不执行旧工具调用。</text>
 </svg>

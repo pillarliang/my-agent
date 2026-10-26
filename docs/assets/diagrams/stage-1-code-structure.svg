@@ -3,7 +3,7 @@
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
 <rect class="box" x="350" y="20" width="300" height="85" rx="8"/>
 <text x="366" y="49" class="head">main() · 函数</text>
-<text x="366" y="77" class="">任务入口；会话部分见阶段 3A</text>
+<text x="366" y="77" class="">任务入口；会话部分见阶段 3</text>
 <rect class="box" x="350" y="170" width="300" height="85" rx="8"/>
 <text x="366" y="199" class="head">run_task() · 函数</text>
 <text x="366" y="227" class="">创建工具和模型，调用循环</text>
@@ -50,5 +50,5 @@
 <path class="edge" d="M840 630 V700" marker-end="url(#arrow)"/>
 <text x="350" y="740" class="note">注册表统一处理参数、权限与回执</text>
 <text x="350" y="766" class="note">异常与真实结果再交回 Runner</text>
-<text x="500" y="812" class="note" text-anchor="middle">箭头：调用、创建或持有关系；不是继承。当前只保留任务内存消息；会话记录见阶段 3A 的后续设计。</text>
+<text x="500" y="812" class="note" text-anchor="middle">箭头：调用、创建或持有关系；不是继承。当前只保留任务内存消息；会话记录见阶段 3 的后续设计。</text>
 </svg>
