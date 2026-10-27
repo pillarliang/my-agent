@@ -6,7 +6,7 @@
 
 ## 启动教程网页
 
-在项目根目录运行独立静态服务，仅需 Python 3.12 或更新版本：
+在项目根目录运行独立静态服务，仅需 Python 3.9 或更新版本：
 
 ```sh
 python3 scripts/serve_tutorial.py --port 8080

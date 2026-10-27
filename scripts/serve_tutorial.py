@@ -1,5 +1,7 @@
 """独立的教程静态服务，仅使用标准库，不导入或启动 Agent。"""
 
+from __future__ import annotations
+
 import argparse
 import io
 from functools import partial
