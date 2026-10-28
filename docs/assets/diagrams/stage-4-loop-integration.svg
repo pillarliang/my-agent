@@ -49,5 +49,5 @@
 <path d="M350 456 V360" class="arrow" marker-end="url(#arrow)"/>
 <rect x="24" y="600" width="832" height="76" rx="8" class="box"/>
 <text x="40" y="628" class="head">当前实现：按完整 Turn 选择上下文，保留原始历史与工具回执</text>
-<text x="40" y="655" class="small">阶段 4 先落地“协议一致计量 + 按完整 Turn 整块裁剪 + 每次请求前复核”；大结果另存、摘要与检索留作阶段 5 按需扩展。</text>
+<text x="40" y="655" class="small">阶段 4 先落地“协议一致计量 + 按完整 Turn 整块裁剪 + 每次请求前复核”；大结果另存、摘要与检索留作阶段 6 按需扩展。</text>
 </svg>

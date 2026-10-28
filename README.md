@@ -82,6 +82,8 @@ uv run python examples/00_plain_loop.py
 
 阶段 2 先读 [Tools ↔ Policy 协议](docs/modules/policy.html#module-policy-interface)：工具识别动作，注册表以 `ActionRequest(operation, resource)` 统一询问 `Policy.evaluate()`，取得 `PolicyDecision(allowed, reason)`。拒绝返回 `policy_denied`；允许后才执行。[禁止覆盖实验](examples/policy_no_overwrite.py) 和 [Policy 测试](tests/test_policy.py) 验证权限是否生效，不涉及成果验收。
 
+下一步学习 [阶段 5：用 Memory 跨会话复用项目知识](docs/stages/stage-5.html#stage-5)。首版采用人工维护的项目记忆文件，代码尚未实现。后续依次为 [阶段 6：长任务机制](docs/stages/stage-6.html#stage-6)、[阶段 7：安全恢复](docs/stages/stage-7.html#stage-7) 和 [阶段 8：入口、扩展与编排](docs/stages/stage-8.html#stage-8)。
+
 当前代码实现到阶段 4。可直接读 [阶段 3：会话与记录](docs/stages/stage-3.html#stage-3)，从要记住什么逐步推导消息、任务、保存与读取，再对照 [session.py](learn_agent/session.py)。[Session / State 模块原理](docs/modules/state.html#session-purpose) 补充 pi / Codex 的方案比较；[阶段 4](docs/stages/stage-4.html#stage-4) 对照 [context.py](learn_agent/context.py) 理解预算、历史块、必需内容保护与选择清单。
 
 普通函数注册时直接声明所需权限，例如 `tools.register(count_lines, ReadFileArguments, permission="read", path_parameter="path")`。路径来自本次调用的 path 参数；不再传动作说明函数。注册表统一生成动作、调用 Policy，允许才执行。声明需求不代表获得授权；write 会根据目标是否存在区分新建与覆盖。新增工具复用已有权限即可，不改 registry.py 或 Runner。

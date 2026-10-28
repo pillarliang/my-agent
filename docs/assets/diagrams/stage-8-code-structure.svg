@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 860" role="img" aria-labelledby="title"><title id="title">阶段 8 当前 CLI 与后续入口、扩展和编排的接入位置</title>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:14px}.box{fill:#f4f7fb;stroke:#9dacc2;stroke-width:1.4}.planned{fill:#fffaf0;stroke:#b28a43;stroke-dasharray:6 4}.head{font-size:16px;font-weight:650}.note{fill:#52637b;font-size:13px}.edge{fill:none;stroke:#40516b;stroke-width:1.5}.future{stroke:#9a722c;stroke-dasharray:6 4}</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
+<rect class="box" x="20" y="20" width="280" height="110" rx="8"/>
+<text x="36" y="49" class="head">CLI main() · 已有函数</text>
+<text x="36" y="77" class="">接收任务、设置工作区与权限</text>
+<text x="36" y="103" class="">可执行任务或查询会话记录</text>
+<rect class="box" x="360" y="20" width="280" height="110" rx="8"/>
+<text x="376" y="49" class="head">run_task() · 已有函数</text>
+<text x="376" y="77" class="">注册工具，创建模型连接</text>
+<text x="376" y="103" class="">应用用例由入口调用</text>
+<rect class="box" x="700" y="20" width="280" height="110" rx="8"/>
+<text x="716" y="49" class="head">run_agent() · 已有函数</text>
+<text x="716" y="77" class="">单 Agent 循环，返回 RunResult</text>
+<text x="716" y="103" class="">Model / Tools / SessionLog</text>
+<rect class="box planned" x="20" y="310" width="280" height="140" rx="8"/>
+<text x="36" y="339" class="head">HTTP / SSE · 后续选项</text>
+<text x="36" y="367" class="">HTTP 执行、查询、观察分开</text>
+<text x="36" y="393" class="">复用应用用例与持久记录</text>
+<text x="36" y="419" class="">断开观察连接不等于取消任务</text>
+<rect class="box planned" x="360" y="310" width="280" height="140" rx="8"/>
+<text x="376" y="339" class="head">Skills / Hooks · 后续选项</text>
+<text x="376" y="367" class="">按选择接入输入准备或执行节点</text>
+<text x="376" y="393" class="">定义触发点、权限与失败处理</text>
+<text x="376" y="419" class="">具体函数与类尚未确定</text>
+<rect class="box planned" x="700" y="310" width="280" height="140" rx="8"/>
+<text x="716" y="339" class="head">MCP 工具 · 后续选项</text>
+<text x="716" y="367" class="">外部调用适配为工具契约</text>
+<text x="716" y="393" class="">经 ToolRegistry 检查和分发</text>
+<text x="716" y="419" class="">返回真实结果，保留调用 ID</text>
+<rect class="box planned" x="360" y="650" width="280" height="140" rx="8"/>
+<text x="376" y="679" class="head">Graph / 多 Agent · 后续选项</text>
+<text x="376" y="707" class="">由编排职责调度应用用例</text>
+<text x="376" y="733" class="">先确定任务 ID、权限和汇合</text>
+<text x="376" y="759" class="">执行前设计取消与失败处理</text>
+<path class="edge" d="M300 75 H360" marker-end="url(#arrow)"/>
+<path class="edge" d="M640 75 H700" marker-end="url(#arrow)"/>
+<path class="edge future" d="M160 310 V200 H500 V130" marker-end="url(#arrow)"/>
+<path class="edge future" d="M500 310 V210 H840 V130" marker-end="url(#arrow)"/>
+<path class="edge future" d="M840 310 V130" marker-end="url(#arrow)"/>
+<path class="edge future" d="M360 710 H330 V180 H450 V130" marker-end="url(#arrow)"/>
+<text x="500" y="842" class="note" text-anchor="middle">实线与实框：现有调用；虚线与虚框：候选扩展。独立教程 HTTP 服务不属于 Agent 的 HTTP API。</text>
+</svg>

@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="../assets/tutorial.css">
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
-<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
 <main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/modules/context.html#module-context">English</a></p><article class="chapter" id="module-context">
 <header class="chapter-header"><span class="kind">模块原理与方案 · 依据 pi / Codex / Deep Agents 源码</span><h2>Context Manager：组织本次发给模型的内容</h2></header>
 <section class="lesson-section" id="module-context-p1-panel-A"><h3>1. 问题起点与设计原则：为什么“保存了历史”不等于“每次全发给模型”？</h3><div class="lesson-body"><div class="am-md">
@@ -183,28 +183,28 @@
 <td>单次工具返回长日志或大文件</td>
 <td>产物存储、预览生成与分页补读接口</td>
 <td>预览漏掉关键报错、原文件变动</td>
-<td>阶段 5（按大回执痛点引入）</td>
+<td>阶段 6（按大回执痛点引入）</td>
 </tr>
 <tr>
 <td>历史摘要压缩</td>
 <td>长链路探索过程不能简单丢弃</td>
 <td>额外模型调用、切分点与摘要版本管理</td>
 <td>摘要遗漏硬约束、多次压缩失真</td>
-<td>阶段 5（按长过程痛点引入）</td>
+<td>阶段 6（按长过程痛点引入）</td>
 </tr>
 <tr>
 <td>检索与渐进加载</td>
 <td>候选参考资料或扩展说明过多</td>
 <td>索引构建维护、多轮检索往返</td>
 <td>漏检关键段落、命中过期内容</td>
-<td>阶段 5 / 7（按资料规模引入）</td>
+<td>阶段 6 / 8（按资料规模引入）</td>
 </tr>
 <tr>
 <td>子任务窗口隔离</td>
 <td>中间搜索试错过程撑爆主窗口</td>
 <td>子任务委派契约、独立预算与结果核验</td>
 <td>交接上下文遗漏、子任务幻觉传播</td>
-<td>阶段 7（按多角色协作引入）</td>
+<td>阶段 8（按多角色协作引入）</td>
 </tr>
 <tr>
 <td>服务端原生压缩</td>
@@ -261,7 +261,7 @@
 <li><strong>仅做历史摘要</strong>：能把前 20 轮浓缩成一段话，但摘要模型可能漏掉“UTC 时间”或把“先不要覆盖原文件”误缩写为“准备写入原文件”（因此在保留关键要求原文的同时，写入动作仍须由独立 <a href="policy.html#module-policy">Policy</a> 拦截兜底）。</li>
 <li><strong>仅另存大段工具结果</strong>：消除了第 10 轮 50 页长日志占用的巨量体积，但无法阻止 30 轮对话消息本身的持续增长。</li>
 <li><strong>仅做外部资料检索</strong>：能按关键词查到往期活动片段，但不知道用户在第 20 轮口头改过表格格式。</li>
-<li><strong>分阶段组合演进</strong>：先在<strong>阶段 4</strong> 实现“预算计量 + 必需块保护 + 按完整 Turn 整块裁剪”守住窗口底线；到了<strong>阶段 5</strong> 再针对长日志引入“大结果另存预览”，针对超长探索过程引入“历史摘要”。</li>
+<li><strong>分阶段组合演进</strong>：先在<strong>阶段 4</strong> 实现“预算计量 + 必需块保护 + 按完整 Turn 整块裁剪”守住窗口底线；在<a href="../stages/stage-6.html#stage-6">阶段 6</a>针对长日志选择“大结果另存预览”，针对超长探索过程选择“历史摘要”。</li>
 </ul>
 </div></div>
 </section>
@@ -274,7 +274,7 @@
   </ul>
 </li>
 <li><strong>计量范围</strong>：当前以输入 JSON 的 UTF-8 字节数保守估算 Token，不是供应商的精确计数。应用设置窗口额度与安全余量，可按模型替换计量器；具体配置见<a href="../stages/stage-4.html#stage-4-budget">阶段 4</a>。</li>
-<li><strong>后续按需扩展（<a href="../stages/stage-5.html#stage-5">阶段 5</a> 及以后）</strong>：大段工具结果另存与分页补读、历史摘要压缩（Compaction）、按需资料检索（RAG）与跨会话长期记忆（Memory）。</li>
+<li><strong>后续按需扩展</strong>：大段工具结果另存与分页补读、历史摘要压缩（Compaction）、按需资料检索（RAG）与跨会话长期记忆（Memory）。</li>
 </ul>
 </div></div>
 </section>
