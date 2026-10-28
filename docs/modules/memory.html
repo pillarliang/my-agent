@@ -17,15 +17,44 @@
 <ol><li><strong>应用确定范围</strong>：根据当前工作区或用户配置，指定可读取的记忆来源。</li><li><strong>Memory 读取资料</strong>：返回内容及其来源；条目多时，也可以先查找与任务相关的条目。</li><li><strong>Context 检查输入</strong>：将记忆与其他输入一起计量，再决定是否能够发送。</li><li><strong>模型参考资料回答</strong>：需要操作文件时提出工具调用，执行仍经过 Tools 与 Policy。</li></ol>
 <p>记忆可以由用户直接维护，也可以从会话记录中提取。因此 Session 能提供写入来源，但 Memory 不必依赖自动扫描历史。模型提出的候选与用户已经确认的事实要分清；记忆中的“允许覆盖文件”也不能替代实际权限检查。</p>
 <p>没有记忆与读取失败是两种结果：前者可以正常继续，后者应按应用约定明确处理，不能悄悄当成“没有记忆”。</p></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-C"><h3>3. 先分清：记什么、谁来写？</h3><div class="lesson-body"><div class="am-md">
-<ul><li><strong>项目事实与偏好</strong>：如依赖管理方式、报告格式；适合在相关任务中反复使用。</li><li><strong>经验记录</strong>：如一次排障的现象、原因与解决办法；应保留当时的环境和依据，供类似问题参考。</li><li><strong>固定操作方法</strong>：如每次发布要执行的步骤；当它已经成为可重复执行的流程，可以整理成 <a href="extensions.html#module-extensions">Skill</a>。</li></ul>
-<p>这些内容都可以先由人写入文件。“有没有长期记忆”和“会不会自动提取记忆”是两回事。自动提取节省整理时间，但增加核对事实、处理冲突和防止错误写入的成本。</p></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-D"><h3>4. 怎样保存和读取？</h3><div class="lesson-body"><div class="am-md">
-<h4>A. 一份短文件，按任务读取全文</h4><p>用户把知识写进 Markdown 文件，程序在任务开始时读取。内容少时最容易理解和检查，也能直接编辑、更正与删除；代价是每次请求都要承担全文的输入成本。</p>
-<h4>B. 索引文件加主题文件，按需补读</h4><p>启动时只加载简短目录，需要某个主题时再读正文。适合知识已经分成多个主题的情况；需要解决索引与正文同步，以及没有读到相关正文时怎样处理。</p>
-<h4>C. 数据库条目，按项目和关键词查询</h4><p>用 SQLite 等数据库保存条目，按项目、状态和关键词筛选。适合需要精确查询、更正记录或并发写入的情况；代价是维护表结构和查询逻辑。</p>
-<h4>D. 向量或混合检索</h4><p>把文本转换为向量，查找含义相近的候选，也可以结合关键词查询。适合条目多、提问用词变化大的情况；需要额外的向量生成、索引维护与检索效果评测。只能在当前用户有权访问的范围内查询，含义相近也不代表事实仍然有效。</p>
-<p>这些是存储和读取方式，可以逐步组合；自动提取则决定谁生成写入内容，不是另一种存储介质。</p></div></div></section>
+<section class="lesson-section" id="module-memory-p1-panel-C"><h3>3. Memory 存在哪里？（四种常见存储位置）</h3><div class="lesson-body"><div class="am-md">
+<p>设计 Memory 时，首先要明确<strong>“什么内容值得存”</strong>以及<strong>“存在哪里”</strong>：</p>
+<ul><li><strong>存什么内容</strong>：只存跨会话反复使用的<strong>项目事实与偏好</strong>（如依赖工具、代码规范）和<strong>经过验证的排障经验</strong>（现象、原因与解法）。如果某套操作已经成为固定执行流程，则适合整理成 <a href="extensions.html#module-extensions">Skill</a>。</li></ul>
+<p>按系统复杂度从低到高，Memory 常见有四种存放位置：</p>
+<h4>A. 单份项目或全局 Markdown 文件（如 <code>&lt;workspace&gt;/MEMORY.md</code>、<code>AGENTS.md</code>）</h4>
+<p>直接存放在项目工作区根目录（仅对当前项目生效）或用户全局配置目录（如 <code>~/.agent/MEMORY.md</code>，对当前用户的所有项目生效）。纯文本最容易打开查看、手动修改和纳入版本控制；适合条目不多、以核心项目约定为主的阶段。</p>
+<h4>B. 索引文件 + 分主题 Markdown 文件（如 <code>MEMORY.md</code> + <code>memories/*.md</code>）</h4>
+<p>主文件只存放简短目录与一句话摘要，详细的模块说明或排障记录拆分到独立主题文件中。适合知识按主题明显分块、单文件已经过长的场景。</p>
+<h4>C. 结构化数据库表（如 SQLite <code>memories</code> 表）</h4>
+<p>将每条记忆存为数据库记录（包含 <code>id</code>、适用范围 <code>scope</code>、正文 <code>content</code>、来源 <code>source</code>、状态 <code>status</code>、更新时间 <code>updated_at</code> 等字段）。适合需要按项目/状态精确过滤、保留更正轨迹或由程序并发写入的场景。</p>
+<h4>D. 向量索引或混合检索库（如 SQLite FTS + Embedding 向量库）</h4>
+<p>在结构化条目之上额外建立关键词倒排索引与语义向量索引。适合记忆条目非常多、用户提问用词与原文字面差异较大的场景，但会引入向量计算与检索评测成本。</p></div></div></section>
+<section class="lesson-section" id="module-memory-p1-panel-D"><h3>4. 什么时候、怎么增删改查（CRUD）？</h3><div class="lesson-body"><div class="am-md">
+<p>明确了存在哪里之后，还要定下<strong>什么时候触发、由谁执行“增、查、改、删”</strong>。注意区分“存在哪里（存储介质）”与“谁来写（人工 vs 模型工具 vs 后台提取）”是两个正交的选择：</p>
+<h4>增（Create：什么时候写入、谁来写？）</h4>
+<ul>
+<li><strong>方式 1：用户手动编辑文件（最简单可靠）</strong>：当用户确认一条长期约定（如“本项目用 <code>uv run</code>”）时，直接打开 <code>MEMORY.md</code> 写入。注意：在普通对话里模型口头回答“好的，我记住了”只会留在当前 <code>SessionLog</code>，不会自动写入记忆文件。</li>
+<li><strong>方式 2：模型在对话中调用记忆工具写入</strong>：用户明确要求“请记住这条规则”时，模型发起 <code>memory_write</code> 或文件写入工具调用，经 <code>Policy</code> 权限检查或用户确认后落盘。</li>
+<li><strong>方式 3：会话结束后后台自动提炼</strong>：任务或会话结束时，后台流程扫描 <code>SessionLog</code>，提炼出值得复用的事实写入记忆库。省去人工整理，但必须额外防范“把模型猜错的结论当成事实写入”以及重复写入问题。</li>
+</ul>
+<h4>查（Read / Query：什么时候读取、怎么放进模型请求？）</h4>
+<ul>
+<li><strong>方式 1：每次任务启动时全量读取（适合短文件）</strong>：<code>run_task()</code> 启动时直接读取当前工作区的 <code>MEMORY.md</code> 全文，交给 <code>Context</code> 组装成参考资料消息放进 <code>ModelRequest</code>。优点是稳定直接、无需模型先调工具找文件；代价是每次请求都要占用这部分输入预算。</li>
+<li><strong>方式 2：每次请求前按关键词或向量检索（适合数据库 / 向量库）</strong>：在 <code>Context</code> 组装请求前，先按当前项目范围过滤，再用本次用户问题检索最相关的 Top-K 条记忆放入请求。</li>
+<li><strong>方式 3：模型按需调用工具读取（适合索引 + 主题文件）</strong>：任务启动时只向模型提供简短目录索引；当模型判断需要某个主题的细节时，再主动调用读取或检索工具拉取正文。</li>
+</ul>
+<h4>改（Update：约定变化时怎么更新、新旧冲突听谁的？）</h4>
+<ul>
+<li><strong>文件方案</strong>：直接修改 <code>MEMORY.md</code> 中的对应内容。为避免同一次多步任务执行中途上下文突然变化，任务执行期间应锁定启动时读取的快照，修改后的内容在<strong>下一次任务</strong>启动时生效。</li>
+<li><strong>数据库与索引方案</strong>：按条目 <code>id</code> 更新正文并同步刷新检索索引；若需保留历史审计，可将旧条目标记为 <code>superseded</code>（已替代）并插入新条目。</li>
+<li><strong>新旧冲突优先级</strong>：当旧会话历史（<code>SessionLog</code>）里残留着旧做法，而当前读取的 <code>Memory</code> 已更新为新约定时，系统指令必须明确优先级：<strong>本次用户明确要求 &gt; 当前读取的 Memory &gt; 历史对话中的旧默认约定</strong>。</li>
+</ul>
+<h4>删（Delete / Forget：什么时候删除、删除的边界在哪？）</h4>
+<ul>
+<li><strong>文件方案</strong>：删掉 <code>MEMORY.md</code> 中的过期段落，或直接清空、删除文件；下一次任务启动时便不再注入该内容。</li>
+<li><strong>数据库与自动提炼方案</strong>：将条目标记为 <code>deleted</code> 并同步从检索索引中移除；若开启了后台自动提炼，还必须阻止后台从旧 <code>SessionLog</code> 里把同一内容再次提取回来。</li>
+<li><strong>删除的边界</strong>：删除 Memory 的作用是<strong>停止在后续任务中自动加载该知识</strong>，但它不会自动抹掉旧会话 <code>SessionLog</code> 里已经发生过的历史问答。</li>
+</ul></div></div></section>
 <section class="lesson-section" id="module-memory-p1-panel-E"><h3>5. 源码比较：pi 与 Deep Agents 怎样加载项目知识？</h3><div class="lesson-body"><div class="am-md">
 <p>两者都能从文件提供持续可用的项目背景。pi 将相关文件称为项目上下文；Deep Agents 使用 MemoryMiddleware。这里比较的是<strong>文件怎样进入模型输入</strong>，不能据此推断它们都具备自动提取或结构化记忆库。</p>
 <h4>pi：从目录发现上下文文件</h4>
@@ -38,9 +67,13 @@
 <section class="lesson-section" id="module-memory-p1-panel-F"><h3>6. 什么时候才需要结构化条目？</h3><div class="lesson-body"><div class="am-md">
 <p>一份人工维护的短文件，可以用文件路径标明来源，用工作区限制适用范围。需要逐条更正、查询或自动整理时，再增加条目结构。</p>
 <details><summary>自动提取与结构化存储需要补充的信息</summary><ul><li><strong>来源</strong>：记录对应会话、任务或原始资料的位置，方便核对。</li><li><strong>适用范围</strong>：明确属于哪个用户或项目，查询时先限制范围。</li><li><strong>有效状态</strong>：区分正在使用、被更正和已删除的内容，避免查询返回旧值。</li><li><strong>确认依据</strong>：区分用户明确提供的事实与模型候选；模型不能替用户生成确认记录。</li></ul><p>只有需要保留更正过程时，才增加版本关联；只有知识具有明确有效期时，才增加过期时间。这些字段服务于具体行为，不是 Memory 的统一格式。</p></details></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-G"><h3>7. 怎样更正和遗忘？</h3><div class="lesson-body"><div class="am-md">
-<ul><li><strong>人工文件方案</strong>：直接修改或删除正文，下次读取时使用新内容。若缓存了旧内容，需要同步刷新缓存。</li><li><strong>条目与索引方案</strong>：更正或删除正式条目时，同步更新查询状态和检索索引，避免旧值继续被返回。</li><li><strong>自动提取方案</strong>：删除后还要阻止后台流程从旧对话中重新提取同一内容。</li></ul>
-<p>删除记忆不等于删除历史：旧问答可能仍在 Session 中，已发送给模型的内容也无法撤回。说明遗忘效果时，要明确指的是“不再从记忆来源自动加载”，还是还要另外删除历史和其他副本。</p></div></div></section>
+<section class="lesson-section" id="module-memory-p1-panel-G"><h3>7. 更正与遗忘时的三个核心边界</h3><div class="lesson-body"><div class="am-md">
+<p>无论采用文件还是数据库方案，处理知识的更正与遗忘时，都必须把清三个关键边界：</p>
+<ul>
+<li><strong>单次任务内锁定不可变快照</strong>：多步任务执行中途如果允许底层记忆文件被随时改动，会导致第 1 步和第 2 步发给模型的项目约定不一致，引发推理混乱。因此，修改后的记忆只能在<strong>下一次任务</strong>生效，当前任务必须锁定启动时读取的快照。</li>
+<li><strong>冲突消解遵循三层优先级</strong>：当新旧约定发生冲突时，不能靠运气让模型猜，系统指令必须声明规则：<strong>本次用户明确要求 &gt; 当前读取的 Memory 默认约定 &gt; 会话历史中的旧默认记录</strong>。</li>
+<li><strong>区分“停止注入”与“物理抹除”</strong>：删除 Memory 的本质是<strong>停止在后续任务中作为背景资料自动加载</strong>。它不能、也不应该自动去重写或篡改过去已保存在 <code>SessionLog</code> 里的真实问答历史。</li>
+</ul></div></div></section>
 <section class="lesson-section" id="module-memory-p2-panel-A"><h3>8. 本项目当前选择：一份人工维护的项目文件</h3><div class="lesson-body"><div class="am-md">
 <p><strong>阶段 0–4 已实现</strong>会话保存、续接与上下文预算；Memory 尚未实现。<strong>阶段 5 已选择</strong>工作区根目录的 <code>MEMORY.md</code>：由用户编辑，每次任务开始时读取，路径与正文一起进入预算检查，同一任务使用同一份内容。</p>
 <p>选择它是因为少量项目约定可以直接检查，不需要先解决提取准确率与检索质量。初始化位置、现有源码入口和拟议调用流程见 <a href="../stages/stage-5.html#stage-5-p1-panel-C">阶段 5：怎样接入现有闭环</a>。</p></div></div></section>

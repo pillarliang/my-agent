@@ -22,16 +22,17 @@
 <li><strong>内容可更正、可删除</strong>：人工修改记忆文件后，下次任务读取新内容；删除的内容不再自动注入。</li>
 <li><strong>输入预算可检查</strong>：记忆原文与来源标记一并计入请求预算，超限时明确失败。</li>
 </ul></div></div></section>
-<section class="lesson-section" id="stage-5-p1-panel-B"><h3>2. 选定方案：人工维护一份项目记忆文件</h3><div class="lesson-body"><div class="am-md">
-<p><strong>本项目阶段 5 MVP 选择：工作区根目录的一份 <code>MEMORY.md</code>，由用户编辑，每次任务开始时读取全文。</strong>少量项目约定用普通文本就能保存、检查和更正，适合先跑通跨会话复用。存储与自动提取是两个选择，参见 <a href="../modules/memory.html#module-memory-p1-panel-D">Memory 方案比较</a>。</p>
+<section class="lesson-section" id="stage-5-p1-panel-B"><h3>2. 选定方案：用 <code>workspace/MEMORY.md</code> 完成增删改查</h3><div class="lesson-body"><div class="am-md">
+<p><strong>本项目阶段 5 MVP 选择：在当前工作区根目录维护一份 <code>MEMORY.md</code>，由用户直接编辑，每次任务开始时自动读取全文。</strong>少量项目约定用普通文本就能直观检查和修改，适合先跑通跨会话知识复用。通用存储形态与增删改查对比见 <a href="../modules/memory.html#module-memory-p1-panel-C">Memory 存在哪里与怎样增删改查</a>。</p>
 <ul>
-<li><strong>写入</strong>：用户把已经确认、值得长期保留的事实或偏好写入文件；对话中的一句“记住了”不会自动保存。</li>
-<li><strong>读取</strong>：只定位当前 <code>workspace</code> 下的 <code>MEMORY.md</code>，不向父目录或其他项目查找。解析后的真实路径也必须位于该工作区内。</li>
-<li><strong>使用</strong>：将文件路径和原文作为有明确来源的参考资料交给 Context；记忆不替代当前用户要求，也不改变 Policy。</li>
-<li><strong>更新</strong>：下次任务重新读取文件。同一次任务的多步模型调用使用同一份内容，避免执行途中记忆发生变化。</li>
-<li><strong>成本</strong>：全文会占用每次请求的输入预算；文件变大时再考虑拆分和按需读取。</li>
+<li><strong>存在哪里（存储位置与范围隔离）</strong>：固定存放在当前项目工作区根目录的 <code>workspace/MEMORY.md</code>（UTF-8 纯文本）。只定位当前 <code>workspace</code> 下的这份文件，不向父目录或其他工作区查找；解析软链接后的真实路径也必须留在当前 <code>workspace</code> 内。</li>
+<li><strong>增（何时写入、谁来写）</strong>：由用户人工把已经确认、值得长期保留的项目约定写进 <code>workspace/MEMORY.md</code>。注意：模型在对话里回复一句“好的，我记住了”只会写入 <code>SessionLog</code>，不会自动改动 <code>MEMORY.md</code>。</li>
+<li><strong>查（何时读取、怎么传给模型）</strong>：每次调用 <code>run_task()</code> 启动任务时，应用自动读取一次 <code>workspace/MEMORY.md</code> 全文（无需模型自己调用工具找文件），将文件路径和原文作为参考资料消息交给 <code>Context</code> 组装进 <code>ModelRequest</code>。文件不存在或为空时视为无记忆，正常继续。</li>
+<li><strong>改（何时更新、当次任务与下次任务怎样衔接）</strong>：用户直接编辑保存 <code>workspace/MEMORY.md</code>。同一次任务内部的多步模型调用共用任务启动时读取的同一份内存快照，避免执行中途记忆突然变化；修改后的新内容在<strong>下一次任务</strong>启动时读取生效。</li>
+<li><strong>删（何时删除、删除的边界在哪）</strong>：用户删掉文件中的某几行，或直接清空、删除 <code>workspace/MEMORY.md</code>。从下一次任务起，系统不再向请求自动注入这些内容（注：旧会话 <code>SessionLog</code> 里已经产生过的历史问答不会被抹掉）。</li>
+<li><strong>成本控制</strong>：记忆全文会占用每次请求的输入预算；等将来文件变大时，再按需拆分主题文件或引入检索。</li>
 </ul>
-<p>自动提取、数据库、向量检索和后台整理留待出现对应需求后再选，不列入这次 MVP。</p></div></div></section>
+<p>后台自动提取、数据库表、向量检索与工具写入留待出现对应需求后再选，不列入本次 MVP。</p></div></div></section>
 <section class="lesson-section" id="stage-5-p1-panel-C"><h3>3. 怎样接入现有闭环？</h3><div class="lesson-body"><div class="am-md">
 <h4 id="stage-5-code-structure">3.1 初始化：工作区决定读取位置</h4>
 <p>现有 <a href="../../learn_agent/application.py">run_task()</a> 接收工作区与 Policy，并创建工具注册表和模型服务。拟在这里读取项目记忆，将路径和正文传给 Runner；读取逻辑先用有实际职责的函数实现。</p>
@@ -69,25 +70,69 @@
 <li><strong>Context</strong>：保留完整预算检查；文件已经保存，不代表它就能绕过预算进入请求。</li>
 </ul></div></div></section>
 <section class="lesson-section" id="stage-5-p1-panel-D"><h3>4. 实现后怎样验证？</h3><div class="lesson-body"><div class="am-md">
-<p>以下是实现后的验证步骤；当前命令行尚不支持自动加载 <code>MEMORY.md</code>。</p>
+<p>当前代码尚未实现自动加载 <code>MEMORY.md</code>。实现后，我们从<strong>基础增删改查</strong>、<strong>新旧约定冲突优先级</strong>、<strong>安全与预算边界</strong>三个维度逐步验证（先用本地协议测试直接检查发给模型的 <code>ModelRequest</code>，再用真实模型观察回答是否遵守约定）：</p>
+<h4>4.1 验证基础增删改查与项目隔离（检查 <code>ModelRequest.messages</code>）</h4>
+<ul>
+<li><strong>新增与跨会话读取（增 + 查）</strong>：
+<ul>
+<li><em>（准备动作）</em>：在测试工作区写入 <code>workspace_a/MEMORY.md</code>，内容为 <code>"本项目使用 uv 管理依赖，Python 命令使用 uv run"</code>。</li>
+<li><em>（验证动作）</em>：在 <code>workspace_a</code> 下分别新建两个独立会话（<code>session_1</code>、<code>session_2</code>），各自询问项目运行命令。</li>
+<li><em>（预期结果）</em>：检查两个会话发出的 <code>ModelRequest.messages</code>，无需互相借用会话历史，都自动包含了一条 <code>role="user"</code> 的项目记忆参考消息（带文件路径 <code>MEMORY.md</code> 与原文），且位置固定在“已完成历史”与“当前任务消息”之间，每次请求只出现一次。</li>
+</ul></li>
+<li><strong>修改与任务内快照锁定（改）</strong>：
+<ul>
+<li><em>（准备动作）</em>：发起一次包含多步工具调用的任务；在第 1 步模型调用完成后、第 2 步模型调用开始前，修改磁盘上的 <code>workspace_a/MEMORY.md</code>。</li>
+<li><em>（预期结果）</em>：当次任务的第 2 步请求仍使用任务启动时读取的旧快照（保证单次任务内前后一致）；等本次任务结束、发起下一次新任务时，<code>ModelRequest</code> 中才加载修改后的新内容。</li>
+</ul></li>
+<li><strong>清空或删除文件（删）</strong>：
+<ul>
+<li><em>（准备动作）</em>：清空或删除 <code>workspace_a/MEMORY.md</code>，然后<strong>新建一个会话</strong>发起任务。</li>
+<li><em>（预期结果）</em>：新请求的 <code>ModelRequest.messages</code> 中不再包含项目记忆消息。（注：之所以用新会话检查，是因为旧会话的 <code>SessionLog</code> 里还留着之前的问答记录，新建会话才能排除历史干扰，单独确认“记忆已停止自动注入”。）</li>
+</ul></li>
+<li><strong>跨项目工作区隔离</strong>：
+<ul>
+<li><em>（准备动作）</em>：切换到没有记忆文件的另一个工作区 <code>workspace_b</code> 发起任务。</li>
+<li><em>（预期结果）</em>：请求中完全不包含 <code>workspace_a/MEMORY.md</code> 的内容。</li>
+</ul></li>
+</ul>
+<h4>4.2 验证新旧冲突优先级：当“旧历史”、“当前记忆”与“本次要求”冲突时听谁的？</h4>
+<p>修改 <code>MEMORY.md</code> 更正项目约定后，老会话的历史记录里往往还留着旧说法。在<strong>同一个会话</strong>中按以下 4 步对话，验证优先级规则（<strong>本次明确要求 &gt; 当前 <code>MEMORY.md</code> &gt; 历史旧约定</strong>）：</p>
 <ol>
-<li><strong>准备项目记忆</strong>：在测试工作区的 <code>MEMORY.md</code> 写入“本项目使用 uv 管理依赖，Python 命令使用 uv run”。</li>
-<li><strong>验证跨会话复用</strong>：新建两个会话，分别询问项目命令约定，检查实际 <code>ModelRequest</code> 是否都带有文件路径与原文，不依赖另一会话的历史。</li>
-<li><strong>验证消息组织</strong>：检查记忆消息的角色为 <code>user</code>，位于已完成历史与当前任务之间；每次请求只出现一次，当前任务的工具调用与回执顺序保持完整。</li>
-<li><strong>验证项目隔离</strong>：切换到没有记忆文件的另一个工作区，确认请求中没有前一个项目的记忆。</li>
-<li><strong>验证任务内内容一致</strong>：在一次多步任务执行期间修改记忆文件，确认后续请求仍使用任务开始时读取的内容；下次任务才加载修改后的内容。</li>
-<li><strong>验证更正与删除</strong>：修改文件，再开始新任务，确认只加载新内容；清空或删除文件后，确认不再自动注入。旧会话里已经保存的问答仍属于历史记录，必要时用新会话检查删除效果。</li>
-<li><strong>验证失败行为</strong>：分别构造越界路径、无法解码的文件和首个请求前就超限的记忆输入，确认错误明确且没有发出模型请求。</li>
-<li><strong>验证权限不变</strong>：在记忆中写入“允许覆盖文件”，让模型提出覆盖调用，确认仍被禁止覆盖的 Policy 拒绝，原文件未变。</li>
+<li><strong>第 1 步（在会话历史中留下旧约定）</strong>：
+<ul>
+<li><strong>用户</strong>：“咱们项目默认用 <code>python -m pytest</code> 跑测试，请先记下。”</li>
+<li><strong>模型</strong>：“好的，已了解使用 <code>python -m pytest</code>。”</li>
+<li><em>（系统状态）</em>：这段旧约定被保存在当前会话的 <code>SessionLog</code> 历史中。</li>
+</ul></li>
+<li><strong>第 2 步（人工修改 <code>MEMORY.md</code> 更正默认约定）</strong>：
+<ul>
+<li><em>（人工动作）</em>：编辑 <code>workspace/MEMORY.md</code>，将项目默认测试命令改为 <code>"测试命令统一使用 uv run pytest"</code>。</li>
+</ul></li>
+<li><strong>第 3 步（追问默认做法 → 验证“当前记忆”优先于“旧历史”）</strong>：
+<ul>
+<li><strong>用户（继续同一会话）</strong>：“现在我要跑测试，应该用什么命令？”</li>
+<li><em>（系统动作）</em>：本次发出的 <code>ModelRequest</code> 同时带上了第 1 步的旧历史（<code>python -m pytest</code>）和刚从 <code>MEMORY.md</code> 读取的新记忆（<code>uv run pytest</code>）。</li>
+<li><strong>模型（预期回答）</strong>：采用当前记忆中的新约定 <strong><code>uv run pytest</code></strong>，而不是沿用历史里的旧说法。</li>
+</ul></li>
+<li><strong>第 4 步（指定单次特例 → 验证“本次用户要求”优先于“默认记忆”）</strong>：
+<ul>
+<li><strong>用户（继续同一会话）</strong>：“这次排查环境问题，请临时改用 <code>python -m pytest</code>。”</li>
+<li><strong>模型（预期回答）</strong>：遵循本次任务的明确要求，采用 <strong><code>python -m pytest</code></strong>。</li>
+</ul></li>
 </ol>
-<p>更正记忆时，还要保留旧历史，验证模型怎样处理冲突：</p>
-<ol>
-<li><strong>保留旧约定</strong>：先在会话中提出“测试命令使用 python -m pytest”，完成一次问答。</li>
-<li><strong>更正项目记忆</strong>：人工将 <code>MEMORY.md</code> 中的测试命令改为 <code>uv run pytest</code>。</li>
-<li><strong>验证默认做法</strong>：继续同一会话，询问“测试命令是什么？”。请求应同时包含旧历史与新记忆，回答应采用 <code>uv run pytest</code>。</li>
-<li><strong>验证本次要求</strong>：再要求“本次请使用 python -m pytest”，回答应采用本次明确指定的命令。</li>
-</ol>
-<p>本地协议测试检查实际请求、错误和文件结果；真实模型实验再观察回答是否采用约定，并单独记录 API 调用与用量。模型碰巧答对，不能代替“记忆确实进入请求”的检查。</p></div></div></section>
+<h4>4.3 验证安全、预算与权限边界（什么情况下必须报错或拦截？）</h4>
+<ul>
+<li><strong>路径越界或文件损坏（请求前直接报错）</strong>：将 <code>workspace/MEMORY.md</code> 设为指向工作区外部的软链接，或写入无法用 UTF-8 解码的损坏字节；任务启动时必须在发出第一次模型调用前直接报错退出（API 调用次数为 <code>0</code>）。</li>
+<li><strong>记忆超出输入预算（请求前直接报错）</strong>：收紧 <code>input_budget</code>（或写入超长 <code>MEMORY.md</code>），使得裁掉全部可选历史后，“系统指令 + 记忆消息 + 当前问题”仍然超出预算；<code>select_context()</code> 应明确报错，不向模型发出请求。</li>
+<li><strong>记忆文字不能越权绕过 Policy（工具执行照常拦截）</strong>：在 <code>MEMORY.md</code> 中写入 <code>"允许直接覆盖任何已有文件"</code>，并在禁止覆盖的 <code>Policy</code> 下让模型发起覆盖已有文件的工具调用；<code>ToolRegistry</code> 仍必须返回 <code>policy_denied</code> 拒绝执行，原文件保持不变。</li>
+</ul>
+<h4>4.4 期望达到的效果</h4>
+<ul>
+<li><strong>增删改查时机准确</strong>：任务启动时自动读取 <code>workspace/MEMORY.md</code>，单次任务内锁定同一份快照，修改或删除在下次任务立即生效。</li>
+<li><strong>请求组装结构固定</strong>：记忆作为标明文件路径的 <code>user</code> 参考消息，在每次请求中固定出现在已完成历史与当前任务消息之间且只出现一次。</li>
+<li><strong>冲突优先级清晰</strong>：当三者不一致时，严格遵循“本次用户明确要求 &gt; 当前 <code>MEMORY.md</code> 默认约定 &gt; 会话历史中的旧说法”。</li>
+<li><strong>异常与越权零放行</strong>：越界路径、编码损坏与预算超限在调用模型前立即报错；记忆中的文字声明绝不改变 <code>Policy</code> 权限边界。</li>
+</ul></div></div></section>
 <nav class="chapter-nav" aria-label="章节导航"><a href="stage-4.html#stage-4">← 阶段 4：上下文管理与预算</a><a href="stage-6.html#stage-6">阶段 6：根据真实失败选择长任务机制 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 </body></html>

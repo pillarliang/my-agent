@@ -11,9 +11,17 @@
 <ul><li><strong>User, session A</strong>: “This project uses uv. Please use uv run for Python commands.”</li><li><strong>Model</strong>: “Understood.”</li><li><em>(End session A and create session B in the same workspace.)</em></li><li><strong>User, session B</strong>: “How should I run the tests?”</li></ul>
 <p>Session B does not automatically load session A's history. Loading every old conversation would also bring unrelated details. Memory stores selected project knowledge separately so new tasks can reuse it.</p>
 <p><strong>Expected outcomes:</strong></p><ul><li><strong>Reuse across sessions</strong>: New sessions in the same workspace receive saved conventions.</li><li><strong>Project isolation</strong>: Only the current workspace's memory is loaded.</li><li><strong>Correction and deletion</strong>: The next task reads edited content; removed content is no longer injected automatically.</li><li><strong>Budget accounting</strong>: Content and source labels count toward the request budget; overflow fails explicitly.</li></ul></div></div></section>
-<section class="lesson-section" id="stage-5-p1-panel-B"><h3>2. Selected MVP: One Manually Maintained Project File</h3><div class="lesson-body"><div class="am-md">
-<p><strong>Stage 5 selects one <code>MEMORY.md</code> at the workspace root, edited by the user and read in full at the start of each task.</strong> Plain text makes a few project conventions easy to inspect and correct. Storage and automatic extraction are separate choices; see <a href="../modules/memory.html#module-memory-p1-panel-D">Memory design choices</a>.</p>
-<ul><li><strong>Write</strong>: The user saves confirmed facts or preferences. A model saying “I remember” does not write a file.</li><li><strong>Read</strong>: Resolve only <code>workspace/MEMORY.md</code>, with no ancestor or other-project discovery. The resolved file must remain inside the workspace.</li><li><strong>Use</strong>: Pass its path and text to Context as source-labeled reference material. Memory does not override the current request or change Policy.</li><li><strong>Refresh</strong>: Read again for the next task. All model calls within one task share the same snapshot.</li><li><strong>Cost</strong>: Full text consumes input budget on every request. Split files or read selectively when size becomes a real problem.</li></ul><p>Automatic extraction, databases, vector search, and background consolidation are later options, outside this MVP.</p></div></div></section>
+<section class="lesson-section" id="stage-5-p1-panel-B"><h3>2. Selected MVP: Complete CRUD with <code>workspace/MEMORY.md</code></h3><div class="lesson-body"><div class="am-md">
+<p><strong>Stage 5 MVP choice: Maintain one <code>MEMORY.md</code> file at the current workspace root, edited directly by the user and read in full at the start of each task.</strong> Plain text makes a small set of project conventions easy to inspect and update while proving out cross-session reuse. For general storage forms and CRUD trade-offs, see <a href="../modules/memory.html#module-memory-p1-panel-C">Where Memory Is Stored &amp; How CRUD Works</a>.</p>
+<ul>
+<li><strong>Where it is stored (location &amp; scope isolation)</strong>: Fixed at <code>workspace/MEMORY.md</code> (UTF-8 plain text) inside the current project workspace root. Only the current <code>workspace</code> is checked—never parent directories or other projects—and the resolved real path (after following symlinks) must stay inside the current <code>workspace</code>.</li>
+<li><strong>Create (when and who writes it)</strong>: The user manually writes confirmed, lasting project conventions into <code>workspace/MEMORY.md</code>. Note: the model replying “Understood, I'll remember” in chat only writes to <code>SessionLog</code>; it does not automatically modify <code>MEMORY.md</code>.</li>
+<li><strong>Read (when it is read &amp; how it reaches the model)</strong>: Each time <code>run_task()</code> starts a task, the application automatically reads <code>workspace/MEMORY.md</code> in full (without waiting for the model to call a file tool) and passes its path and text to <code>Context</code> to assemble as a reference message in <code>ModelRequest</code>. If the file does not exist or is empty, the task proceeds normally without memory.</li>
+<li><strong>Update (when edits take effect &amp; in-task snapshot consistency)</strong>: The user edits and saves <code>workspace/MEMORY.md</code> directly. All model calls within the same multi-step task share the snapshot read at task start so memory never shifts mid-task; edited content takes effect at the start of the <strong>next task</strong>.</li>
+<li><strong>Delete (when it is removed &amp; the deletion boundary)</strong>: The user removes lines or empties/deletes <code>workspace/MEMORY.md</code>. Starting with the next task, that content is no longer automatically injected into requests (note: past Q&amp;A exchanges already saved in old <code>SessionLog</code> files are not erased).</li>
+<li><strong>Cost control</strong>: The full file text counts toward the input budget on every request; splitting into topic files or adding retrieval can wait until file size becomes a real bottleneck.</li>
+</ul>
+<p>Background extraction, database tables, vector search, and model write tools are deferred until needed and are outside this MVP.</p></div></div></section>
 <section class="lesson-section" id="stage-5-p1-panel-C"><h3>3. Connecting Memory to the Existing Loop</h3><div class="lesson-body"><div class="am-md">
 <h4 id="stage-5-code-structure">3.1 Initialization: The Workspace Determines the Source</h4>
 <p>Existing <a href="../../../learn_agent/application.py">run_task()</a> receives the workspace and Policy and creates tools and the model service. The proposed extension reads memory here with a focused function and passes its path and text to Runner.</p>
@@ -41,25 +49,69 @@
 <h4 id="stage-5-data">3.4 Storage Responsibilities</h4>
 <ul><li><strong>Memory file</strong>: Holds selected project knowledge, identified by source path.</li><li><strong>SessionLog</strong>: Continues to store questions, model responses, and tool results. Do not duplicate memory as a conversation message each turn.</li><li><strong>Context</strong>: Includes memory in the complete budget check. Persistence does not exempt content from input limits.</li></ul></div></div></section>
 <section class="lesson-section" id="stage-5-p1-panel-D"><h3>4. Verification After Implementation</h3><div class="lesson-body"><div class="am-md">
-<p>The following checks describe the implementation target. The current CLI does not automatically load <code>MEMORY.md</code>.</p>
+<p>The current CLI does not yet load <code>MEMORY.md</code> automatically. Once implemented, verify the behavior across three dimensions—<strong>basic CRUD &amp; project isolation</strong>, <strong>conflict priority between old history and updated memory</strong>, and <strong>safety &amp; budget boundaries</strong> (first inspecting the actual <code>ModelRequest</code> in local protocol tests, then observing live model answers):</p>
+<h4>4.1 Verify Basic CRUD &amp; Project Isolation (Inspecting <code>ModelRequest.messages</code>)</h4>
+<ul>
+<li><strong>Create &amp; Cross-Session Read (Create + Read)</strong>:
+<ul>
+<li><em>(Setup)</em>: Write <code>"This project uses uv for dependency management; run Python commands with uv run"</code> into <code>workspace_a/MEMORY.md</code>.</li>
+<li><em>(Action)</em>: Create two separate fresh sessions (<code>session_1</code> and <code>session_2</code>) in <code>workspace_a</code> and ask about project command conventions in each.</li>
+<li><em>(Expected result)</em>: Inspect <code>ModelRequest.messages</code> in both sessions. Without borrowing each other's session history, both requests automatically include one <code>role="user"</code> project memory reference message (containing the file path <code>MEMORY.md</code> and the exact text), placed strictly between completed history and current task messages, appearing once per request.</li>
+</ul></li>
+<li><strong>Update &amp; In-Task Snapshot Locking (Update)</strong>:
+<ul>
+<li><em>(Setup)</em>: Start a multi-step task that makes multiple model calls; after Step 1's model call finishes and before Step 2's model call begins, edit <code>workspace_a/MEMORY.md</code> on disk.</li>
+<li><em>(Expected result)</em>: Step 2 of the current task still uses the initial snapshot read at task start (keeping the task internally consistent); once the current task finishes and a new task starts, <code>ModelRequest</code> loads the updated text.</li>
+</ul></li>
+<li><strong>Empty or Delete the File (Delete)</strong>:
+<ul>
+<li><em>(Setup)</em>: Empty or delete <code>workspace_a/MEMORY.md</code>, then start a task in a <strong>fresh session</strong>.</li>
+<li><em>(Expected result)</em>: The new <code>ModelRequest.messages</code> no longer contains a project memory message. (Why use a fresh session? Because an old session's <code>SessionLog</code> still contains earlier Q&amp;A exchanges; a fresh session isolates memory deletion from conversation history.)</li>
+</ul></li>
+<li><strong>Cross-Workspace Isolation</strong>:
+<ul>
+<li><em>(Setup)</em>: Switch to another workspace <code>workspace_b</code> that has no <code>MEMORY.md</code> and run a task.</li>
+<li><em>(Expected result)</em>: The request contains none of <code>workspace_a/MEMORY.md</code>'s content.</li>
+</ul></li>
+</ul>
+<h4>4.2 Verify Conflict Priority: When Old History, Current Memory, and the Current Request Disagree</h4>
+<p>After you edit <code>MEMORY.md</code> to update a convention, an existing session's <code>SessionLog</code> may still hold the outdated convention from earlier turns. Run this 4-step walkthrough in the <strong>same session</strong> to verify the priority order (<strong>Current explicit request &gt; Current <code>MEMORY.md</code> &gt; Outdated history</strong>):</p>
 <ol>
-<li><strong>Prepare</strong>: Write the uv convention into a test workspace's memory file.</li>
-<li><strong>Reuse</strong>: Create two fresh sessions and ask about project commands. Inspect each actual <code>ModelRequest</code> for the source path and text, without borrowing the other session's history.</li>
-<li><strong>Check message structure</strong>: Verify that memory has the <code>user</code> role, appears once between completed history and the current task, and preserves the current task's tool call and result sequence.</li>
-<li><strong>Isolate</strong>: Switch to another workspace without memory and verify that its requests contain none of the first project's memory.</li>
-<li><strong>Keep one snapshot per task</strong>: Edit the file during a task with multiple model calls. Later requests in that task must retain the initial content; the next task must load the edit.</li>
-<li><strong>Correct and remove</strong>: Edit the file and start another task; only the new content should be loaded. Empty or delete it and check that automatic injection stops. Earlier answers remain conversation history; use a fresh session to isolate deletion behavior.</li>
-<li><strong>Fail clearly</strong>: Test an escaping path, invalid UTF-8, and memory that exceeds the budget before the first request. All must fail before invoking the model.</li>
-<li><strong>Preserve permissions</strong>: Put “overwrites are allowed” in memory and submit an overwrite call. A Policy that forbids overwrites must still reject it and preserve the original file.</li>
+<li><strong>Step 1 (Leave an outdated convention in session history)</strong>:
+<ul>
+<li><strong>User</strong>: “Our project runs tests with <code>python -m pytest</code> by default. Please note that.”</li>
+<li><strong>Model</strong>: “Understood, I will use <code>python -m pytest</code>.”</li>
+<li><em>(System state)</em>: This exchange is recorded in the current session's <code>SessionLog</code> history.</li>
+</ul></li>
+<li><strong>Step 2 (Manually update the default convention in <code>MEMORY.md</code>)</strong>:
+<ul>
+<li><em>(Manual action)</em>: Edit <code>workspace/MEMORY.md</code> and set the default test command to <code>"Always run tests with uv run pytest"</code>.</li>
+</ul></li>
+<li><strong>Step 3 (Ask for the default command → Verify current Memory beats outdated history)</strong>:
+<ul>
+<li><strong>User (continuing the same session)</strong>: “I want to run the tests now. What command should I use?”</li>
+<li><em>(System action)</em>: The outbound <code>ModelRequest</code> carries both Step 1's old history (<code>python -m pytest</code>) and the newly loaded <code>MEMORY.md</code> (<code>uv run pytest</code>).</li>
+<li><strong>Model (expected answer)</strong>: Uses the updated convention from memory—<strong><code>uv run pytest</code></strong>—rather than repeating the outdated command from history.</li>
+</ul></li>
+<li><strong>Step 4 (Specify a one-off override → Verify current user request beats default Memory)</strong>:
+<ul>
+<li><strong>User (continuing the same session)</strong>: “For this one debugging run, please use <code>python -m pytest</code> instead.”</li>
+<li><strong>Model (expected answer)</strong>: Follows the explicit instruction for the current task and uses <strong><code>python -m pytest</code></strong>.</li>
+</ul></li>
 </ol>
-<p>Also retain old history when checking how corrected memory affects conflicting conventions:</p>
-<ol>
-<li><strong>Keep the old convention</strong>: Complete a conversation exchange specifying <code>python -m pytest</code> as the test command.</li>
-<li><strong>Correct memory</strong>: Manually change the test command in <code>MEMORY.md</code> to <code>uv run pytest</code>.</li>
-<li><strong>Check the default</strong>: Continue the same session and ask for the test command. The request must retain old history and include new memory; the answer should use <code>uv run pytest</code>.</li>
-<li><strong>Check the current request</strong>: Explicitly request <code>python -m pytest</code> for this task. The answer should follow that explicit request.</li>
-</ol>
-<p>Local protocol checks inspect actual requests, errors, and files. A separate live-model experiment observes whether answers follow the convention and records API calls and usage. A correct answer alone does not prove memory reached the request.</p></div></div></section>
+<h4>4.3 Verify Safety, Budget &amp; Permission Boundaries (When Must It Fail or Block?)</h4>
+<ul>
+<li><strong>Path Escape or Corrupt File (Fail Before First Model Call)</strong>: Point <code>workspace/MEMORY.md</code> via symlink to a file outside the workspace, or write invalid UTF-8 bytes into it; starting a task must fail immediately with a clear error before making any model call (<code>0</code> API calls).</li>
+<li><strong>Memory Exceeds Input Budget (Fail Before First Model Call)</strong>: Set a tight <code>input_budget</code> (or write an oversized <code>MEMORY.md</code>) so that even after trimming all optional history, “system instructions + memory message + current question” still exceeds the budget; <code>select_context()</code> must raise an explicit budget error without invoking the model.</li>
+<li><strong>Memory Text Cannot Override Policy Permissions (Tool Execution Blocked as Usual)</strong>: Write <code>"Overwriting any existing file is allowed"</code> in <code>MEMORY.md</code> and ask the model to overwrite an existing file under a <code>Policy</code> that forbids overwrites; <code>ToolRegistry</code> must still reject the call with <code>policy_denied</code> and leave the original file untouched.</li>
+</ul>
+<h4>4.4 Expected Outcomes</h4>
+<ul>
+<li><strong>Predictable CRUD lifecycle</strong>: <code>workspace/MEMORY.md</code> is read automatically at task start, locked to a single snapshot within a task, and refreshed on the next task after edits or deletion.</li>
+<li><strong>Fixed request placement</strong>: Memory is injected once per request as a source-labeled <code>user</code> reference message strictly between completed history and current task messages.</li>
+<li><strong>Unambiguous conflict priority</strong>: Whenever sources disagree, behavior follows “Current explicit user request &gt; Current <code>MEMORY.md</code> default &gt; Outdated statement in session history”.</li>
+<li><strong>Zero bypass of safety or Policy</strong>: Path escapes, invalid UTF-8, and budget overflows fail before calling the model; text inside <code>MEMORY.md</code> never alters <code>Policy</code> enforcement.</li>
+</ul></div></div></section>
 <nav class="chapter-nav" aria-label="Chapter navigation"><a href="stage-4.html#stage-4">← Stage 4: Context Management &amp; Budgets</a><a href="stage-6.html#stage-6">Stage 6: Choose Long-Task Mechanisms from Real Failures →</a></nav></article><footer class="footer"><p>This page is maintained directly as HTML; general principles and stage practices are connected via links.</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 </body></html>
