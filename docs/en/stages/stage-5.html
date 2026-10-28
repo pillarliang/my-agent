@@ -16,7 +16,7 @@
 <ul>
 <li><strong>Where it is stored (location &amp; scope isolation)</strong>: Fixed at <code>workspace/MEMORY.md</code> (UTF-8 plain text) inside the current project workspace root. Only the current <code>workspace</code> is checked—never parent directories or other projects—and the resolved real path (after following symlinks) must stay inside the current <code>workspace</code>.</li>
 <li><strong>Create (when and who writes it)</strong>: The user manually writes confirmed, lasting project conventions into <code>workspace/MEMORY.md</code>. Note: the model replying “Understood, I'll remember” in chat only writes to <code>SessionLog</code>; it does not automatically modify <code>MEMORY.md</code>.</li>
-<li><strong>Read (when it is read &amp; how it reaches the model)</strong>: Each time <code>run_task()</code> starts a task, the application automatically reads <code>workspace/MEMORY.md</code> in full (without waiting for the model to call a file tool) and passes its path and text to <code>Context</code> to assemble as a reference message in <code>ModelRequest</code>. If the file does not exist or is empty, the task proceeds normally without memory.</li>
+<li><strong>Read (when it is read &amp; how it reaches the model)</strong>: Each time <code>run_task()</code> starts a task, the application automatically reads <code>workspace/MEMORY.md</code> in full (without waiting for the model to call a file tool) and passes a reference message containing the source path identifier and full text to <code>Context</code> to assemble into <code>ModelRequest</code>. If the file does not exist or is empty, the task proceeds normally without memory.</li>
 <li><strong>Update (when edits take effect &amp; in-task snapshot consistency)</strong>: The user edits and saves <code>workspace/MEMORY.md</code> directly. All model calls within the same multi-step task share the snapshot read at task start so memory never shifts mid-task; edited content takes effect at the start of the <strong>next task</strong>.</li>
 <li><strong>Delete (when it is removed &amp; the deletion boundary)</strong>: The user removes lines or empties/deletes <code>workspace/MEMORY.md</code>. Starting with the next task, that content is no longer automatically injected into requests (note: past Q&amp;A exchanges already saved in old <code>SessionLog</code> files are not erased).</li>
 <li><strong>Cost control</strong>: The full file text counts toward the input budget on every request; splitting into topic files or adding retrieval can wait until file size becomes a real bottleneck.</li>
@@ -30,7 +30,22 @@
 <ol><li><strong>Application reads</strong>: Obtain the workspace's file path and text at task start.</li><li><strong>Runner prepares task input</strong>: Load the session history and retain the project memory for each model request during the task.</li><li><strong>Context assembles</strong>: Extend <a href="../../../learn_agent/context.py">select_context()</a> to place memory in a reference message between completed history and the current task, then measure the full request.</li><li><strong>Check before invoking</strong>: Keep the short memory as required input while trimming optional history as in Stage 4. If required input still overflows, stop and report that memory or the budget needs adjustment.</li><li><strong>Tools enforce permissions</strong>: ToolRegistry still checks Policy before executing model-requested actions.</li></ol>
 <p>These are proposed changes: <code>run_task()</code>, <code>run_agent()</code>, and <code>select_context()</code> do not yet accept a separate memory input.</p>
 <h4 id="stage-5-request-order">3.3 Message Placement and Conflicting Conventions</h4>
-<p>The proposed design reuses <code>TextMessage</code> with the <code>user</code> role for one project memory message. Its content identifies it as application-loaded project reference material and includes the file path and original text. This role supplies reference material alongside the current task; application behavior is still defined by system instructions.</p>
+<p>The proposed design reuses <code>TextMessage</code> with the <code>user</code> role for one project memory message. The primary payload is the <strong>full text content</strong> of the memory file, prefixed by its <strong>relative source path</strong> as an identifier. The application reads the file directly at task start and injects it into the request, so the model receives the conventions immediately without making a tool call.</p>
+<details open><summary>Example structure of the project memory TextMessage</summary><pre class="am-code"><code>TextMessage(
+    role="user",
+    content=(
+        "[Project Reference Material]\n"
+        "Source: MEMORY.md\n"
+        "Content:\n"
+        "This project uses uv for dependency management. Run Python commands with uv run.\n"
+        "Run tests using uv run pytest."
+    ),
+)</code></pre>
+<ul>
+<li><strong>Full text content (core payload)</strong>: Injected directly at startup so the model knows project conventions immediately without spending a tool call to read files.</li>
+<li><strong>Source path identifier (metadata header)</strong>: Labels the material as coming from <code>MEMORY.md</code>, establishing it as project defaults so the model can resolve overrides and trace provenance.</li>
+</ul>
+</details>
 <p>Assemble <code>ModelRequest.messages</code> in this order:</p>
 <ol>
 <li><strong>System instructions</strong>: Application behavior and rules for using project memory.</li>
@@ -56,7 +71,7 @@
 <ul>
 <li><em>(Setup)</em>: Write <code>"This project uses uv for dependency management; run Python commands with uv run"</code> into <code>workspace_a/MEMORY.md</code>.</li>
 <li><em>(Action)</em>: Create two separate fresh sessions (<code>session_1</code> and <code>session_2</code>) in <code>workspace_a</code> and ask about project command conventions in each.</li>
-<li><em>(Expected result)</em>: Inspect <code>ModelRequest.messages</code> in both sessions. Without borrowing each other's session history, both requests automatically include one <code>role="user"</code> project memory reference message (containing the file path <code>MEMORY.md</code> and the exact text), placed strictly between completed history and current task messages, appearing once per request.</li>
+<li><em>(Expected result)</em>: Inspect <code>ModelRequest.messages</code> in both sessions. Without borrowing each other's session history, both requests automatically include one <code>role="user"</code> project memory reference message (containing the source path <code>MEMORY.md</code> and the full text), placed strictly between completed history and current task messages, appearing once per request.</li>
 </ul></li>
 <li><strong>Update &amp; In-Task Snapshot Locking (Update)</strong>:
 <ul>

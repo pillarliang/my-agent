@@ -27,7 +27,7 @@
 <ul>
 <li><strong>存在哪里（存储位置与范围隔离）</strong>：固定存放在当前项目工作区根目录的 <code>workspace/MEMORY.md</code>（UTF-8 纯文本）。只定位当前 <code>workspace</code> 下的这份文件，不向父目录或其他工作区查找；解析软链接后的真实路径也必须留在当前 <code>workspace</code> 内。</li>
 <li><strong>增（何时写入、谁来写）</strong>：由用户人工把已经确认、值得长期保留的项目约定写进 <code>workspace/MEMORY.md</code>。注意：模型在对话里回复一句“好的，我记住了”只会写入 <code>SessionLog</code>，不会自动改动 <code>MEMORY.md</code>。</li>
-<li><strong>查（何时读取、怎么传给模型）</strong>：每次调用 <code>run_task()</code> 启动任务时，应用自动读取一次 <code>workspace/MEMORY.md</code> 全文（无需模型自己调用工具找文件），将文件路径和原文作为参考资料消息交给 <code>Context</code> 组装进 <code>ModelRequest</code>。文件不存在或为空时视为无记忆，正常继续。</li>
+<li><strong>查（何时读取、怎么传给模型）</strong>：每次调用 <code>run_task()</code> 启动任务时，应用自动读取一次 <code>workspace/MEMORY.md</code> 全文（无需模型自己调用工具找文件），将包含来源路径标识与文件完整正文的参考资料消息交给 <code>Context</code> 组装进 <code>ModelRequest</code>。文件不存在或为空时视为无记忆，正常继续。</li>
 <li><strong>改（何时更新、当次任务与下次任务怎样衔接）</strong>：用户直接编辑保存 <code>workspace/MEMORY.md</code>。同一次任务内部的多步模型调用共用任务启动时读取的同一份内存快照，避免执行中途记忆突然变化；修改后的新内容在<strong>下一次任务</strong>启动时读取生效。</li>
 <li><strong>删（何时删除、删除的边界在哪）</strong>：用户删掉文件中的某几行，或直接清空、删除 <code>workspace/MEMORY.md</code>。从下一次任务起，系统不再向请求自动注入这些内容（注：旧会话 <code>SessionLog</code> 里已经产生过的历史问答不会被抹掉）。</li>
 <li><strong>成本控制</strong>：记忆全文会占用每次请求的输入预算；等将来文件变大时，再按需拆分主题文件或引入检索。</li>
@@ -47,7 +47,22 @@
 </ol>
 <p>上述接法需要扩展现有接口。目前 <code>run_task()</code>、<code>run_agent()</code> 与 <code>select_context()</code> 都没有独立的 Memory 参数。</p>
 <h4 id="stage-5-request-order">3.3 记忆放在哪里，发生冲突时听谁的？</h4>
-<p>本阶段拟复用 <code>TextMessage</code>，以 <code>user</code> 角色发送一条项目记忆消息。正文标明“应用加载的项目参考资料”、文件路径和记忆原文。使用这个角色，是为了把资料与当前任务一起提供给模型；应用的行为规则仍由系统指令说明。</p>
+<p>本阶段拟复用 <code>TextMessage</code>，以 <code>user</code> 角色发送一条项目记忆消息。消息内容的核心载荷是<strong>文件的完整正文</strong>，并附加<strong>来源文件相对路径</strong>作为标识。应用在任务启动时直接读取文件内容拼入请求，模型在第 1 步就能直接获知规则，无需再调用工具读取文件。</p>
+<details open><summary>项目记忆消息（TextMessage）的组装格式示例</summary><pre class="am-code"><code>TextMessage(
+    role="user",
+    content=(
+        "【项目参考资料】\n"
+        "来源文件: MEMORY.md\n"
+        "内容:\n"
+        "本项目使用 uv 管理依赖，Python 命令统一使用 uv run。\n"
+        "测试命令统一使用 uv run pytest。"
+    ),
+)</code></pre>
+<ul>
+<li><strong>文件完整正文（核心载荷）</strong>：由应用在启动时读取全文注入，保证模型零额外工具调用成本即可直接使用项目约定。</li>
+<li><strong>来源路径标识（元数据头部）</strong>：注明资料来自工作区根目录的 <code>MEMORY.md</code>，让模型明确其属于“项目默认约定”，便于正确处理特例覆盖与来源溯源。</li>
+</ul>
+</details>
 <p>每次构造 <code>ModelRequest.messages</code> 时，按以下顺序排列：</p>
 <ol>
 <li><strong>系统指令</strong>：说明应用的行为要求，以及怎样使用项目记忆。</li>
@@ -77,7 +92,7 @@
 <ul>
 <li><em>（准备动作）</em>：在测试工作区写入 <code>workspace_a/MEMORY.md</code>，内容为 <code>"本项目使用 uv 管理依赖，Python 命令使用 uv run"</code>。</li>
 <li><em>（验证动作）</em>：在 <code>workspace_a</code> 下分别新建两个独立会话（<code>session_1</code>、<code>session_2</code>），各自询问项目运行命令。</li>
-<li><em>（预期结果）</em>：检查两个会话发出的 <code>ModelRequest.messages</code>，无需互相借用会话历史，都自动包含了一条 <code>role="user"</code> 的项目记忆参考消息（带文件路径 <code>MEMORY.md</code> 与原文），且位置固定在“已完成历史”与“当前任务消息”之间，每次请求只出现一次。</li>
+<li><em>（预期结果）</em>：检查两个会话发出的 <code>ModelRequest.messages</code>，无需互相借用会话历史，都自动包含了一条 <code>role="user"</code> 的项目记忆参考消息（包含来源路径 <code>MEMORY.md</code> 与文件完整正文），且位置固定在“已完成历史”与“当前任务消息”之间，每次请求只出现一次。</li>
 </ul></li>
 <li><strong>修改与任务内快照锁定（改）</strong>：
 <ul>
