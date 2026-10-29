@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="../assets/tutorial.css">
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
-<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：根据真实失败选择长任务机制</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：长任务支撑：大输出暂存与历史摘要</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、Harness 核心模块</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">三、进阶扩展模块</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">四、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">五、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
 <main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/modules/policy.html#module-policy">English</a></p><article class="chapter" id="module-policy">
 <header class="chapter-header"><span class="kind">通用设计原则与可选方案 · 当前实现见阶段 2</span><h2>Policy：在执行前检查操作权限</h2></header>
 <section class="lesson-section" id="module-policy-p1-panel-A"><h3>1. 问题起点：为什么执行工具前必须做权限检查？</h3><div class="lesson-body"><div class="am-md">
@@ -26,22 +26,80 @@
 <section class="lesson-section" id="module-policy-interface"><h3>2. 黑盒交互：输入动作请求，输出许可决定</h3><div class="lesson-body"><div class="am-md">
 <p>以拦截覆盖文件为例，工具系统与 Policy 之间的黑盒交互只交换两项数据：</p>
 <ul><li><strong>输入（<code>ActionRequest</code>）</strong>：本次要执行的具体动作与目标资源，例如 <code>ActionRequest(operation="overwrite", resource="summary.txt")</code>。</li><li><strong>输出（<code>PolicyDecision</code>）</strong>：是否允许执行及原因说明，例如 <code>PolicyDecision(allowed=False, reason="禁止覆盖已有文件")</code>。</li></ul>
+<p><strong>关键认知澄清：模型只给出意图与参数，物理状态由 Harness 检查决定</strong></p>
+<p>初学者极易产生一个误区：<em>“是不是模型在 ToolCall 里把 operation 参数写成了 overwrite？”</em>——<strong>绝对不是！</strong>模型只发起 <code>write_file(path="summary.txt", content="...")</code>，模型既不能也不应该决定操作是新建还是覆盖。真正的动作性质是由 Harness 系统前往物理磁盘执行 <code>lstat()</code> 探查后判定的：</p>
+<ul>
+<li><strong>模型（LLM）</strong>：发出业务意图 <code>write_file(path="summary.txt")</code>，表达“我想向这个文件写入内容”。</li>
+<li><strong>工具系统（Harness）</strong>：探查工作区物理磁盘。若文件不存在，包装为 <code>ActionRequest(operation="create")</code>；若文件已存在，包装为 <code>ActionRequest(operation="overwrite")</code>。</li>
+<li><strong>策略模块（Policy）</strong>：根据当前安全规则裁决是否放行。默认规则下，<code>overwrite</code> 被判定为 <code>allowed=False</code>。</li>
+<li><strong>安全拦截</strong>：底层物理写入被阻断，原文件完好无损，并向模型返回 <code>policy_denied</code> 回执。</li>
+</ul>
 </div>
-<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-policy-principles.svg" width="940" height="380" alt="通用职责：Runner 请求保存文件，Tools 向 Policy 提交覆盖动作，Policy 拒绝，Tools 不执行并返回失败；不限定具体类或函数" loading="lazy"><figcaption>通用交互图：Tools 识别动作并询问 Policy，获准才执行，拒绝则直接返回失败回执。</figcaption></figure>
+<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-policy-principles.svg" width="980" height="460" alt="通用职责：模型发起写入调用，Tools 探查真实物理磁盘后判定为覆盖，向 Policy 提交动作，Policy 拒绝后 Tools 放弃底层物理写入并返回失败回执" loading="lazy"><figcaption>通用流转时序：模型表达意图，Harness 核实物理环境后生成客观动作，Policy 裁决并阻断危险操作。</figcaption></figure>
 <div class="am-md"><p>在与周边模块协作时，职责边界如下（具体 Python 代码见<a href="../stages/stage-2.html#stage-2-policy-code">阶段 2</a>）：</p><ul><li><strong>应用入口（Application）</strong>：在初始化工具注册表时注入权限规则与工作目录配置。</li><li><strong>工具系统（Tools）</strong>：在运行期校验参数并识别真实动作，统一调用 Policy；若被拒绝，生成 <code>policy_denied</code> 回执交回 Runner。</li><li><strong>上下文与状态（<a href="context.html#module-context">Context</a> / <a href="state.html#module-state">State</a>）</strong>：Context 只管理模型输入，State 只记录发生过的回执——历史记录中某次操作曾获准，绝不代表本轮新调用自动获准。</li></ul></div>
 </div></section>
-<section class="lesson-section" id="module-policy-p1-panel-C"><h3>3. 可选实现方案：如何识别动作、如何判断规则？</h3><div class="lesson-body"><div class="am-md">
+<section class="lesson-section" id="module-policy-p1-panel-C"><h3>3. 核心机制解析与可选方案对比</h3><div class="lesson-body"><div class="am-md">
 <p>实现 Policy 时，“如何从工具调用中提取动作”和“如何根据规则判断许可”是两个可以独立组合的设计维度：</p>
 <h4>维度一：如何从调用中识别动作？</h4>
 <ul>
-<li><strong>注册时声明权限元数据</strong>：工具注册时声明所需权限类别（如 <code>read</code> / <code>write</code>）和路径参数名，由共享代码结合文件系统状态自动生成 <code>ActionRequest</code>。适合多个工具复用同类权限的场景。</li>
+<li><strong>注册时声明权限元数据（本项目方案）</strong>：工具注册时声明所需权限类别（如 <code>read</code> / <code>write</code>）和路径参数名（如 <code>path_parameter="path"</code>），由底层共享代码自动去参数字典提取路径、结合真实文件系统状态自动生成 <code>ActionRequest</code>。适合多个工具复用同类权限的场景。</li>
 <li><strong>工具提供自定义动作描述函数</strong>：由每个工具各自编写函数解析参数并描述动作。适合各工具资源形态差异极大的场景，但维护成本更高。</li>
 </ul>
 <h4>维度二：如何判断规则？</h4>
 <ul>
-<li><strong>代码条件分支</strong>：在内存中通过配置开关与白名单集合直接判断。规则简单直观，适合起步阶段。</li>
+<li><strong>代码条件分支（本项目方案）</strong>：在内存中通过配置开关（如 <code>allow_create</code>、<code>allow_overwrite</code>）与白名单集合（如 <code>create_files</code>）直接判断。规则简单直观，适合起步阶段。</li>
 <li><strong>声明式规则配置</strong>：将允许／拒绝条件写成配置文件按优先级匹配。适合规则频繁变动的场景，需处理规则冲突与默认兜底。</li>
 <li><strong>独立策略服务</strong>：由外部服务集中审批并返回决定。适合多应用共享企业级权限，但会引入网络调用与服务高可用成本。</li>
+</ul>
+
+<h4>具体案例：什么是“声明权限类别与路径参数名”？</h4>
+<p>看 <code>WRITE_FILE</code> 的注册定义（<a href="../../learn_agent/tools/filesystem.py">filesystem.py</a>）：</p>
+<pre class="am-code"><code>WRITE_FILE = ToolDefinition(
+    name="write_file",
+    description="写入一个工作区文件...",
+    arguments_model=WriteFileArguments,  # 参数模型，包含 path 和 content 两个字段
+    function=write_file,                 # 底层写文件的普通函数
+    permission="write",                  # 声明 1：权限类别为“写入意图”
+    path_parameter="path",               # 声明 2：去参数中找名为 "path" 的字段提取目标路径
+)</code></pre>
+<p><strong>为什么要这样声明？</strong>因为模型在发起调用时，传过来的只是一个普通 JSON 参数字典（如 <code>{"path": "summary.txt", "content": "..."}</code>）。有了这两项元数据，底层通用函数 <code>prepare_action()</code> 就能全自动运行：</p>
+<ul>
+<li>根据 <code>path_parameter="path"</code>，自动提取出目标文件 <code>summary.txt</code>（避免每个工具重复编写解析逻辑）；</li>
+<li>根据 <code>permission="write"</code>，自动前往工作区磁盘调用 <code>lstat()</code> 探查物理文件是否存在；</li>
+<li>若文件不存在则生成 <code>ActionRequest(operation="create")</code>；若已存在则生成 <code>ActionRequest(operation="overwrite")</code>。</li>
+</ul>
+
+<h4>具体案例：什么是“注入权限规则”？</h4>
+<p>在命令行入口启动 Agent 时（<a href="../../learn_agent/__main__.py">__main__.py</a>）：</p>
+<pre class="am-code"><code># 1. 开发者决定本次运行的安全策略：允许新建，但禁止覆盖！
+policy = Policy(
+    allow_read=True,
+    allow_create=True,
+    allow_overwrite=False  # 默认禁止覆盖
+)
+
+# 2. 将 policy 和工作区路径作为参数传入工具注册表：
+tools = ToolRegistry(
+    definitions=[LIST_FILES, READ_FILE, WRITE_FILE],
+    workspace=WORKSPACE,
+    policy=policy  # <-- 这就是“注入权限规则”！
+)</code></pre>
+<p><strong>为什么叫“注入”？为什么不直接把写工具删掉来做只读？</strong></p>
+<p>“工具管能力，Policy 管开关”。通过外部注入 Policy 来管理权限，具有三个关键的工程优势：</p>
+<ul>
+<li><strong>支持细粒度白名单</strong>：例如设置 <code>Policy(allow_create=False, create_files=frozenset([Path("output/report.md")]))</code>，能做到“全局只读，但特批允许生成一份专属报告”，这是直接删掉工具做不到的。</li>
+<li><strong>具备因果感知与友好解释</strong>：模型如果调用了未授权工具，会收到结构化的 <code>policy_denied</code> 回执，能礼貌地向用户说明“该操作已被安全策略拦截”，而不是因找不到工具而困惑或产生幻觉。</li>
+<li><strong>工具集统一，环境动态切换</strong>：同一套代码和工具列表，只需在初始化时注入不同的 Policy 实例，就能无缝切换“只读分析模式”、“代码生成沙箱模式”或“生产覆盖重构模式”。</li>
+</ul>
+
+<h4>完整的真实场景：端到端 5 步协同闭环</h4>
+<p>当一个外部配置了“禁止覆盖”策略的 Agent 面临覆盖写时，系统经历以下确定性的 5 步闭环：</p>
+<ul>
+<li><strong>步骤 1（启动注入）</strong>：开发者在启动时创建 <code>Policy(allow_create=True, allow_overwrite=False)</code> 并注入 <code>ToolRegistry</code>。</li>
+<li><strong>步骤 2（模型表达意图）</strong>：模型发出工具调用 <code>write_file(path="summary.txt", content="报告...")</code>，模型不决定也不含有 create 或 overwrite。</li>
+<li><strong>步骤 3（系统探查物理状态）</strong>：<code>ToolRegistry</code> 依据 <code>path_parameter="path"</code> 提取路径，通过 <code>lstat()</code> 探查发现 <code>summary.txt</code> 在磁盘上已存在！系统客观判定这是覆盖写，组装出 <code>ActionRequest(operation="overwrite", resource="summary.txt")</code>。</li>
+<li><strong>步骤 4（策略审查）</strong>：<code>ToolRegistry</code> 询问注入的 Policy，Policy 命中 <code>allow_overwrite=False</code> 规则，返回 <code>PolicyDecision(allowed=False, reason="禁止覆盖已有文件")</code>。</li>
+<li><strong>步骤 5（安全拦截与回执）</strong>：<code>ToolRegistry</code> 放弃调用底层物理写函数，磁盘原文件毫发无损，并向模型返回带有拦截原因的 <code>ToolResult(status="policy_denied")</code>。</li>
 </ul>
 </div></div></section>
 <section class="lesson-section" id="module-policy-p2-panel-A"><h3>4. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md">
