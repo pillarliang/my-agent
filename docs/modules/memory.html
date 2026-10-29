@@ -10,7 +10,7 @@
 <section class="lesson-section" id="module-memory-p1-panel-A"><h3>1. 问题起点：新会话需要知道什么？</h3><div class="lesson-body"><div class="am-md">
 <ul><li><strong>用户（会话 A）</strong>：“这个项目使用 uv，Python 命令请使用 uv run。”</li><li><strong>模型</strong>：“好的。”</li><li><em>（结束会话 A，新建会话 B）</em></li><li><strong>用户（会话 B）</strong>：“怎样运行测试？”</li></ul>
 <p>新会话没有前面的消息，模型就缺少项目约定。Memory 的作用是<strong>把值得复用的知识单独保存，在后续任务需要时重新提供给模型</strong>。它不是修改模型参数，也不是把所有会话历史都放进请求。</p>
-<ul><li><strong>值得保留</strong>：已确认的项目事实、长期偏好和经过验证的经验，例如“项目使用 uv”。</li><li><strong>需要重新核对</strong>：当前测试结果、临时报错和文件某一行的内容；这些信息随时间或代码变化，不能当作一直成立的事实。</li></ul></div></div></section>
+<ul><li><strong>值得保留</strong>：已确认的项目事实、长期偏好和经过验证的经验，例如“项目使用 uv”。</li><li><strong>需要重新核对</strong>：测试结果、临时报错和文件具体行内容会随代码变动而失效，不能视为恒定事实，引用或排查时必须重新核实最新状态。</li></ul></div></div></section>
 <section class="lesson-section" id="module-memory-interaction"><h3>2. Session、Memory 与 Context 怎样配合？</h3><div class="lesson-body"><div class="am-md">
 <ul><li><strong>Session 保存发生过什么</strong>：按会话保存问题、回答与工具回执，供查询或续接对话。</li><li><strong>Memory 保存值得复用什么</strong>：保存选定的事实或偏好，说明来自哪里、适用于哪个项目或用户。</li><li><strong>Context 决定本次发送什么</strong>：把本次问题、选中的历史和适用记忆组装成模型输入，并检查完整请求的预算。</li></ul>
 <p>一次使用记忆的任务可以分为以下步骤：</p>
@@ -64,7 +64,16 @@
 </g>
 </svg><figcaption>通用协作边界：Memory 在任务启动时锁定快照，Context Manager 只读筛选并注入参考消息，SessionLog 仅保存实际对话交互。</figcaption></figure>
 <p>记忆可以由用户直接维护，也可以从会话记录中提取。因此 Session 能提供写入来源，但 Memory 不必依赖自动扫描历史。模型提出的候选与用户已经确认的事实要分清；记忆中的“允许覆盖文件”也不能替代实际权限检查。</p>
-<p>没有记忆与读取失败是两种结果：前者可以正常继续，后者应按应用约定明确处理，不能悄悄当成“没有记忆”。</p></div></div></section>
+<p>没有记忆与读取失败是两种结果：前者可以正常继续，后者应按应用约定明确处理，严禁在代码中用 <code>try...except Exception: return None</code> 悄悄当成“没有记忆”：</p>
+<ul>
+<li><strong>没有记忆（预期内的空状态）</strong>：未创建 <code>MEMORY.md</code>（捕获 <code>FileNotFoundError</code>）或正文仅含空白。此时解析函数返回 <code>None</code>，流程正常推进，本次请求不注入记忆消息。</li>
+<li><strong>读取失败（非预期的系统异常）</strong>：文件存在但无访问权限（<code>PermissionError</code>）、编码损坏（<code>UnicodeDecodeError</code>）、软链接指向工作区外部（越界）或目标是目录。若静默吞掉异常，会导致关键项目规范悄然失效，引发模型盲目操作。工程上应按约定显式处理：
+  <ul>
+  <li><strong>强一致模式（本项目采用）</strong>：在发出第 1 步模型请求前<strong>直接抛出异常中断执行（Fail-Fast）</strong>，强制用户修正损坏的配置文件后再运行；</li>
+  <li><strong>容错辅助模式（如 pi）</strong>：若记忆仅作参考，可捕获异常并在控制台/日志中<strong>显式输出 Warning 告警</strong>并标记运行降级，绝不装作无事发生。</li>
+  </ul>
+</li>
+</ul></div></div></section>
 <section class="lesson-section" id="module-memory-p1-panel-C"><span id="module-memory-p1-panel-F"></span><h3>3. Memory 的存储介质与数据结构（从纯文本到多维命名空间）</h3><div class="lesson-body"><div class="am-md">
 <p>设计 Memory 时，首先要划分<strong>“存什么内容”</strong>以及<strong>“采用什么数据结构和存储介质”</strong>：</p>
 <ul>
@@ -107,9 +116,26 @@
 <figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/memory-read-paths.svg" width="840" height="580" alt="Memory 读取与注入模型的三条通道" loading="lazy"><figcaption>Memory 读取与注入机制：启动全量加载 vs 请求前动态检索 vs 运行期按需查阅。</figcaption></figure>
 <div class="am-md">
 <ul>
-<li><strong>通道 1：任务启动时全量加载（短规则首选，零延迟）</strong>：<code>run_task()</code> 启动时自动读取当前工作区的 <code>MEMORY.md</code> 全文，由 <code>Context Manager</code> 组装为系统参考消息。优点是稳定直接、模型无需先调工具找文件；代价是每次请求都要消耗固定输入预算。</li>
-<li><strong>通道 2：每次请求前动态检索（多租户、海量条目首选）</strong>：在 <code>Context</code> 组装每步请求前，先按项目范围硬过滤，再用当前用户问题做关键词（FTS）或向量相似度（Embedding）计算，仅提取 Top-K 条相关记忆注入输入。</li>
-<li><strong>通道 3：运行期模型按需查阅（大文档、渐进披露首选）</strong>：初始输入仅提供简短的主题目录或核心索引；当模型在多步执行中遇到专业问题时，自主发起 <code>read_memory</code> 或 <code>search_memory</code> 工具调用按需翻查正文。</li>
+<li><strong>通道 1：任务启动时全量加载（短规则首选，零延迟，非 RAG）</strong>：<code>run_task()</code> 启动时自动读取当前工作区的 <code>MEMORY.md</code> 全文，由 <code>Context Manager</code> 组装为系统参考消息。优点是稳定直接、模型无需先调工具找文件；代价是每次请求都要消耗固定输入预算，仅适合几十行以内的项目约定。</li>
+<li><strong>通道 2：每次请求前动态检索（经典被动 RAG，海量条目首选）</strong>：
+  <ul>
+  <li><strong>技术本质</strong>：本质就是经典的 <strong>RAG（检索增强生成，Pre-retrieval RAG）</strong> 模式在记忆系统中的落地。</li>
+  <li><strong>执行机制</strong>：在组装每步请求前，外围框架先按租户或项目范围硬过滤，再用当前用户问题做关键词（FTS/BM25）或向量相似度（Embedding Top-K）计算，仅提取最相关的几条记忆切片拼入 Prompt。</li>
+  <li><strong>交互特征</strong>：<strong>模型被动接收，无感知</strong>。外部系统在请求发出前静默完成检索与组装，模型不需要先调用工具，适合多租户背景、条目海量且单条规则相对独立的知识库场景。</li>
+  </ul>
+</li>
+<li><strong>通道 3：运行期模型按需查阅（渐进式披露 + Agentic RAG，大文档首选）</strong>：
+  <ul>
+  <li><strong>技术本质</strong>：将 <strong>“渐进式披露（Progressive Disclosure）”</strong> 的信息分层策略与 <strong>“基于工具的主动式检索（Agentic RAG）”</strong> 相结合。</li>
+  <li><strong>执行机制</strong>：
+    <ul>
+    <li><strong>第一层（轻量路标，渐进披露）</strong>：初始输入绝不塞入海量正文，仅提供简短的主题目录或索引大纲（如列出有哪些可用规则模块），以极低的 Token 成本让模型“知道系统里存在什么”。</li>
+    <li><strong>第二层（按需检索，工具召回）</strong>：模型在多步执行中遇到专业问题时，自主发起工具调用——若查阅某模块正文调用 <code>read_memory(topic)</code>（定向抽取）；若在长文档中找细节，则自主提炼精准搜索词调用 <code>search_memory(query)</code>（触发底层的全文或向量召回）。</li>
+    </ul>
+  </li>
+  <li><strong>交互特征</strong>：<strong>模型主动驱动，支持多跳</strong>。由模型根据当前任务上下文判断“查不查、去哪查、搜什么词”，甚至在结果不符时换词重搜。适合体系复杂、单篇篇幅巨大的架构指南与业务文档。</li>
+  </ul>
+</li>
 </ul>
 
 <h4>4.3 读写协同的三大工程铁律</h4>
@@ -151,8 +177,18 @@
 </ul>
 
 <h4>5.2 方案二：中间件切入与存储抽象解耦（Deep Agents）</h4>
-<p>在云原生、多租户或容器化沙箱环境中，Agent 的执行节点往往是无状态的，无法直接假定本地存在固定物理文件。Deep Agents 展现了<strong>将记忆抽象为独立中间件并解耦底层存储</strong>的标准架构。</p>
+<p>在个人电脑上运行 Agent（如本地开发中的 Cursor、Claude Code）时，硬盘是永久持久化的，直接读取 <code>~/.claude/CLAUDE.md</code> 极其自然。但当 Agent 部署到<strong>云原生、多租户或容器化沙箱环境</strong>时，底层运行逻辑发生了根本变化：</p>
 <ul>
+<li><strong>为什么云端节点“无法假定本地存在固定物理文件”？</strong>
+  <ul>
+  <li><strong>容器随生随灭（节点无状态）</strong>：在云端或沙箱中，运行 Agent 的 Docker 容器或 Pod 往往是临时的。任务一执行完毕，容器连同其本地硬盘就会被直接销毁重置，存放在本地磁盘上的记忆文件彻底丢失。</li>
+  <li><strong>多节点请求漂移</strong>：用户上一秒发起的请求在 A 容器执行，下一秒追问可能被网关调度分发到了 B 容器。B 容器根本访问不到 A 容器的本地文件系统。</li>
+  <li><strong>多租户隔离与安全</strong>：同一台服务器可能先后承载不同企业客户的任务，如果直接把记忆当作明文文件保存在本地，极易造成数据混淆或跨租户安全泄漏。</li>
+  </ul>
+</li>
+<li><strong>核心破局思路：计算与存储彻底解耦</strong>：
+  <p>执行节点只负责纯粹的流程调度与计算（即“无状态 Runner”），而记忆数据必须存放在远端独立的中心化存储中（如 Redis、PostgreSQL、S3 等云端对象存储）。Deep Agents 展现了<strong>将记忆抽象为独立中间件并解耦底层存储后端</strong>的标准架构：</p>
+</li>
 <li><strong>核心抽象与生命周期钩子</strong>：
   <p>Deep Agents 在 <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L195-L243">memory.py</a> 中定义了 <code>MemoryMiddleware</code>，通过框架提供的中间件机制切入 Agent 生命周期：</p>
   <ol>
@@ -232,7 +268,23 @@
   <ol>
   <li><strong>隐式提炼与事件触发</strong>：用户在对话中透露出持久特征（如“我平时在 macOS 上用 zsh，写 Python 优先使用 3.12”），服务端模型在推理输出时附带一个结构化的 <code>Memory Update Event</code>。</li>
   <li><strong>前端感知与审计面板</strong>：界面给出轻量级提示（如“已更新记忆”）。用户随时可在设置中打开“个人记忆管理面板”，查看所有已保存的单条事实条目，并支持单条编辑或彻底删除。</li>
-  <li><strong>上下文选择性注入</strong>：每次发起新任务时，系统根据相关性算法或全部有效事实，将条目格式化为简洁的列表（如 <code>- User prefers Python 3.12</code>）作为系统指令的一部分随请求发送。</li>
+  <li><strong>上下文选择性注入（按需拼装系统提示）</strong>：
+    <p>用户沉淀的事实条目日积月累可能有几十甚至上百条（如“养了一只猫”、“喜欢简洁代码”、“技术栈是 Python 3.12”）。若每次提问都不加筛选地全部塞入，既浪费 Token 预算，又会分散模型的注意力。因此系统在组装输入时执行<strong>“按需筛选 + 紧凑注入”</strong>：</p>
+    <ul>
+    <li><strong>筛选策略（相关性 vs 全量）</strong>：
+      <ul>
+      <li><em>海量条目时（按问题相关性筛选）</em>：当用户问代码时，后台先做语义检索，仅挑出与编程相关的偏好；宠物或生活偏好被自动过滤（这正是 4.2 节通道 2 动态检索的典型体现）；</li>
+      <li><em>条目较少时（全部有效事实）</em>：若用户累计沉淀的事实只有十几条，直接打包全部尚未被删除或替代的有效偏好。</li>
+      </ul>
+    </li>
+    <li><strong>紧凑格式化呈现</strong>：将选中的事实从数据库中取出，拼装为最省 Token 的纯文本条目清单，作为系统指令（System Prompt）的一部分发送给模型：
+      <pre><code>[已知用户偏好与背景约定]
+- 用户偏好使用 Python 3.12，函数必须包含类型标注
+- 代码风格要求精简，不输出多余的寒暄与废话</code></pre>
+    </li>
+    <li><strong>无感生效</strong>：模型带着这组定制事实生成回答，用户会感觉模型“懂我的习惯”，且全程模型无需调用任何检索工具。</li>
+    </ul>
+  </li>
   <li><strong>AgentScope Java 的实践</strong>：在 <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/memory.md">AgentScope Java memory.md</a> 中，系统专门设计了 <code>LongTermMemory</code> 接口与压缩整理流程，明确区分了“完整的执行历史（Session Log）”与“经提炼后的长期记忆条目（LongTermMemory）”。</li>
   </ol>
 </li>

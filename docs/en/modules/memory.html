@@ -9,9 +9,10 @@
 <main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/memory.html#module-memory">中文版</a></p><article class="chapter" id="module-memory"><header class="chapter-header"><span class="kind">Module Principles &amp; Designs · Pinned Source References</span><h2>Memory: Select Knowledge Retained Across Sessions</h2></header>
 <section class="lesson-section" id="module-memory-p1-panel-A"><h3>1. What Should a New Session Know?</h3><div class="lesson-body"><div class="am-md">
 <ul><li><strong>User, session A</strong>: “This project uses uv. Use uv run for Python commands.”</li><li><strong>Model</strong>: “Understood.”</li><li><em>(End session A and create session B.)</em></li><li><strong>User, session B</strong>: “How do I run the tests?”</li></ul>
-<p>Without earlier messages, the new session lacks that convention. Memory <strong>stores selected reusable knowledge separately and supplies it to later tasks</strong>. It does not change model parameters or load every conversation.</p><ul><li><strong>Keep</strong>: Confirmed project facts, lasting preferences, and verified lessons.</li><li><strong>Recheck</strong>: Test results, temporary errors, and current file contents. These observations can become outdated.</li></ul></div></div></section>
+<p>Without earlier messages, the new session lacks that convention. Memory <strong>stores selected reusable knowledge separately and supplies it to later tasks</strong>. It does not change model parameters or load every conversation.</p><ul><li><strong>Keep</strong>: Confirmed project facts, lasting preferences, and verified lessons, e.g., “This project uses uv”.</li><li><strong>Recheck</strong>: Test results, temporary errors, and specific line contents change as code evolves and cannot be treated as permanent facts; re-verify their latest state when referencing or debugging.</li></ul></div></div></section>
 <section class="lesson-section" id="module-memory-interaction"><h3>2. How Session, Memory, and Context Cooperate</h3><div class="lesson-body"><div class="am-md">
 <ul><li><strong>Session records what happened</strong>: Questions, responses, and tool results for inspection or continuation.</li><li><strong>Memory stores what is worth reusing</strong>: Selected facts or preferences with their source and applicable project or user.</li><li><strong>Context constructs the current input</strong>: Combine the question, selected history, and applicable memory within the full request budget.</li></ul>
+<p>A task that uses memory can be divided into the following steps:</p>
 <ol><li><strong>Application chooses scope</strong>: Identify allowed sources from the workspace or user configuration.</li><li><strong>Memory supplies content</strong>: Return text and sources, optionally finding relevant entries when there are many.</li><li><strong>Context checks input</strong>: Count memory together with other content before sending.</li><li><strong>Model uses the reference</strong>: Proposed tool calls still go through Tools and Policy.</li></ol>
 <figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 920 620" width="920" height="620" role="img" aria-label="General collaboration: the application reads Memory at startup into an immutable snapshot; Runner loads session history and Context Manager packs it into ModelRequest under budget constraints; Model responses and tool receipts are appended to SessionLog without duplicating Memory.">
 <defs><marker id="memory-interface-arrow-en" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
@@ -61,7 +62,17 @@
   <text x="460" y="595">Solid lines: calls or snapshot handoff; dashed lines: returns. Memory is read once at task start as an immutable snapshot for per-step budget checks, and is not duplicated into SessionLog.</text>
 </g>
 </svg><figcaption>General collaboration boundary: Memory locks an immutable snapshot at task start, Context Manager filters and injects reference messages into requests, and SessionLog stores only actual conversation exchanges.</figcaption></figure>
-<p>Users can maintain memory directly, or an extraction process can propose content from Session. Automatic history scanning is optional. Separate model candidates from confirmed facts. Text claiming permission cannot replace Policy checks.</p><p>No memory and a failed read are different results. Handle failures explicitly according to the application contract.</p></div></div></section>
+<p>Users can maintain memory directly, or an extraction process can propose content from Session. Automatic history scanning is optional. Separate model candidates from confirmed facts. Text claiming permission cannot replace Policy checks.</p>
+<p>No memory and a failed read are fundamentally different results. The former allows execution to proceed normally, while the latter must be handled explicitly according to application policy. Never write <code>try...except Exception: return None</code> to silently mask failures as absent memory:</p>
+<ul>
+<li><strong>No memory (expected clean absence)</strong>: The file does not exist (catching <code>FileNotFoundError</code>) or contains only whitespace. The loader returns <code>None</code>, and execution proceeds normally without injecting reference messages.</li>
+<li><strong>Failed read (unexpected system error)</strong>: The file exists but access is denied (<code>PermissionError</code>), encoding is corrupted (<code>UnicodeDecodeError</code>), a symlink escapes the workspace, or the path is a directory. Silently swallowing these errors causes project rules to vanish without notice. Handle them explicitly:
+  <ul>
+  <li><strong>Fail-fast mode (used in this project)</strong>: Raise the exception immediately before sending the first model request, stopping the task until the corrupted file or permission is fixed.</li>
+  <li><strong>Tolerant warning mode (e.g., pi)</strong>: If memory is purely advisory, log an explicit warning to the console or telemetry and flag the run as degraded, rather than pretending nothing went wrong.</li>
+  </ul>
+</li>
+</ul></div></div></section>
 <section class="lesson-section" id="module-memory-p1-panel-C"><span id="module-memory-p1-panel-F"></span><h3>3. Storage Media &amp; Data Structures: From Plain Text to Multi-Dimensional Namespaces</h3><div class="lesson-body"><div class="am-md">
 <p>Designing Memory begins with two structural decisions: <strong>what is worth storing</strong> and <strong>what data structures and storage media to use</strong>:</p>
 <ul>
@@ -104,9 +115,26 @@
 <figure class="am-diagram"><img class="lesson-svg" src="../../assets/diagrams/memory-read-paths.svg" width="840" height="580" alt="Three channels for Memory reading and model injection" loading="lazy"><figcaption>Memory read mechanisms: startup full load vs. per-request dynamic retrieval vs. on-demand tool inspection.</figcaption></figure>
 <div class="am-md">
 <ul>
-<li><strong>Channel 1: Full Load at Task Start (Default for Short Files, Zero Tool Overhead)</strong>: At the start of <code>run_task()</code>, the harness reads <code>MEMORY.md</code> in full, and <code>Context Manager</code> injects it as reference messages. It requires no preliminary tool calls from the model, though every request incurs token usage for the memory text.</li>
-<li><strong>Channel 2: Dynamic Per-Request Retrieval (Best for Large Multi-Tenant Stores)</strong>: Before assembling each request, filter by scope and retrieve the Top-K relevant items using keyword search (FTS) or vector similarity (Embedding) against the current prompt.</li>
-<li><strong>Channel 3: On-Demand Tool Query by the Model (Best for Large Topic Docs)</strong>: Inject only an index or table of contents; when the model encounters domain-specific questions mid-run, it invokes <code>read_memory</code> or <code>search_memory</code> tools on demand.</li>
+<li><strong>Channel 1: Full Load at Task Start (Default for Short Files, Zero Tool Overhead, Non-RAG)</strong>: At the start of <code>run_task()</code>, the harness reads <code>MEMORY.md</code> in full, and <code>Context Manager</code> injects it as reference messages. It requires no preliminary tool calls from the model, though every request incurs token usage for the memory text. Best suited for short project rules under dozens of lines.</li>
+<li><strong>Channel 2: Dynamic Per-Request Retrieval (Classic Passive Pre-retrieval RAG, Best for Large Stores)</strong>:
+  <ul>
+  <li><strong>Technical Essence</strong>: Standard <strong>Retrieval-Augmented Generation (Pre-retrieval RAG)</strong> applied to agent memory.</li>
+  <li><strong>Execution Mechanism</strong>: Before assembling each request, the outer framework filters by tenant/project scope, runs keyword search (FTS/BM25) or vector similarity (Embedding Top-K) against the user query, and injects only the most relevant memory snippets into the prompt.</li>
+  <li><strong>Interaction Characteristic</strong>: <strong>Passive for the model, zero tool round-trips</strong>. The system quietly handles retrieval before calling the model, ideal for large multi-tenant knowledge bases with independent rule items.</li>
+  </ul>
+</li>
+<li><strong>Channel 3: On-Demand Tool Query by the Model (Progressive Disclosure + Agentic RAG, Best for Large Topic Docs)</strong>:
+  <ul>
+  <li><strong>Technical Essence</strong>: Combines <strong>Progressive Disclosure</strong> information architecture with <strong>Tool-Based Retrieval (Agentic RAG)</strong>.</li>
+  <li><strong>Execution Mechanism</strong>:
+    <ul>
+    <li><strong>Tier 1 (Lightweight Table of Contents)</strong>: The initial prompt injects only a compact topic outline or index (e.g. available rule modules), consuming minimal tokens so the model knows what knowledge exists.</li>
+    <li><strong>Tier 2 (On-Demand Retrieval via Tools)</strong>: When the model encounters domain-specific questions mid-run, it autonomously invokes <code>read_memory(topic)</code> for targeted reading, or formulates precise search queries for <code>search_memory(query)</code> to trigger underlying full-text or vector recall.</li>
+    </ul>
+  </li>
+  <li><strong>Interaction Characteristic</strong>: <strong>Active model-driven exploration, multi-hop capable</strong>. The model decides when, where, and what to search, refining queries when initial hits are insufficient. Ideal for complex architectural guides and extensive documentation.</li>
+  </ul>
+</li>
 </ul>
 
 <h4>4.3 Three Core Engineering Rules for Read/Write Harmony</h4>
@@ -148,8 +176,18 @@
 </ul>
 
 <h4>5.2 Paradigm 2: Middleware Interception &amp; Decoupled Storage Backend (Deep Agents)</h4>
-<p>In cloud-native, multi-tenant, or containerized sandbox settings, execution runtimes are often stateless and cannot assume local disk files. Deep Agents exemplifies <strong>abstracting memory into lifecycle middleware with pluggable storage backends</strong>.</p>
+<p>When running an agent on a personal computer (e.g., local development with Cursor or Claude Code), the local disk is permanently available, making it straightforward to read <code>~/.claude/CLAUDE.md</code>. However, in <strong>cloud-native, multi-tenant, or containerized sandbox environments</strong>, underlying runtime characteristics change fundamentally:</p>
 <ul>
+<li><strong>Why Cloud Runtimes "Cannot Assume Local Physical Files":</strong>
+  <ul>
+  <li><strong>Ephemeral Containers (Stateless Execution Nodes)</strong>: For security and elasticity, Docker containers or Kubernetes Pods hosting agents are ephemeral. Once a task terminates, the container and its scratch disk are destroyed, losing any local files.</li>
+  <li><strong>Multi-Node Request Drifting</strong>: A user's first prompt may run in Container A, while a follow-up prompt seconds later is routed to Container B. Container B cannot access Container A's local filesystem.</li>
+  <li><strong>Multi-Tenant Isolation and Security</strong>: A single host server may sequentially handle tasks for different enterprise tenants; storing memories as plaintext files on local disk risks cross-tenant leaks.</li>
+  </ul>
+</li>
+<li><strong>Architectural Solution: Complete Separation of Compute and Storage</strong>:
+  <p>The runner node focuses purely on workflow orchestration and compute (a "stateless runner"), while memory data is persisted in a centralized remote store (e.g., Redis, PostgreSQL, or S3-compatible object storage). Deep Agents demonstrates this standard architecture by <strong>abstracting memory into lifecycle middleware with pluggable storage backends</strong>:</p>
+</li>
 <li><strong>Core Abstraction and Lifecycle Hooks</strong>:
   <p>Deep Agents defines <code>MemoryMiddleware</code> in <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L195-L243">memory.py</a>, hooking into agent execution:</p>
   <ol>
@@ -229,7 +267,23 @@
   <ol>
   <li><strong>Implicit Extraction &amp; Event Emission</strong>: When a user states an enduring preference (e.g., “I use macOS and prefer Python 3.12”), the model emits a structured <code>Memory Update Event</code>.</li>
   <li><strong>UI Feedback &amp; Management Dashboard</strong>: The UI displays a notification (e.g., “Saved to memory”). Users can inspect all saved fact items in settings, edit them, or delete stale entries.</li>
-  <li><strong>Selective Context Injection</strong>: At task start, relevant facts are formatted into a concise list (e.g., <code>- User prefers Python 3.12</code>) and prepended to system instructions.</li>
+  <li><strong>Selective Context Injection (Assembling Input on Demand)</strong>:
+    <p>Over time, a user may accumulate dozens or hundreds of facts (e.g., “owns a cat”, “prefers concise code”, “uses Python 3.12”). Dumping all facts into every request wastes token budget and distracts the model. The system applies <strong>selective filtering and compact injection</strong>:</p>
+    <ul>
+    <li><strong>Filtering Strategy (Relevance vs. Full Bundle)</strong>:
+      <ul>
+      <li><em>When many facts exist (Relevance Retrieval)</em>: For coding prompts, semantic search pulls only programming-related preferences; pet/lifestyle facts are ignored (the exact pattern of Channel 2 Pre-retrieval RAG).</li>
+      <li><em>When few facts exist (All Active Facts)</em>: If a user has only a handful of facts, all active and un-superseded items are bundled directly.</li>
+      </ul>
+    </li>
+    <li><strong>Compact Formatting</strong>: Matched facts are pulled from the database and formatted into a concise, token-efficient list inside the system prompt:
+      <pre><code>[Known User Preferences & Background Constraints]
+- User prefers Python 3.12 with explicit type annotations
+- Concise output style without conversational filler</code></pre>
+    </li>
+    <li><strong>Transparent Execution</strong>: The model responds under these customized constraints seamlessly, giving users the feeling that the model “naturally remembers them” without requiring manual tool calls.</li>
+    </ul>
+  </li>
   <li><strong>AgentScope Java Practice</strong>: In <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/memory.md">AgentScope Java memory.md</a>, the system provides a <code>LongTermMemory</code> abstraction that explicitly separates full execution history (Session Log) from consolidated long-term memory items.</li>
   </ol>
 </li>

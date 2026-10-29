@@ -43,8 +43,8 @@
 <text x="312" y="210" class="head" text-anchor="start">通道 2：请求前动态检索</text>
 <text x="312" y="237" class="small" text-anchor="start">• 代表：LangGraph Store、AgentScope</text>
 <text x="312" y="259" class="small" text-anchor="start">• 机制：组装请求前用本次问题检索</text>
-<text x="312" y="281" class="small" text-anchor="start">• 策略：关键词 FTS 或向量 Top-K</text>
-<text x="312" y="303" class="small" text-anchor="start">• 优势：知识海量时消减无关 Token 占用</text>
+<text x="312" y="281" class="small" text-anchor="start">• 本质：经典 Pre-retrieval RAG</text>
+<text x="312" y="303" class="small" text-anchor="start">• 检索：关键词 FTS 或向量 Top-K</text>
 <text x="312" y="323" class="badge" text-anchor="start">【多租户、知识库场景首选】</text>
 
 <!-- 通道 3 -->
@@ -52,8 +52,8 @@
 <text x="584" y="210" class="head" text-anchor="start">通道 3：运行期按需查阅</text>
 <text x="584" y="237" class="small" text-anchor="start">• 代表：MemGPT 归档库、分主题索引</text>
 <text x="584" y="259" class="small" text-anchor="start">• 机制：上下文仅给简短目录索引</text>
-<text x="584" y="281" class="small" text-anchor="start">• 触发：模型需要时自主调工具读取正文</text>
-<text x="584" y="303" class="small" text-anchor="start">• 优势：渐进披露，单轮输入极小化</text>
+<text x="584" y="281" class="small" text-anchor="start">• 触发：模型按需调工具查阅正文</text>
+<text x="584" y="303" class="small" text-anchor="start">• 本质：渐进披露 + Agentic RAG</text>
 <text x="584" y="323" class="badge" text-anchor="start">【适合庞大复杂的主题文档】</text>
 
 <!-- 向下汇聚箭头 -->
