@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recovery：中断检查点、异常容错与安全恢复 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：长任务支撑：大输出暂存与历史摘要</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、Harness 核心模块</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">三、进阶扩展模块</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="#module-recovery" data-chapter="module-recovery">Recovery：中断检查点、异常容错与安全恢复</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">四、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">五、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../stages/stage-7.html#stage-7">阶段 7 实践</a></p><article class="chapter" id="module-recovery">
+<header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Recovery：中断检查点、异常容错与安全恢复</h2></header>
+<div class="am-md"><p>本章系统解析 Agent 在真实长任务与生产环境中的故障容错体系：从物理崩溃断点识别、运行时异常分级处理，到检查点（Checkpoint）设计与带副作用动作的幂等恢复机制。代码实践与测试注入见<a href="../stages/stage-7.html#stage-7">阶段 7：中断后怎样安全继续</a>。</p></div>
+
+<section class="lesson-section" id="module-recovery-p1-panel-A"><h3>1. 问题起点：为什么保存了历史还不等于能安全恢复？</h3><div class="lesson-body"><div class="am-md">
+<p>默认情况下，普通的 Agent 会话记录仅负责按顺序追加写入消息（如用户提问、模型响应、工具回执）。但在生产长任务中，进程可能因断电、OOM（内存耗尽）、超时或宿主机重启在中途突然死亡。考虑以下典型场景：</p>
+<ul>
+<li><strong>用户</strong>：“帮我生成一份审计报告 <code>audit.log</code>，并调用支付接口完成服务续费。”</li>
+<li><strong>模型</strong>：提出调用 <code>write_file(path="audit.log", content="...")</code>。</li>
+<li><em>（系统动作：底层文件已在物理磁盘写入成功，或外部支付网关已成功扣款）</em></li>
+<li><em>（意外中断：在程序将执行回执写入 JSONL 日志之前，物理机断电或进程因 OOM 突然被系统强杀）</em></li>
+<li><em>（系统重启）</em></li>
+</ul>
+<p>如果此时仅依据日志记录进行“无脑重放”，日志中只有“模型发起调用”而没有回执，系统会误以为动作从未执行过，从而再次发起写文件或再次调用扣费接口——<strong>导致磁盘文件被二次篡改破坏，或产生灾难性的重复扣款！</strong></p>
+<p>要实现安全恢复，系统必须将三类数据物理分离：</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>数据对象</th>
+<th>存储内容</th>
+<th>在恢复流程中的核心作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>会话记录（Transcript）</strong></td>
+<td>用户提问、模型完整回答与工具观察回执</td>
+<td>证明对话中“说过什么、发生过什么”，供模型生成下一轮上下文与人工回溯排查。</td>
+</tr>
+<tr>
+<td><strong>执行检查点（Checkpoint）</strong></td>
+<td>当前任务停在哪个 Step、待确认动作标识与生命周期指针</td>
+<td>记录“推进到了哪一步”，是崩溃重启后的定位锚点，防止重头盲目计算。</td>
+</tr>
+<tr>
+<td><strong>动作执行物证（Receipt / Evidence）</strong></td>
+<td>物理磁盘状态（时间戳、哈希）或外部 API 幂等状态查询回执</td>
+<td>核对“动作是否在物理世界真实生效”，解决网络超时和日志缺失时的状态不确定性。</td>
+</tr>
+</tbody>
+</table></div>
+</div></div></section>
+
+<section class="lesson-section" id="module-recovery-cutpoints"><h3>2. 核心辨析：崩溃切分断点 vs 运行时工具失败</h3><div class="lesson-body"><div class="am-md">
+<p>在工程实现中，开发者极易将“工具执行报错”与“系统崩溃断点”混为一谈。<strong>它们是两个完全正交的维度：</strong></p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>比较维度</th>
+<th>生命周期崩溃断点（Crash Cut Points）</th>
+<th>运行时工具失败（Runtime Failures）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>物理现象</strong></td>
+<td><strong>进程突然死亡</strong>（断电、OOM、SIGKILL），内存数据全丢。</td>
+<td><strong>进程完好存活</strong>，执行遇到预期或未预期的报错。</td>
+</tr>
+<tr>
+<td><strong>能否捕获</strong></td>
+<td>无法被代码内的 <code>try...except</code> 捕获。</td>
+<td>可被 Harness 捕获并打包为结构化 <code>ToolResult</code>。</td>
+</tr>
+<tr>
+<td><strong>发生位置</strong></td>
+<td>发生在 Harness 生命周期与外部世界的交界边缘。</td>
+<td>发生在工具函数逻辑内部或模型协议解析层。</td>
+</tr>
+<tr>
+<td><strong>恢复手段</strong></td>
+<td><strong>冷启动恢复</strong>：加载独立 Checkpoint，探查物证后继续。</td>
+<td><strong>热循环自愈</strong>：直接将错误回执喂回给模型，由模型在下一步自主修正。</td>
+</tr>
+</tbody>
+</table></div>
+
+<h4>生命周期中的四大崩溃注入断点</h4>
+<p>测试与验证容错能力时，应在以下四个关键临界点注入崩溃中断：</p>
+<ol>
+<li><strong>动作派发前中断</strong>：模型已返回调用意图，但 Harness 尚未调用底层函数。<em>（恢复策略：重新做 Policy 权限检查后安全重做）</em></li>
+<li><strong>动作执行中／返回前中断</strong>：底层写文件或网络请求正在进行，进程突然死亡。<em>（恢复策略：外部状态未知，必须先探查磁盘/网络凭据，绝不盲目重试）</em></li>
+<li><strong>收到结果但未落盘前中断</strong>：底层操作已成功，ToolResult 已在内存，但在追加写入会话文件前崩溃。<em>（恢复策略：依据幂等键和物证核实，直接补齐回执，跳过工具执行）</em></li>
+<li><strong>结果落盘后、下一轮模型请求前中断</strong>：工具回执已安全持久化，但尚未发送给模型。<em>（恢复策略：直接加载已有完整上下文，推进下一轮模型推理）</em></li>
+</ol>
+</div></div></section>
+
+<section class="lesson-section" id="module-recovery-tool-failure"><h3>3. 模型 Tool Call 失败的处理机制：什么时候让模型重试？</h3><div class="lesson-body"><div class="am-md">
+<p>当模型发出的工具调用出现问题时，绝不是简单无脑地让模型一次次重试。系统应根据错误性质分层处置：</p>
+
+<h4>A. 模型可自愈错误（喂回错误回执，触发自主纠错）</h4>
+<ul>
+<li><strong>参数格式错误（Schema Validation Error）</strong>：模型漏掉了必填参数，或将数值传成了字符串。</li>
+<li><strong>工具名不存在（Unknown Tool）</strong>：模型幻觉编造了一个系统未注册的工具名。</li>
+<li><strong>受控业务失败（Domain Error）</strong>：要读取的文件不存在、目标目录为空等。</li>
+<li><strong>处理方式</strong>：Harness 捕获异常，将其包装为带真实报错信息的 <code>ToolResult(is_error=True, content="...")</code>，作为 Observation 传给模型。模型会在下一轮根据错误提示修正参数或调整策略。</li>
+</ul>
+
+<h4>B. 权限拦截错误（Policy Denied，明确阻断）</h4>
+<ul>
+<li><strong>场景</strong>：模型尝试覆盖已被保护的文件，或试图越权访问工作区外的目录。</li>
+<li><strong>处理方式</strong>：Policy 判定拒绝后，直接生成安全拦截回执。模型收到“已被安全策略拒绝”的客观事实，应当向用户说明或寻求新路径，而非重复暴力请求。</li>
+</ul>
+
+<h4>C. 基础设施级临时故障（框架层退避重试，不惊动模型）</h4>
+<ul>
+<li><strong>场景</strong>：调用外部模型接口或第三方 API 时遇到网络偶发丢包、429 限流或 503 临时不可用。</li>
+<li><strong>处理方式</strong>：由底层客户端或 Tool 内部使用<strong>指数退避（Exponential Backoff with Jitter）</strong>自动重试 2~3 次。这类故障是物理链路问题，不需要浪费模型 Token 去让模型重新思考。</li>
+</ul>
+
+<h4>D. 连续死循环与无进展（断路器熔断，人工介入 HITL）</h4>
+<ul>
+<li><strong>场景</strong>：模型产生思维僵局，连续 3 次传入完全相同的错误参数或陷入死循环。</li>
+<li><strong>处理方式</strong>：<strong>触发 Loop 断路器（Circuit Breaker）</strong>，强制将任务置为 <code>paused_for_human</code>（暂停等待人工确认），避免无限消耗模型算力和费用。</li>
+</ul>
+</div></div></section>
+
+<section class="lesson-section" id="module-recovery-pipeline"><h3>4. 恢复中断任务的执行步骤（底层机理推导）</h3><div class="lesson-body"><div class="am-md">
+<p>在设计恢复流程时，必须严格执行以下四步标准化管线：</p>
+<ol>
+<li><strong>独立恢复入口（Resumed Run）</strong>：
+  <p>恢复操作必须通过专用的 <code>resume_task(run_id)</code> 入口执行，不与接收新提问的 <code>run_task(prompt)</code> 混用。严禁为了“图省事”直接在数据库中把未完成的任务强行改成 <code>completed</code>——这会导致日志中出现无回执的悬空 ToolCall，破坏大模型协议上下文的完整性。</p>
+</li>
+<li><strong>判断动作状态（严格区分四态）</strong>：
+  <p>扫描 Checkpoint 中所有未闭合的工具调用，严禁只有二元的“成功/失败”：</p>
+  <ul>
+    <li><code>completed</code>（已确认完成）：工具回执完备，<strong>直接复用已有结果</strong>，跳过工具执行。</li>
+    <li><code>not_dispatched</code>（尚未派发）：底层操作确认从未发生，可重新发起执行。</li>
+    <li><code>running</code>（后台异步执行中）：与外部任务句柄重新挂接并等待完成。</li>
+    <li><code>unknown</code>（结果未知）：<strong>极度危险状态</strong>。系统必须暂停自动执行，先触发“物证探查器（Evidence Probe）”核实外部状态；若无法确认，坚决挂起转交人工介入（Human-in-the-Loop）。</li>
+  </ul>
+</li>
+<li><strong>重新校验 Policy 权限（动态安全审查）</strong>：
+  <p>即使在中断前该动作已被 Policy 批准，在恢复重试时<strong>必须按当前最新的 Policy 重新做一次权限检查</strong>。因为在系统崩溃到恢复的这段时间里，用户可能修改了权限配置（如撤销了写权限），绝不能以历史批准记录绕过当下的安全防线。</p>
+</li>
+<li><strong>持久化恢复进度与幂等绑定（Invocation 与 Attempt）</strong>：
+  <p>为每次逻辑调用（<code>Invocation</code>）分配全局唯一的幂等键（<code>idempotency_key</code>），并将每次物理重试记录为独立的尝试（<code>Attempt</code>）。恢复探查或重新执行成功后，先将回执写入磁盘 Checkpoint，再拉起模型继续推进循环。</p>
+</li>
+</ol>
+</div></div></section>
+
+<section class="lesson-section" id="module-recovery-state-schema"><h3>5. 会话记录外需要补充哪些状态？（样本数据结构与场景案例）</h3><div class="lesson-body"><div class="am-md">
+<p>如果系统只保存普通的聊天记录（<code>[{"role": "user", ...}, {"role": "assistant", ...}]</code>），一旦崩溃就无法知道工具执行到底处在哪个临界点。因此，可靠 Harness 必须在对话文件外，独立维护一份<strong>任务运行检查点记录（Run Checkpoint）</strong>。</p>
+
+<h4>5.1 检查点元数据 Schema 样本（JSON）</h4>
+<pre><code>{
+  "run_id": "run_20261029_095201",
+  "session_id": "session_user_001",
+  "status": "interrupted",
+  "interrupted_at": "2026-10-29T09:52:15Z",
+  "resume_count": 0,
+  "budget": {
+    "max_steps": 8,
+    "current_step": 3,
+    "tokens_spent": 2150
+  },
+  "checkpoint": {
+    "step_id": 3,
+    "lifecycle_point": "tool_execution_interrupted",
+    "active_turn_id": "turn_003"
+  },
+  "invocations": [
+    {
+      "invocation_id": "inv_write_report_01",
+      "call_id": "call_llm_9921",
+      "tool_name": "write_file",
+      "arguments": {
+        "path": "reports/summary.md",
+        "content": "# 执行总结\n所有测试用例已全部通过。"
+      },
+      "has_side_effect": true,
+      "idempotency_key": "idem_run20261029_s3_c1",
+      "status": "unknown",
+      "attempts": [
+        {
+          "attempt_id": 1,
+          "dispatched_at": "2026-10-29T09:52:14Z",
+          "finished_at": null,
+          "error": "Process terminated by SIGKILL (OOM)"
+        }
+      ],
+      "evidence_probe": {
+        "strategy": "filesystem_stat",
+        "target": "reports/summary.md",
+        "expected_hash": "a1b2c3d4e5f6...",
+        "probe_result": "target_exists_and_hash_matched"
+      }
+    }
+  ]
+}</code></pre>
+
+<h4>5.2 场景演练对比：两类故障的差异化恢复路径</h4>
+
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>故障场景</th>
+<th>崩溃发生点与状态判定</th>
+<th>恢复引擎的实际执行动作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>场景 A：带副作用的写操作在执行中崩溃</strong></td>
+<td>
+  * 动作：<code>write_file</code><br>
+  * 状态：<code>unknown</code><br>
+  * 崩溃点：动作执行中／返回前
+</td>
+<td>
+  1. 恢复命令读取 Checkpoint，发现 <code>inv_write_report_01</code> 状态为 <code>unknown</code>。<br>
+  2. <strong>阻止自动重写</strong>，触发 <code>filesystem_stat</code> 探查器核对文件存在性与哈希。<br>
+  3. 确认文件内容与模型要求一致（证明崩溃前已落盘），直接合成成功回执写入会话。<br>
+  4. 恢复状态标记为 <code>completed</code>，不消耗额外写算力，直接推进下一轮模型请求。
+</td>
+</tr>
+<tr>
+<td><strong>场景 B：只读操作在派发前崩溃</strong></td>
+<td>
+  * 动作：<code>read_file</code><br>
+  * 状态：<code>not_dispatched</code><br>
+  * 崩溃点：动作派发前
+</td>
+<td>
+  1. 恢复命令扫描到只读动作未执行。<br>
+  2. 提交当前生效的 Policy 重新审查读取权限。<br>
+  3. 审查获准后，发起第 2 次 Attempt 执行真实读取。<br>
+  4. 将最新读取回执保存为 Observation，恢复模型循环。
+</td>
+</tr>
+</tbody>
+</table></div>
+</div></div></section>
+
+<section class="lesson-section" id="module-recovery-framework-comparison"><h3>6. 业界主流 Agent 容错与恢复方案对比</h3><div class="lesson-body"><div class="am-md">
+<p>各开源项目和工业框架在处理“中断与恢复”时，根据其架构形态形成了不同的代表性模式：</p>
+
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>方案 / 框架</th>
+<th>核心容错机制</th>
+<th>检查点粒度</th>
+<th>中断与人工介入（HITL）</th>
+<th>适用场景与主要代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LangGraph</strong></td>
+<td>基于图节点的 Checkpointer（Memory / Sqlite / Postgres）。</td>
+<td><strong>Node 级别</strong>：每经过一个节点自动存盘一个版本快照。</td>
+<td>原生支持在节点前/后调用 <code>interrupt()</code> 挂起，外部传参通过 <code>resume()</code> 恢复。</td>
+<td>适合复杂状态图编排；但状态快照较大，需仔细设计持久化字段的序列化。</td>
+</tr>
+<tr>
+<td><strong>OpenAI Assistants API</strong></td>
+<td>基于服务端的 Run 状态机（<code>queued</code> → <code>in_progress</code> → <code>requires_action</code>）。</td>
+<td><strong>RunStep 级别</strong>：每个 ToolCall 和 Message 派生独立步骤。</td>
+<td>模型提出 ToolCall 时 Run 进入 <code>requires_action</code> 挂起，客户端提交回执后恢复。</td>
+<td>标准 SaaS 云端状态；强依赖外部托管，无法掌控底层执行细粒度断点。</td>
+</tr>
+<tr>
+<td><strong>Temporal / Durable Execution</strong></td>
+<td>工作流事件溯源（Event Sourcing）与 Activity 幂等执行。</td>
+<td><strong>Activity 级别</strong>：每个外部动作绑定唯一 Token，历史自动重放。</td>
+<td>原生支持长期休眠、定时器唤醒与人工审批信号（Signal）。</td>
+<td>工业级可靠性最高；但要求工作流代码必须保持确定性（Deterministic），改造成本高。</td>
+</tr>
+<tr>
+<td><strong>pi / Codex</strong></td>
+<td>单线程 Rollout Reconstruction 与 Turn 完整性重建。</td>
+<td><strong>Turn 级别</strong>：按递增序号维护消息链，未闭合调用补齐空回执。</td>
+<td>通过只读检查历史回放重建模型上下文，遇到破损断行安全丢弃末尾。</td>
+<td>极简高效，单机无外部重型依赖；但对多步骤外部副作用需依赖人工探查补全。</td>
+</tr>
+</tbody>
+</table></div>
+</div></div></section>
+
+<section class="lesson-section" id="module-recovery-expected-outcomes"><h3>7. 期望达到的效果</h3><div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>断点位置精准还原</strong>：系统重启后能明确识别任务夭折在生命周期哪个断点，绝不从头盲目重新请求模型。</li>
+<li><strong>未知状态零盲目重试</strong>：对于结果未知的有副作用动作，必须探查物理物证或暂停等待人工确认，杜绝重复写入或重复扣费。</li>
+<li><strong>已完成步骤零算力浪费</strong>：已成功落盘的回执在恢复时直接复用，不重复调用工具或模型。</li>
+<li><strong>安全规则动态一致</strong>：恢复重新执行任何动作时，严格遵循当前环境生效的 Policy，不因历史记录豁免安全检查。</li>
+<li><strong>运行时异常自愈闭环</strong>：参数校验错误和业务异常以 Observation 形式喂回模型，模型在预算范围内自主修正，连续死循环时及时熔断。</li>
+</ul>
+</div></div></section>
+
+<nav class="chapter-nav" aria-label="章节导航"><a href="memory.html#module-memory">← Memory：选择跨会话保留的知识</a><a href="extensions.html#module-extensions">Extensions：接入 Skills、Hooks 和外部工具 →</a></nav>
+</article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>

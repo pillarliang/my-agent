@@ -73,19 +73,68 @@
 <section class="lesson-section" id="module-context-interface"><h3>2. 黑盒交互与调用时机：谁发起、谁决定、谁执行？</h3><div class="lesson-body"><div class="am-md">
 <p>在运行循环中，Context Manager 作为纯逻辑决策模块接入在 <strong>Runner 每次调用 <code>Model.invoke()</code> 之前</strong>，与周边模块交换两项核心数据：</p>
 <ul>
-<li><strong>输入（候选材料与预算配置）</strong>：系统指令、按任务归组的候选历史块、当前任务已产生的提问／响应／回执、可用工具定义（Schema）以及输入 Token 预算。</li>
-<li><strong>输出（本轮请求视图或超限错误）</strong>：在预算内组装好的消息序列与<strong>选择决策清单</strong>（记录保留了哪些块、省略或压缩了哪些块、最终计量体积）；若仅固定必需内容已超出预算，则返回明确的无法构建原因。</li>
+<li><strong>输入（候选材料与预算配置）</strong>：系统指令、<strong>长期记忆（<a href="memory.html#module-memory">Memory</a> 快照与项目规则）</strong>、按任务归组的候选历史块（<a href="state.html#module-state">State</a>）、当前任务已产生的提问／响应／回执、可用工具定义（<a href="tools.html#module-tools">Tools</a> Schema）以及输入 Token 预算。</li>
+<li><strong>输出（本轮请求视图或超限错误）</strong>：在预算内组装好的消息序列与<strong>选择决策清单</strong>（记录保留了哪些块、注入了哪些记忆、省略或压缩了哪些块、最终计量体积）；若仅固定必需内容已超出预算，则返回明确的无法构建原因。</li>
 </ul>
 <p>注意调用时机：<strong>不是只在收到用户提问时筛选一次，而是循环内每发起一次模型请求前都要重新复核</strong>。因为同一任务内部第 1 步调用工具读取文件后，返回的大段回执会立刻增大第 2 步请求模型的输入体积。</p>
-<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 900 620" width="900" height="620" role="img" aria-label="通用交互：Runner 从记录层取得已完成历史、从工具系统取得工具定义，在每步请求模型前交给 Context Manager 按预算筛选；拿到本轮输入后请求 Model，工具执行经 Policy 授权，真实回执追加保存后进入下一轮复核">
+<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 980 660" width="980" height="660" role="img" aria-label="通用交互：Runner 从 Memory 读取项目规则、从记录层取得已完成历史、从工具系统取得工具定义，在每步请求模型前交给 Context Manager 按预算筛选；拿到本轮输入后请求 Model，工具执行经 Policy 授权，真实回执追加保存后进入下一轮复核">
 <defs><marker id="context-interface-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
-<g fill="none" stroke="currentColor" stroke-width="1.3"><rect x="16" y="16" width="132" height="44" rx="8"/><rect x="185" y="16" width="130" height="44" rx="8"/><rect x="365" y="16" width="170" height="44" rx="8"/><rect x="590" y="16" width="110" height="44" rx="8"/><rect x="755" y="16" width="130" height="44" rx="8"/></g>
-<g fill="currentColor" text-anchor="middle" font-size="15"><text x="82" y="44">会话／记录层</text><text x="250" y="44">Runner</text><text x="450" y="44">Context Manager</text><text x="645" y="44">Model</text><text x="820" y="44">Tools / Policy</text></g>
-<g stroke="currentColor" opacity=".25" stroke-dasharray="5 5"><path d="M82 60 V570 M250 60 V570 M450 60 V570 M645 60 V570 M820 60 V570"/></g>
-<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#context-interface-arrow)"><path d="M250 110 H82"/><path d="M250 190 H820"/><path d="M250 285 H450"/><path d="M250 400 H645"/><path d="M250 490 H820"/><path d="M250 565 H82"/></g>
-<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#context-interface-arrow)"><path d="M82 150 H250"/><path d="M820 230 H250"/><path d="M450 345 H250"/><path d="M645 445 H250"/><path d="M820 530 H250"/></g>
-<g fill="currentColor" text-anchor="middle" font-size="14"><text x="166" y="98">读取已完成历史块</text><text x="166" y="138">有序历史与任务归属</text><text x="535" y="178">取得可用工具的声明</text><text x="535" y="218">工具 Schema（不执行工具）</text><text x="350" y="264">系统指令、候选历史、当前消息</text><text x="350" y="280">工具 Schema 与输入预算</text><text x="350" y="323">本轮输入视图 + 选择决策清单</text><text x="350" y="339">（或超限无法构建原因）</text><text x="447" y="388">用筛选后的输入请求模型</text><text x="447" y="433">回答或工具调用（ModelResponse）</text><text x="535" y="478">提交动作 → Policy 授权 → 获准才执行</text><text x="535" y="518">真实回执 ToolResult（含拒绝与失败）</text><text x="166" y="553">追加保存本轮响应与回执（不改旧历史）</text><text x="450" y="605">实线：发起调用或追加记录；虚线：返回结果。下一步请求模型前再次经 Context Manager 复核预算。</text></g>
-</svg><figcaption>通用协作边界：Context Manager 只读筛选并组装本次输入，不直接修改会话存储，也不代管工具权限。</figcaption></figure>
+<g fill="none" stroke="currentColor" stroke-width="1.3">
+  <rect x="12" y="16" width="130" height="44" rx="8"/>
+  <rect x="160" y="16" width="120" height="44" rx="8"/>
+  <rect x="305" y="16" width="110" height="44" rx="8"/>
+  <rect x="440" y="16" width="150" height="44" rx="8"/>
+  <rect x="620" y="16" width="110" height="44" rx="8"/>
+  <rect x="760" y="16" width="140" height="44" rx="8"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="15">
+  <text x="77" y="44">工作区 / Memory</text>
+  <text x="220" y="44">会话／记录层</text>
+  <text x="360" y="44">Runner</text>
+  <text x="515" y="44">Context Manager</text>
+  <text x="675" y="44">Model</text>
+  <text x="830" y="44">Tools / Policy</text>
+</g>
+<g stroke="currentColor" opacity=".25" stroke-dasharray="5 5">
+  <path d="M77 60 V610 M220 60 V610 M360 60 V610 M515 60 V610 M675 60 V610 M830 60 V610"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#context-interface-arrow)">
+  <path d="M360 95 H77"/>
+  <path d="M360 165 H220"/>
+  <path d="M360 235 H830"/>
+  <path d="M360 310 H515"/>
+  <path d="M360 400 H675"/>
+  <path d="M360 480 H830"/>
+  <path d="M360 560 H220"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#context-interface-arrow)">
+  <path d="M77 130 H360"/>
+  <path d="M220 200 H360"/>
+  <path d="M830 270 H360"/>
+  <path d="M515 355 H360"/>
+  <path d="M675 440 H360"/>
+  <path d="M830 520 H360"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="14">
+  <text x="218" y="88">启动读取项目约定 MEMORY.md</text>
+  <text x="218" y="123">不可变 Memory 快照</text>
+  <text x="290" y="158">读取已完成历史块 (Turn)</text>
+  <text x="290" y="193">有序历史与任务归属</text>
+  <text x="595" y="228">取得可用工具的声明 (Specs)</text>
+  <text x="595" y="263">工具 Schema（不执行工具）</text>
+  <text x="437" y="298">系统指令、Memory、历史、</text>
+  <text x="437" y="314">当前消息、工具定义与输入预算</text>
+  <text x="437" y="345">本轮输入视图 + 选择决策清单</text>
+  <text x="437" y="361">（含记忆注入、裁剪折叠与体积核算）</text>
+  <text x="517" y="392">用筛选后的完整输入请求模型</text>
+  <text x="517" y="432">回答或工具调用（ModelResponse）</text>
+  <text x="595" y="472">提交动作 → Policy 授权 → 获准才执行</text>
+  <text x="595" y="512">真实回执 ToolResult（含拒绝与失败）</text>
+  <text x="290" y="552">追加保存本轮响应与回执</text>
+  <text x="290" y="568">（Memory 内容不向记录层重复灌入）</text>
+  <text x="480" y="635">实线：发起调用或追加记录；虚线：返回数据。每步请求模型前重新经 Context Manager 复核预算。</text>
+</g>
+</svg><figcaption>通用协作边界：Context Manager 综合裁决系统指令、Memory 记忆、历史记录与工具 Schema，只读筛选并组装本次输入，不直接修改会话存储，也不代管工具权限。</figcaption></figure>
 </div></div></section>
 <section class="lesson-section" id="module-context-p1-panel-B"><h3>3. 核心机制拆解：开源 Harness 如何解决三个共同问题？</h3><div class="lesson-body"><div class="am-md">
 <p>要把候选数据安全地变成单次模型请求，所有 Agent Harness 都必须依次解决三个具体问题：<strong>在哪里转换视图、怎样核算预算、从哪里安全切分</strong>。</p>
@@ -115,49 +164,116 @@
 </ul>
 </div></div>
 </section>
-<section class="lesson-section" id="module-context-p1-panel-D"><h3>4. 可选方案对比：超出预算后的 7 种处理策略</h3><div class="lesson-body"><div class="am-md">
-<p>当候选内容超出输入预算时，可以根据任务瓶颈由浅入深选择以下处理策略（它们是按需组合的工具箱，而非首版必须一次做完的清单）：</p>
+<section class="lesson-section" id="module-context-p1-panel-D"><h3>4. 可选方案对比：超出预算后的 7 种处理策略与演进脉络</h3><div class="lesson-body"><div class="am-md">
+<p>在上下文工程中，这 7 种策略并不是彼此孤立的功能清单，而是一条由<strong>真实业务痛点驱动的阶梯式演进脉络</strong>：前一种方案暴露出的致命缺陷，往往正是后一种方案被发明的根本原因：</p>
+<pre class="am-code"><code>A. 全量拼接 ──(线性超限)──> B. 确定性分块裁剪
+                             ├─(单步大回执撑爆)──> C. 大输出另存与预览
+                             └─(多步长链失忆)────> D. 历史摘要与折叠
+                                                       └─(静态资料挤占/探索试错噪音)──> E. 按需检索 ──> F. 子任务隔离 ──> G. 服务端原生加速</code></pre>
+
 <h4>A. 全量历史拼接（对照基线）</h4>
 <ul>
-<li><strong>做法</strong>：按时间顺序发送全部已完成历史与当前消息，附上系统指令和工具定义（阶段 3 的基线行为）。</li>
+<li><strong>做法</strong>：按时间顺序发送全部已完成历史与当前消息，附上系统指令和工具定义（最基础的基线行为）。</li>
 <li><strong>适用场景</strong>：轮次少、工具输出短的简单对话，或作为排查“模型出错是否因为裁剪丢了信息”的对照基线。</li>
-<li><strong>代价与局限</strong>：输入体积随轮次与工具调用线性膨胀，遇到长文件或长对话必然触发窗口超限。</li>
+<li><strong>代价与局限（线性膨胀与单步炸裂）</strong>：输入体积随轮次与工具调用线性膨胀；只要遇到一个上千行的大日志文件或超过 10 轮交互，就会瞬间打爆模型上下文上限（如 8k/32k 限制），直接触发 <code>ContextWindowExceeded</code> 报错停止。</li>
+<li><strong>演进方向</strong>：不能任由消息无约束堆积，必须引入确定性输入预算与切分边界，直接催生了 <strong>B. 按完整交互块确定性裁剪</strong>。</li>
 </ul>
 <h4>B. 按完整交互块确定性裁剪（阶段 4 MVP 首选）</h4>
 <ul>
 <li><strong>做法</strong>：锁定系统指令、显式标记的必需历史与当前任务消息，将其余已完成的历史任务（<code>Turn</code>）作为可选块；超出预算时从最旧的可选 <code>Turn</code> 开始整块省略，直到满足预算。</li>
 <li><strong>适用场景</strong>：多轮日常问答、阶段性独立任务，以及构建长任务机制前的基础预算防线。</li>
-<li><strong>代价与局限</strong>：零额外模型调用、结果完全确定、块内原文 100% 保真；但若未显式标记必需块或维护结构化任务状态，极早期提出的要求会随旧块一起被移出。</li>
+<li><strong>收益</strong>：零额外模型调用、结果完全确定、块内交互原文 100% 保真，且以完整 <code>Turn</code> 为单位裁剪天然保证 <code>ToolCall</code> 与 <code>ToolResult</code> 不被切断。</li>
+<li><strong>代价与局限（长任务中的两大确定性死穴）</strong>：单纯按完整块硬裁剪，在面对真实复杂长任务时会暴露出两类致命失效，这直接构成了引入方案 C 与方案 D 的根本原因：
+  <ul>
+    <li><strong>死穴一：工具单次吐出巨量数据（单步撑爆当前轮）</strong>：
+      <ul>
+        <li><strong>用户</strong>：“分析 access.log 中最近的 5 个 500 报错根因。”</li>
+        <li><strong>模型</strong>：调用 <code>read_file(path="access.log")</code>。</li>
+        <li><em>（系统执行：日志文件有 10MB、20 万行文本，单条 ToolResult 估算超过 80,000 Token）</em></li>
+        <li><strong>失效表现</strong>：撑爆预算的是<strong>当前轮内正在生成的单个工具回执</strong>。此时即便把所有历史 Turn 全部裁光（哪怕历史被裁为 0 条），仅“当前用户提问 + 系统指令 + 单条超大回执”就已经突破预算上限，任务在单步内直接报错崩溃。</li>
+        <li><strong>演进方向</strong>：必须在工具回执进入模型前进行物理拦截与外置暂存，直接催生了 <strong>C. 大段工具结果另存与首尾预览（Offloading）</strong>。</li>
+      </ul>
+    </li>
+    <li><strong>死穴二：多步执行后硬裁剪导致目标遗忘（长链失忆与任务跑偏）</strong>：
+      <ul>
+        <li><strong>用户</strong>：“重构 auth 鉴权模块。必须严格兼容旧版 JWT 格式，最后输出重构文件清单。”</li>
+        <li><em>（模型连续执行了 16 轮文件检索、修改与单元测试）</em></li>
+        <li><em>（触发整块硬裁剪：前 8 轮交互被全量丢弃）</em></li>
+        <li><strong>模型</strong>：“重构已完成。”<em>（完全忘记了必须兼容旧版 JWT 格式的核心约束，也没有输出文件清单）</em></li>
+        <li><strong>失效表现</strong>：为了给不断增长的后续动作腾出空间，最早期包含用户全局目标、核心约束与验收标准的消息被粗暴移出上下文。模型在长链路后期彻底“失忆”并出现不可控跑偏。</li>
+        <li><strong>演进方向</strong>：不能对历史交互做全盘抛弃，而应将中间探查过程提炼折叠，同时将全局硬约束纳入保护区，直接催生了 <strong>D. 历史摘要 + 近期原文（Compaction / Summarization）</strong>。</li>
+      </ul>
+    </li>
+  </ul>
+</li>
 </ul>
-<h4>C. 大段工具结果另存与预览（Offloading）</h4>
+<h4>C. 大段工具结果另存与首尾预览（Offloading / Staging）</h4>
 <ul>
-<li><strong>做法</strong>：当工具返回超大文件或长日志时，将完整内容另存到工作区或产物存储，上下文中只保留执行状态、首尾预览、文件路径与分页补读说明；后续轮次也可将已落盘的大段写入参数替换为简短引用。</li>
-<li><strong>适用场景</strong>：频繁读取长文档、大代码文件或构建日志的任务。</li>
-<li><strong>代价与局限</strong>：无需额外调用模型即可大幅消减单步体积噪音；但必须提供可靠的分页补读工具（只截断不给补读路径会永久丢失中间细节），并记录内容哈希以防原文件被改写。</li>
+<li><strong>做法</strong>：专门解决上述“死穴一（单步超大回执）”。在工具执行完毕向 Runner 返回时检查回执体积；若超过安全阈值（例如 3,000 字符或 1KB），自动将完整内容写入磁盘暂存文件（如 <code>.learn_agent/artifacts/tool_xxx.txt</code>）。发给模型的 <code>ToolResult</code> 仅保留【前 500 字符预览】+【后 500 字符预览】，并附带完整文件磁盘路径、大小元数据与定向分页补读指令（如 <code>read_file(path=..., offset=..., limit=...)</code>）。后续轮次中，落盘的大段参数也可同样替换为简短引用。</li>
+<li><strong>适用场景</strong>：频繁读取长文档、大代码文件、构建日志或批量检索结果的任务。</li>
+<li><strong>收益与优势</strong>：无需额外调用模型即可大幅削减单步体积膨胀，保证单次模型请求绝不突破窗口上限。</li>
+<li><strong>代价与局限（首尾盲区与多轮无效化）</strong>：
+  <ul>
+    <li><strong>盲区一：关键信息落入首尾之外（信息黑盒）</strong>：若日志的中间第 10 万行才是关键报错堆栈，首尾预览完全覆盖不到，模型只能通过额外的分页读取工具反复试探，大幅增加网络往返与思考步数。</li>
+    <li><strong>局限二：无法阻止多轮对话本身的累积</strong>：另存机制只在工具返回超大体积时触发；如果对话持续数十轮，每次工具调用哪怕只返回 100 字符，对话消息历史依然会累加撑爆窗口。</li>
+  </ul>
+</li>
+<li><strong>演进方向</strong>：大结果另存必须与 <strong>D. 历史摘要</strong> 配合使用；针对大文件检索，通常应推动向 <strong>E. 文本精准切片与按需检索（Grep / AST）</strong> 演进，避免一次性通读整文件。</li>
 </ul>
 <h4>D. 历史摘要 + 近期原文（Compaction / Summarization）</h4>
 <ul>
-<li><strong>做法</strong>：在安全切分点（如 <code>findCutPoint</code>）将较早的交互块交由模型浓缩为结构化摘要（保留目标、已确认约束、关键发现、失败尝试与文件引用），与“近期原文块（<code>retainedTail</code>）+ 当前任务消息”拼成新上下文。</li>
-<li><strong>适用场景</strong>：跨数十轮持续演进同一产物的复杂长任务。</li>
-<li><strong>代价与局限</strong>：增加额外的模型调用耗时与 Token 开销；多次连续摘要容易累积失真（如漏掉“UTC 时间”或误改“先不要覆盖”），因此核心硬约束应优先放入结构化状态，且摘要失败时必须有回退策略。</li>
+<li><strong>做法</strong>：专门解决上述“死穴二（多步长链失忆）”。当已完成任务块累计占用超过上下文预算水位线（例如占用达总预算的 50% 或 75%）时，在安全切分点（如 <code>findCutPoint</code> 避开 <code>toolResult</code> 边界）触发压缩。将中间多轮“尝试、报错、探查、修正”的冗长工具交互折叠为一条结构化事实摘要（提炼当前总目标、已确认约束、关键发现与结论、失败尝试和文件指针），与“近期原文块（<code>retainedTail</code>）+ 当前任务消息”拼装为本轮请求。</li>
+<li><strong>绝对保护区（Inviolable Zones）与资料分离</strong>：
+  <ul>
+    <li><strong>保护核心指令与初衷</strong>：长任务摘要必须设立两道硬性保护底线：<strong>用户的首条原始自然语言 Prompt（包含目标方向、硬性约束与验收条件）</strong>以及<strong>最近一轮的交互原文（<code>retainedTail</code>）</strong>属于绝对受保区，绝不进行模糊折叠，确保模型始终不忘初衷。</li>
+    <li><strong>严禁外部静态大文件混入保护区</strong>：<strong>绝对保护区只保护用户的“提问指令”，绝不包含用户手动附带、勾选的大型外部静态资料或源码附件！</strong>若将动辄数千行的大文件直接内联并视为“不可裁剪的原始 Prompt”，系统在第 1 轮就会直接突破预算超限崩溃；即便第 1 轮勉强塞入，也会在后续数十轮中永久霸占 70%~80% 的宝贵窗口，导致整个任务因“窗口窒息”而瘫痪。用户选择的外部文件必须归入“参考资料与产物层（Artifacts）”，通过<strong>工作区路径引用由模型按需读取</strong>，或经由<strong>策略 E 进行动态切片检索</strong>，绝不享有永久常驻豁免权。</li>
+  </ul>
+</li>
+<li><strong>适用场景</strong>：跨数十轮持续演进同一复杂产物、包含多步探索与试错的长任务。</li>
+<li><strong>代价与局限（连续失真退化与静态资料挤占）</strong>：
+  <ul>
+    <li><strong>痛点一：连续递归压缩导致的细节失真（有损压缩退化）</strong>：当任务持续数十步、经历 3~4 次连续摘要后，早期的关键事实（如精确函数签名、端口号、正则表达式）极易在语言反复浓缩中被过度平滑或产生漂移，引发后续执行偏离。</li>
+    <li><strong>痛点二：外部静态规范常驻挤占动态窗口</strong>：摘要只能压缩“对话与工具历史”；但若项目包含数十份规范文档、API 手册或大量可用工具 Schema，这些静态参考在每轮请求中必须常驻，在对话发生前就吃掉了大半窗口。</li>
+  </ul>
+</li>
+<li><strong>演进方向</strong>：静态资料绝不能全量常驻，必须根据当前提问动态拉取，直接催生了 <strong>E. 按需检索与渐进加载（Retrieval / Progressive Disclosure）</strong>。</li>
 </ul>
 <h4>E. 按需检索与渐进加载（Retrieval / Progressive Disclosure）</h4>
 <ul>
 <li><strong>做法</strong>：初始上下文只放入简短目录、文档标题或技能（Skills）摘要，运行中按当前问题通过关键词（如全文检索 FTS）或向量检索动态拉取相关片段。</li>
 <li><strong>适用场景</strong>：项目参考资料、规范文档或扩展工具极多，但单轮只需用到其中极小一部分。</li>
-<li><strong>代价与局限</strong>：只能补充外部静态／半静态资料，无法代替当前对话的执行过程状态；存在漏检风险，且检索与原文读取都必须遵守 Policy 工作区权限边界。</li>
+<li><strong>收益与优势</strong>：将静态资料占用的常驻 Token 压缩到极低水平，把宝贵的窗口额度留给当前任务思考。</li>
+<li><strong>代价与局限（检索漏检与主线程探索噪音）</strong>：
+  <ul>
+    <li><strong>痛点一：语义鸿沟与检索漏检（Retrieval Miss）</strong>：关键词或向量检索无法保证 100% 召回，若漏掉关键规范段落，模型会依据残缺背景盲目操作。</li>
+    <li><strong>痛点二：主线程试错探索过程污染主上下文</strong>：为了定位一个问题，Agent 在主循环中连续运行 20 次搜索、阅读 10 个无关代码片段，这些试错过程全塞在主线程上下文中，导致主上下文被大量检索垃圾噪音淹没，迅速耗尽窗口并分散模型注意力。</li>
+  </ul>
+</li>
+<li><strong>演进方向</strong>：将大量冗长、充满试错噪音的专项探查工作剥离出主窗口，交由拥有独立上下文的子任务执行，主 Agent 只接收精炼结论，直接催生了 <strong>F. 独立子任务窗口隔离（Sub-agent Isolation）</strong>。</li>
 </ul>
 <h4>F. 独立子任务窗口隔离（Sub-agent Isolation）</h4>
 <ul>
 <li><strong>做法</strong>：将耗费大量步数的代码搜索、日志排查或独立评审委派给拥有独立上下文窗口的子 Agent；主 Agent 只接收子任务最终提炼的结论与证据引用（详见 <a href="orchestration.html#module-orchestration">Orchestration</a>）。</li>
-<li><strong>适用场景</strong>：探索过程长、中间噪音多，但最终结论简短的子问题。</li>
-<li><strong>代价与局限</strong>：增加多 Agent 协调与结果核验成本；若子任务漏报关键上下文，主 Agent 难以察觉。</li>
+<li><strong>适用场景</strong>：探索过程长、中间噪音多，但最终结论简短的子问题（如“在整个仓库搜索所有使用了废弃 API 的位置”）。</li>
+<li><strong>收益与优势</strong>：主任务上下文极其干净，主 Agent 的注意力聚焦于核心全局目标，彻底免受几十轮中间探索碎片干扰。</li>
+<li><strong>代价与局限（上下文断层与协调开销）</strong>：
+  <ul>
+    <li><strong>痛点：信息孤岛与上下文断层（Context Disconnect）</strong>：子 Agent 拥有干净独立的上下文，但也意味着它看不到主任务隐式获知的全局背景与用户偏好。若任务派发提示词不够完备，子 Agent 会南辕北辙；若子 Agent 汇报结论过于简略，主 Agent 无法核验底层真实证据。同时，多 Agent 协调会显著拉高耗时与调用成本。</li>
+  </ul>
+</li>
+<li><strong>演进方向</strong>：依赖严密的父子任务契约（明确的目标 Schema、证据要求与 Policy 权限继承，见编排模块）；特定模型生态中，服务商则尝试从底层提供 <strong>G. 供应商服务端原生压缩</strong> 来免去应用层设计复杂度的开销。</li>
 </ul>
 <h4>G. 供应商服务端原生压缩（Provider-Native Compaction）</h4>
 <ul>
 <li><strong>做法</strong>：调用模型服务商专有压缩端点（如 OpenAI Responses API 的 Compaction），由服务端返回不透明的压缩续接数据供下一轮传入。</li>
 <li><strong>适用场景</strong>：固定使用单一模型服务商、希望免去自建摘要 Prompt 的场景。</li>
-<li><strong>代价与局限</strong>：压缩产物不可读、不可局部编辑，且无法跨模型或跨供应商复用；本地仍需保留原始 JSONL 记录以备审计与切换模型。</li>
+<li><strong>收益与优势</strong>：无需客户端编写切分与摘要逻辑，直接复用模型厂商训练有素的内部隐空间压缩。</li>
+<li><strong>代价与局限（黑盒锁定与跨模型断裂）</strong>：
+  <ul>
+    <li><strong>痛点：状态黑盒不可读、跨供应商不可迁移</strong>：服务端返回的是加密或私有的不透明续接数据（continuation blob）。开发者无法审计究竟丢弃了哪些上下文，无法纠正幻觉，更无法在不同模型供应商之间切换复用。</li>
+  </ul>
+</li>
+<li><strong>演进方向</strong>：原生压缩仅适合固定单一服务商的传输与显存加速；生产级系统的全局事实源（Source of Truth）必须始终锚定在本地由 State 与 Context Manager 统一管理的透明记录中。</li>
 </ul>
 </div></div>
 </section>

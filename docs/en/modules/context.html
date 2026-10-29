@@ -73,19 +73,68 @@
 <section class="lesson-section" id="module-context-interface"><h3>2. Black-Box Interaction &amp; Call Timing: Who Initiates, Who Decides, Who Executes?</h3><div class="lesson-body"><div class="am-md">
 <p>Inside the execution loop, Context Manager plugs in as a pure decision module <strong>right before Runner calls <code>Model.invoke()</code> on every step</strong>, exchanging two core data structures with neighboring modules:</p>
 <ul>
-<li><strong>Input (candidate materials &amp; budget config)</strong>: System instructions, candidate historical blocks grouped by task, prompts/responses/receipts generated so far in the current task, available tool definitions (schemas), and the input token budget.</li>
-<li><strong>Output (current request view or overflow error)</strong>: The assembled message sequence within budget plus a <strong>selection decision manifest</strong> (recording which blocks were kept, which were omitted or compacted, and the final token count); if fixed required content alone exceeds the budget, it returns an explicit unbuildable reason.</li>
+<li><strong>Input (candidate materials &amp; budget config)</strong>: System instructions, <strong>long-term memory (<a href="memory.html#module-memory">Memory</a> snapshot &amp; project conventions)</strong>, candidate historical blocks grouped by task (<a href="state.html#module-state">State</a>), prompts/responses/receipts generated so far in the current task, available tool definitions (<a href="tools.html#module-tools">Tools</a> schemas), and the input token budget.</li>
+<li><strong>Output (current request view or overflow error)</strong>: The assembled message sequence within budget plus a <strong>selection decision manifest</strong> (recording which blocks were kept, which memories were injected, which blocks were omitted or compacted, and the final token count); if fixed required content alone exceeds the budget, it returns an explicit unbuildable reason.</li>
 </ul>
 <p>Note the call timing: <strong>context is not filtered just once when the user prompt arrives—it must be re-evaluated before every single model request inside the loop</strong>. After Step 1 calls a tool to read a file within the same task, the large returned receipt immediately increases the input size for Step 2's model request.</p>
-<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 900 620" width="900" height="620" role="img" aria-label="General interaction: Runner reads completed history from the recording layer and tool definitions from the tool system, hands them to Context Manager to filter within budget before every model request, invokes Model with the selected input, authorizes tool execution via Policy, and appends actual receipts before re-checking on the next step">
+<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 980 660" width="980" height="660" role="img" aria-label="General interaction: Runner reads project conventions from Memory, completed history from State, and tool definitions from Tools, passing them to Context Manager to filter within budget before every model request; invokes Model with the selected input, authorizes tool execution via Policy, and appends actual receipts before re-checking on the next step">
 <defs><marker id="context-interface-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
-<g fill="none" stroke="currentColor" stroke-width="1.3"><rect x="16" y="16" width="132" height="44" rx="8"/><rect x="185" y="16" width="130" height="44" rx="8"/><rect x="365" y="16" width="170" height="44" rx="8"/><rect x="590" y="16" width="110" height="44" rx="8"/><rect x="755" y="16" width="130" height="44" rx="8"/></g>
-<g fill="currentColor" text-anchor="middle" font-size="15"><text x="82" y="44">State / Records</text><text x="250" y="44">Runner</text><text x="450" y="44">Context Manager</text><text x="645" y="44">Model</text><text x="820" y="44">Tools / Policy</text></g>
-<g stroke="currentColor" opacity=".25" stroke-dasharray="5 5"><path d="M82 60 V570 M250 60 V570 M450 60 V570 M645 60 V570 M820 60 V570"/></g>
-<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#context-interface-arrow)"><path d="M250 110 H82"/><path d="M250 190 H820"/><path d="M250 285 H450"/><path d="M250 400 H645"/><path d="M250 490 H820"/><path d="M250 565 H82"/></g>
-<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#context-interface-arrow)"><path d="M82 150 H250"/><path d="M820 230 H250"/><path d="M450 345 H250"/><path d="M645 445 H250"/><path d="M820 530 H250"/></g>
-<g fill="currentColor" text-anchor="middle" font-size="14"><text x="166" y="98">Read completed history blocks</text><text x="166" y="138">Ordered history &amp; turn grouping</text><text x="535" y="178">Get available tool declarations</text><text x="535" y="218">Tool schemas (without executing)</text><text x="350" y="264">System prompt, history, current msgs,</text><text x="350" y="280">tool schemas &amp; input budget</text><text x="350" y="323">Request view + selection manifest</text><text x="350" y="339">(or budget overflow error)</text><text x="447" y="388">Invoke model with filtered input</text><text x="447" y="433">Answer or tool calls (ModelResponse)</text><text x="535" y="478">Submit action → Policy check → execute</text><text x="535" y="518">Actual ToolResult (incl. denial/failure)</text><text x="166" y="553">Append response &amp; receipt (keep old history)</text><text x="450" y="605">Solid: call or append record; dashed: return result. Re-verify budget via Context Manager before next model call.</text></g>
-</svg><figcaption>General collaboration boundary: Context Manager filters and assembles the current input read-only, without modifying session storage or taking over tool permissions.</figcaption></figure>
+<g fill="none" stroke="currentColor" stroke-width="1.3">
+  <rect x="12" y="16" width="130" height="44" rx="8"/>
+  <rect x="160" y="16" width="120" height="44" rx="8"/>
+  <rect x="305" y="16" width="110" height="44" rx="8"/>
+  <rect x="440" y="16" width="150" height="44" rx="8"/>
+  <rect x="620" y="16" width="110" height="44" rx="8"/>
+  <rect x="760" y="16" width="140" height="44" rx="8"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="15">
+  <text x="77" y="44">Workspace / Memory</text>
+  <text x="220" y="44">State / Records</text>
+  <text x="360" y="44">Runner</text>
+  <text x="515" y="44">Context Manager</text>
+  <text x="675" y="44">Model</text>
+  <text x="830" y="44">Tools / Policy</text>
+</g>
+<g stroke="currentColor" opacity=".25" stroke-dasharray="5 5">
+  <path d="M77 60 V610 M220 60 V610 M360 60 V610 M515 60 V610 M675 60 V610 M830 60 V610"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#context-interface-arrow)">
+  <path d="M360 95 H77"/>
+  <path d="M360 165 H220"/>
+  <path d="M360 235 H830"/>
+  <path d="M360 310 H515"/>
+  <path d="M360 400 H675"/>
+  <path d="M360 480 H830"/>
+  <path d="M360 560 H220"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#context-interface-arrow)">
+  <path d="M77 130 H360"/>
+  <path d="M220 200 H360"/>
+  <path d="M830 270 H360"/>
+  <path d="M515 355 H360"/>
+  <path d="M675 440 H360"/>
+  <path d="M830 520 H360"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="14">
+  <text x="218" y="88">Load conventions MEMORY.md</text>
+  <text x="218" y="123">Immutable Memory snapshot</text>
+  <text x="290" y="158">Read completed history (Turn)</text>
+  <text x="290" y="193">Ordered history &amp; turn grouping</text>
+  <text x="595" y="228">Get available tool specs</text>
+  <text x="595" y="263">Tool schemas (without executing)</text>
+  <text x="437" y="298">System prompt, Memory, history,</text>
+  <text x="437" y="314">current msgs, tool schemas &amp; budget</text>
+  <text x="437" y="345">Request view + selection manifest</text>
+  <text x="437" y="361">(with memory injection &amp; trimming)</text>
+  <text x="517" y="392">Invoke model with filtered input</text>
+  <text x="517" y="432">Answer or tool calls (ModelResponse)</text>
+  <text x="595" y="472">Submit action → Policy check → execute</text>
+  <text x="595" y="512">Actual ToolResult (incl. denial/failure)</text>
+  <text x="290" y="552">Append response &amp; receipt</text>
+  <text x="290" y="568">(Memory is not re-flushed into Session)</text>
+  <text x="480" y="635">Solid: call or append record; dashed: return data. Re-verify budget via Context Manager before next model call.</text>
+</g>
+</svg><figcaption>General collaboration boundary: Context Manager arbitrates across system prompt, Memory, history, and tool schemas read-only, without modifying session storage or taking over tool permissions.</figcaption></figure>
 </div></div></section>
 <section class="lesson-section" id="module-context-p1-panel-B"><h3>3. Core Mechanism Breakdown: How Open-Source Harnesses Solve Three Shared Problems</h3><div class="lesson-body"><div class="am-md">
 <p>To safely turn candidate data into a single model request, every Agent Harness must solve three concrete problems in order: <strong>where to transform the view, how to account for the budget, and where to cut safely</strong>.</p>
@@ -115,49 +164,116 @@
 </ul>
 </div></div>
 </section>
-<section class="lesson-section" id="module-context-p1-panel-D"><h3>4. Comparing Design Options: 7 Strategies When Content Exceeds the Budget</h3><div class="lesson-body"><div class="am-md">
-<p>When candidate content exceeds the input budget, you can choose from the following strategies progressively based on your actual bottleneck (think of them as a composable toolkit rather than a checklist to build all at once in v1):</p>
+<section class="lesson-section" id="module-context-p1-panel-D"><h3>4. Comparing Design Options: 7 Strategies &amp; Their Evolutionary Lineage</h3><div class="lesson-body"><div class="am-md">
+<p>In context engineering, these 7 strategies are not isolated menu options, but form a <strong>stepwise evolutionary chain driven by real-world production pain points</strong>: the fatal failure mode of an earlier strategy is precisely why the subsequent strategy was invented:</p>
+<pre class="am-code"><code>A. Full History ──(Linear Blowout)──> B. Deterministic Trimming
+                                       ├─(Single-step Giant Result)──> C. Large Result Offloading
+                                       └─(Multi-step Amnesia)────────> D. History Summarization
+                                                                          └─(Static Bloat / Noise)──> E. On-Demand Retrieval ──> F. Sub-agent Isolation ──> G. Server-Native Compaction</code></pre>
+
 <h4>A. Full History Concatenation (Baseline Control)</h4>
 <ul>
-<li><strong>How it works</strong>: Send all completed history and current messages in chronological order along with system instructions and tool definitions (Stage 3's current behavior).</li>
+<li><strong>How it works</strong>: Send all completed history and current messages in chronological order along with system instructions and tool definitions (the most basic baseline behavior).</li>
 <li><strong>Best for</strong>: Short conversations with few turns and brief tool outputs, or as a baseline for diagnosing whether a model error was caused by trimming away needed context.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Input size grows linearly with turns and tool calls, inevitably hitting context window limits on large files or long conversations.</li>
+<li><strong>Trade-offs &amp; limitations (Linear expansion and immediate blowup)</strong>: Input size grows linearly with turns and tool calls; reading a 1,000-line file or chatting past 10 turns immediately pierces context window limits (e.g. 8k/32k tokens), halting with a <code>ContextWindowExceeded</code> error.</li>
+<li><strong>Evolution path</strong>: History cannot accumulate unboundedly; deterministic budgets and partition boundaries are required, giving rise to <strong>B. Deterministic Trimming by Complete Interaction Block</strong>.</li>
 </ul>
 <h4>B. Deterministic Trimming by Complete Interaction Block (Stage 4 MVP Choice)</h4>
 <ul>
 <li><strong>How it works</strong>: Lock system instructions, explicitly pinned required history, and current task messages, treating all other completed historical tasks (<code>Turn</code>) as optional blocks; when over budget, omit optional <code>Turn</code> blocks from oldest to newest until the budget is met.</li>
 <li><strong>Best for</strong>: Multi-turn daily Q&amp;A, self-contained phased tasks, and the foundational budget guardrail before adding long-task mechanisms.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Zero extra model calls, 100% deterministic behavior, and 100% verbatim fidelity inside kept blocks; however, if early requirements are neither pinned nor extracted into structured task state, very early constraints will be dropped along with old turns.</li>
+<li><strong>Benefits</strong>: Zero extra model calls, 100% deterministic behavior, 100% verbatim fidelity inside kept blocks, and trimming by whole <code>Turn</code> naturally guarantees that <code>ToolCall</code> and <code>ToolResult</code> pairs are never severed.</li>
+<li><strong>Trade-offs &amp; limitations (The Two Dead-End Failure Modes in Long Tasks)</strong>: Plain deterministic block trimming inevitably runs into two fatal failure cases in complex, long-running tasks, directly motivating Strategy C and Strategy D:
+  <ul>
+    <li><strong>Dead End 1: Single tool step emits massive data (Overwhelming the current turn)</strong>:
+      <ul>
+        <li><strong>User</strong>: "Analyze access.log for root causes of the latest five 500 errors."</li>
+        <li><strong>Model</strong>: Calls <code>read_file(path="access.log")</code>.</li>
+        <li><em>(System execution: Log file is 10MB and 200,000 lines; single ToolResult estimated at over 80,000 tokens)</em></li>
+        <li><strong>Failure symptom</strong>: The budget blowout is caused by a <strong>single pending tool result inside the active turn</strong>. Even if all historical Turn blocks are completely dropped (trimmed to 0 blocks), "user prompt + system prompt + single massive result" alone already blows past the budget, failing immediately on that single step.</li>
+        <li><strong>Evolution path</strong>: Huge payloads must be intercepted and staged to disk before entering model context, directly giving rise to <strong>C. Large Tool Result Offloading &amp; Preview (Offloading)</strong>.</li>
+      </ul>
+    </li>
+    <li><strong>Dead End 2: Multi-step execution drops initial constraints (Long-chain amnesia and drift)</strong>:
+      <ul>
+        <li><strong>User</strong>: "Refactor auth module. Must strictly maintain backwards compatibility with legacy JWT format, and output a refactored file checklist at the end."</li>
+        <li><em>(Model runs 16 consecutive turns of file search, edits, and unit tests)</em></li>
+        <li><em>(Deterministic trimming triggers: drops the first 8 turns entirely)</em></li>
+        <li><strong>Model</strong>: "Refactoring complete." <em>(Completely forgets legacy JWT compatibility constraints and never outputs the file checklist)</em></li>
+        <li><strong>Failure symptom</strong>: To make room for expanding recent interactions, early messages holding global goals, constraints, and acceptance criteria are dumped wholesale. The model loses its original objective and drifts off course.</li>
+        <li><strong>Evolution path</strong>: Instead of crude all-or-nothing omission, intermediate exploration trails must be compacted while global constraints remain protected, directly giving rise to <strong>D. History Summarization + Recent Verbatim Tail (Compaction / Summarization)</strong>.</li>
+      </ul>
+    </li>
+  </ul>
+</li>
 </ul>
-<h4>C. Large Tool Result Offloading &amp; Preview (Offloading)</h4>
+<h4>C. Large Tool Result Offloading &amp; Preview (Offloading / Staging)</h4>
 <ul>
-<li><strong>How it works</strong>: When a tool returns a huge file or long log, save the full content to the workspace or artifact store and keep only the execution status, head/tail preview, file path, and pagination instructions in context; in later turns, large write arguments that have already been flushed to disk can also be replaced with compact references.</li>
-<li><strong>Best for</strong>: Tasks that frequently read long documents, large source files, or build logs.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Drastically cuts single-step volume noise without extra model calls; however, you must provide a reliable paginated read tool (truncating without a way to read the rest permanently hides middle details) and record content hashes in case the underlying file changes.</li>
+<li><strong>How it works</strong>: Specifically addresses "Dead End 1 (Single-step giant result)". When a tool finishes and returns output to the Runner, check output volume; if it exceeds a safety threshold (e.g. 3,000 characters or 1KB), automatically offload the full raw payload to a workspace disk artifact file (e.g. <code>.learn_agent/artifacts/tool_xxx.txt</code>). The <code>ToolResult</code> delivered to the model retains only a [head 500 chars preview] + [tail 500 chars preview], along with the artifact disk path, size metadata, and paginated re-read instructions (e.g. <code>read_file(path=..., offset=..., limit=...)</code>). In subsequent turns, large flushed write arguments can similarly be replaced with concise references.</li>
+<li><strong>Best for</strong>: Tasks that frequently read long documents, large codebases, build logs, or bulk search results.</li>
+<li><strong>Benefits &amp; advantages</strong>: Drastically cuts single-step token blowup without extra model calls, guaranteeing single model requests never pierce context window limits.</li>
+<li><strong>Trade-offs &amp; limitations (Head/Tail Blind Spots &amp; Multi-turn Inefficacy)</strong>:
+  <ul>
+    <li><strong>Blind Spot: Crucial info buried outside head/tail (Information Black Box)</strong>: If line 100,000 holds the real stack trace, head/tail previews miss it completely, forcing the model to make blind paginated probes and increasing roundtrips.</li>
+    <li><strong>Limitation: Cannot stop multi-turn conversational bloat</strong>: Offloading only curbs single large tool outputs; across dozens of turns, even small 100-token messages will eventually exhaust the context window.</li>
+  </ul>
+</li>
+<li><strong>Evolution path</strong>: Offloading must combine with <strong>D. History Summarization</strong>; for large file lookups, it drives evolution toward <strong>E. Targeted On-Demand Retrieval (Grep / AST)</strong> rather than full-file reads.</li>
 </ul>
 <h4>D. History Summarization + Recent Verbatim Tail (Compaction / Summarization)</h4>
 <ul>
-<li><strong>How it works</strong>: At a safe cut point (such as <code>findCutPoint</code>), ask a model to condense earlier interaction blocks into a structured summary (retaining goals, confirmed constraints, key findings, failed attempts, and file references) and combine it with "recent verbatim blocks (<code>retainedTail</code>) + current task messages."</li>
-<li><strong>Best for</strong>: Complex long tasks that evolve the same deliverable across dozens of turns.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Adds extra model call latency and token cost; repeated summarization can accumulate drift (e.g., dropping "UTC time" or misstating "do not overwrite yet"), so hard constraints should live in structured state and summarization must have a fallback strategy on failure.</li>
+<li><strong>How it works</strong>: Specifically addresses "Dead End 2 (Long-chain amnesia)". When cumulative historical tokens exceed a context budget watermark (e.g. reaching 50% or 75% of total budget), trigger compaction at a safe cut point (such as <code>findCutPoint</code> avoiding <code>toolResult</code> boundaries). Condense intermediate multi-turn trails of "attempts, errors, probes, and fixes" into a structured factual summary (capturing current overall goal, confirmed constraints, key discoveries, failed trials, and file pointers), assembled alongside "recent verbatim tail (<code>retainedTail</code>) + active turn messages" into the new request.</li>
+<li><strong>Inviolable Zones &amp; Attachment Separation</strong>:
+  <ul>
+    <li><strong>Protect core instructions &amp; intent</strong>: Long-task summarization must maintain two hard protection zones: the <strong>user's initial natural language prompt (holding high-level goals, hard constraints, and acceptance criteria)</strong> and the <strong>most recent turn's verbatim interaction (<code>retainedTail</code>)</strong> are strictly protected from fuzzy summarization, ensuring the model never loses its original mission.</li>
+    <li><strong>Never pack large static attachments into the protected zone</strong>: <strong>Inviolable zones protect only user instructions, strictly excluding large external files, code attachments, or reference documents manually selected by the user!</strong> If thousand-line files are inlined as "untrimmable initial prompt", the system will fail with context overflow on Turn 1; even if squeezed into Turn 1, they would permanently choke 70%~80% of the context across all subsequent turns. Selected external files belong to the "Reference &amp; Artifact Layer", delivered via <strong>workspace file path pointers for on-demand reading</strong> or <strong>dynamically sliced via Strategy E (progressive retrieval)</strong>—they never receive permanent residency exemptions.</li>
+  </ul>
+</li>
+<li><strong>Best for</strong>: Complex long tasks that evolve the same deliverable across dozens of turns with heavy trial and error.</li>
+<li><strong>Trade-offs &amp; limitations (Degradation over recursive passes &amp; static reference bloat)</strong>:
+  <ul>
+    <li><strong>Pain point 1: Lossy compression drift over multiple cycles</strong>: After 3~4 sequential compactions across 50+ steps, subtle facts (exact regex, port numbers, variable names) get smoothed away or hallucinated.</li>
+    <li><strong>Pain point 2: Static external reference docs permanently crowding the dynamic window</strong>: Summaries only shrink dialogue history; if the project has 50 spec docs or 100 tool schemas, these static references occupy 60% of the window on every turn before dialogue even starts.</li>
+  </ul>
+</li>
+<li><strong>Evolution path</strong>: Static materials cannot stay permanently resident and must be loaded on demand, giving rise to <strong>E. On-Demand Retrieval &amp; Progressive Disclosure</strong>.</li>
 </ul>
 <h4>E. On-Demand Retrieval &amp; Progressive Disclosure (Retrieval / Progressive Disclosure)</h4>
 <ul>
 <li><strong>How it works</strong>: Put only a brief index, document titles, or Skill summaries in the initial context, dynamically fetching relevant snippets during execution via keyword search (e.g., FTS) or vector retrieval based on the current query.</li>
 <li><strong>Best for</strong>: Projects with large reference libraries, specification docs, or many extension tools where any single turn only needs a tiny fraction.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Only supplements external static/semi-static reference material and cannot replace the execution state of the active conversation; carries retrieval-miss risk, and both indexing and reading must obey Policy workspace boundaries.</li>
+<li><strong>Benefits &amp; advantages</strong>: Compresses static token overhead to negligible levels, preserving context for active problem-solving.</li>
+<li><strong>Trade-offs &amp; limitations (Retrieval misses &amp; main-loop trial noise)</strong>:
+  <ul>
+    <li><strong>Pain point 1: Semantic gaps and retrieval misses</strong>: Keyword or vector queries cannot guarantee 100% recall; missing a key specification leads the model to code blindly on partial context.</li>
+    <li><strong>Pain point 2: Exploration trial noise polluting the main context</strong>: In large refactoring tasks, the agent may run 20 grep searches and read 10 irrelevant files. Dumping all these trial-and-error snippets into the main window pollutes context with search debris, rapidly exhausting tokens and distracting the model.</li>
+  </ul>
+</li>
+<li><strong>Evolution path</strong>: Offload noisy exploratory probes to dedicated sub-tasks in isolated context windows, returning only clean conclusions, giving rise to <strong>F. Isolated Sub-agent Context Windows (Sub-agent Isolation)</strong>.</li>
 </ul>
 <h4>F. Isolated Sub-agent Context Windows (Sub-agent Isolation)</h4>
 <ul>
 <li><strong>How it works</strong>: Delegate step-heavy code searches, log investigations, or independent reviews to a sub-agent with its own isolated context window; the main Agent receives only the distilled conclusion and evidence citations (see <a href="orchestration.html#module-orchestration">Orchestration</a>).</li>
-<li><strong>Best for</strong>: Sub-problems with long exploratory trails and noisy intermediate output but concise final conclusions.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Increases multi-agent coordination and verification overhead; if the sub-agent omits critical context, the main Agent may not notice.</li>
+<li><strong>Best for</strong>: Sub-problems with long exploratory trails and noisy intermediate output but concise final conclusions (e.g. "Find all deprecated API usages across the repo").</li>
+<li><strong>Benefits &amp; advantages</strong>: Main agent context stays clean and focused on global deliverables without distraction from dozens of trial steps.</li>
+<li><strong>Trade-offs &amp; limitations (Context disconnect &amp; coordination cost)</strong>:
+  <ul>
+    <li><strong>Pain point: Information silos and context disconnect</strong>: Sub-agents cannot see the implicit background and preferences known to the main task. Weak delegation prompts cause sub-agents to drift; overly brief sub-agent reports prevent the main agent from verifying evidence. Multi-agent coordination also drives up latency and API costs.</li>
+  </ul>
+</li>
+<li><strong>Evolution path</strong>: Requires strict parent-child task contracts (schemas, evidence criteria, Policy inheritance, see Orchestration). In single-provider ecosystems, vendors also introduce <strong>G. Provider-Native Server-Side Compaction</strong> to eliminate client-side state engineering overhead.</li>
 </ul>
 <h4>G. Provider-Native Server-Side Compaction (Provider-Native Compaction)</h4>
 <ul>
 <li><strong>How it works</strong>: Call a model provider's dedicated compaction endpoint (such as OpenAI Responses API Compaction), which returns opaque compacted continuation data to pass into subsequent turns.</li>
 <li><strong>Best for</strong>: Scenarios standardized on a single model provider that want to avoid maintaining custom summarization prompts.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Compacted payloads are opaque, cannot be partially edited, and cannot be reused across models or providers; you must still keep local raw JSONL records for auditing and model switching.</li>
+<li><strong>Benefits &amp; advantages</strong>: Eliminates client-side chunking and summarization logic, leveraging vendor-optimized latent compression.</li>
+<li><strong>Trade-offs &amp; limitations (Black-box lock-in &amp; audit void)</strong>:
+  <ul>
+    <li><strong>Pain point: Opaque encrypted blobs with zero cross-model mobility</strong>: Developers cannot inspect what was kept or omitted, cannot correct hallucinations, and cannot migrate state across different model providers or local models.</li>
+  </ul>
+</li>
+<li><strong>Evolution path</strong>: Native compaction is merely a vendor-specific transport optimization; production systems must always maintain local, transparent ground-truth records across the <strong>A~F</strong> architecture.</li>
 </ul>
 </div></div>
 </section>

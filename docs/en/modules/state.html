@@ -69,12 +69,73 @@
 <figure class="am-diagram"><img class="lesson-svg" src="../../assets/diagrams/session-read-paths.svg" width="840" height="610" alt="List queries, detail queries, and model history reconstruction each select different data; reading records never re-executes tools." loading="lazy"><figcaption>Three read paths each extract different slices of data; read-only queries never trigger model calls or tool execution.</figcaption></figure>
 <ol><li><strong>Query session list</strong>: Reads only file headers or index metadata (ID, workspace directory, updated timestamp) without loading full conversation bodies (see Codex <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/list_threads.rs">list_threads.rs</a>).</li><li><strong>Inspect single-session transcript</strong>: Reconstructs the entire session record in order (including failed errors and unfinished fragments) for developer debugging or user review, without invoking the model or replaying tools (see Codex <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/read_thread.rs">read_thread.rs</a>).</li><li><strong>Reconstruct model context</strong>: Filters for completed turns with closed message chains and processes branch or compaction markers to reconstruct the model message list (see pi <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/session-manager.ts">buildSessionContext</a> and Codex <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/model_context.rs">load_latest_model_context</a> and <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/core/src/session/rollout_reconstruction.rs">rollout_reconstruction.rs</a>).</li></ol>
 </div></div></section>
-<span id="module-state-interaction"></span><span id="module-state-event-purpose"></span><span id="module-state-events"></span><section class="lesson-section" id="session-loop"><h3>8. Collaboration Boundaries with the Agent Loop: State, Events &amp; Crash Recovery</h3><div class="lesson-body"><div class="am-md">
+<span id="module-state-interaction"></span><span id="module-state-event-purpose"></span><span id="module-state-events"></span><section class="lesson-section" id="session-loop"><h3>8. Collaboration Boundaries with the Agent Loop: State, Events &amp; Safe Interruption Recovery</h3><div class="lesson-body"><div class="am-md">
+<h4>8.1 Collaboration Division: State, Event &amp; Loop</h4>
 <ul>
 <li><strong>Initialization vs. runtime division</strong>: At initialization, the application entry point opens or creates a session; at runtime, the Loop first reads completed history to assemble the request, then calls write methods sequentially as user prompts, model responses, tool receipts, and turn completion statuses arrive.</li>
 <li><strong>State (current snapshot view) vs. Event (state transition notification)</strong>: State represents a point-in-time snapshot (such as the active message chain or pending tools), while an Event represents a transition (such as pi's <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent.ts">processEvents</a> and <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/agent-session.ts">AgentSession</a>). In a single-process setup, the Loop can call persistence methods directly without requiring a complex event bus.</li>
-<li><strong>Multi-turn continuation is not crash recovery</strong>: Sending a new follow-up prompt on top of completed history is "multi-turn continuation," whereas resuming an unfinished task from a crash point is "<a href="../stages/stage-7.html#stage-7">interruption recovery</a>"—the latter must also reconcile whether external side effects have already occurred.</li>
+<li><strong>Multi-turn continuation is not crash recovery</strong>: Sending a new follow-up prompt on top of completed history (<code>completed</code>) is "multi-turn continuation," whereas resuming an unfinished task from a crash, network failure, or process kill is "safe crash recovery (Checkpoint &amp; Resumption)". Persisting chat messages alone does not automatically grant safe crash recovery capability.</li>
 </ul>
+
+<h4>8.2 Core Dilemma of Interruption Recovery: Why Logs Cannot Be Replayed Blindly</h4>
+<p>Consider a typical crash scenario during tool execution:</p>
+<ul>
+<li><strong>Model</strong>: Proposes <code>write_file(path="config.yaml", content="...")</code> or calls an external payment/order API.</li>
+<li><em>(System execution: Underlying file write occurs on physical disk, or external payment succeeds)</em></li>
+<li><em>(Sudden crash: Before writing the execution receipt to the JSONL log, the machine loses power or crashes due to OOM)</em></li>
+</ul>
+<p>At this moment, persistent logs only record "model initiated call request", but contain no "tool execution receipt". If restarted by naively replaying the log as a script, the file will be overwritten twice or customer orders will be double-charged!</p>
+<p>Thus, systems must strictly separate three distinct state objects:</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Object Type</th>
+<th>What It Records</th>
+<th>Role in Crash Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Transcript / SessionLog</strong></td>
+<td>Sequenced user prompts, model responses, and tool receipts</td>
+<td>Proves "what happened in the conversation" for context assembly and audit replay</td>
+</tr>
+<tr>
+<td><strong>Execution Checkpoint</strong></td>
+<td>Current step index, state machine node pointer, pending logical invocation ID</td>
+<td>Records "how far execution advanced" as the anchor for restart positioning</td>
+</tr>
+<tr>
+<td><strong>Execution Receipt / Evidence</strong></td>
+<td>Physical world reality check (e.g. disk <code>lstat</code>, content hash, external API idempotent query)</td>
+<td>Verifies "whether the action truly took effect in physical reality", resolving uncertainty during timeouts and missing logs</td>
+</tr>
+</tbody>
+</table></div>
+
+<h4>8.3 Four Action States during Interruption Recovery</h4>
+<p>When the recovery pipeline scans checkpoints and unclosed actions, it must distinguish four concrete underlying states rather than just binary success/failure:</p>
+<ul>
+<li><strong>Not Dispatched (<code>not_dispatched</code>)</strong>: Model emitted tool call intent, but underlying tool function has not executed. Can safely execute after Policy re-check.</li>
+<li><strong>Completed (<code>completed</code>)</strong>: Tool execution completed and receipt confirmed on disk. Recovery <strong>reuses the existing receipt directly</strong> without re-running the tool, preventing duplicate compute and token consumption.</li>
+<li><strong>Running (<code>running</code>)</strong>: External background task or async sub-process is still in progress. Recovery must bind to the existing handle to poll/wait, rather than spawning duplicate instances.</li>
+<li><strong>Unknown (<code>unknown</code>)</strong>: Underlying action may have produced physical side effects, but crashed before receipt write (or network timed out). <strong>Never retry blindly from unknown states!</strong> Must inspect physical state or query idempotency tokens; if unverifiable, pause execution and escalate to human review (HITL).</li>
+</ul>
+
+<h4>8.4 Standard Recovery Pipeline and Key Breakpoints</h4>
+<p>In production engineering, safe resumption follows a 4-step pipeline:</p>
+<ol>
+<li><strong>Dedicated Resumed Run Entry Point</strong>: Load uncompleted checkpoints via dedicated resume commands, keeping it distinct from normal follow-up queries and never forcibly overwriting status to <code>completed</code>.</li>
+<li><strong>Differentiate Read-only vs. Mutating Actions</strong>:
+  <ul>
+    <li><strong>Read-only actions (read file, list)</strong>: Can safely re-execute after Policy re-verification to get fresh snapshots.</li>
+    <li><strong>Mutating actions (write file, external changes)</strong>: Must bind unique Idempotency Keys and Attempt IDs. Inspect disk file existence and content hashes first; if confirmed not executed, proceed to retry; otherwise construct completed receipt.</li>
+  </ul>
+</li>
+<li><strong>Re-verify Policy Permissions</strong>: Resumption must evaluate against the <strong>currently active Policy</strong>, never exempting security checks merely because prior runs were approved.</li>
+<li><strong>Persist Verified Progress and Advance Loop</strong>: Fill missing receipts, flush checkpoints, and return full context to Runner to continue the model loop.</li>
+</ol>
+<p><strong>4 Critical Failure Injection Breakpoints:</strong> Test recovery behavior across: ① Interruption before action dispatch; ② Interruption during tool execution; ③ Interruption after execution before receipt disk write; ④ Interruption after receipt write before next model invoke.</p>
 </div></div></section>
 <section class="lesson-section" id="session-practice"><h3>9. Current Project Choice &amp; Expected Outcomes</h3><div class="lesson-body"><div class="am-md">
 <p><strong>Current project choice:</strong> Uses a <strong>single-session JSONL file + user-task <code>Turn</code> boundaries + strictly sequenced records</strong> (for full derivation and source code, see <a href="../stages/stage-3.html#stage-3">Stage 3: Sessions &amp; Records</a>).</p>

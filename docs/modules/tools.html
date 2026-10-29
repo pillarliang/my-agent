@@ -10,17 +10,101 @@
 <h4>两个核心内部抽象</h4><ul><li><strong>工具定义（<code>ToolDefinition</code>）</strong>：将普通 Python 函数与工具名称、功能说明、参数校验模型及所需权限绑定在一起（模型只能看到生成的说明 Schema，接触不到底层 Python 函数）。</li><li><strong>工具注册表（<code>ToolRegistry</code>）</strong>：按名称管理所有已注册工具，收到调用后统一完成查找、参数校验、动作识别、Policy 授权与函数执行。</li></ul>
 <h4 id="module-tools-loop-interface">工具系统与 Runner 的黑盒交互</h4><p>Runner 无需关心每个工具内部如何实现，只通过三个标准数据对象与工具系统交互：</p></div><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-tools-loop-interface.svg" width="700" height="365" alt="Runner 与 Tool 系统的黑盒交互：读取 specs 返回 ToolSpec 列表；每次提交 ToolCall，返回带原调用 ID 的 ToolResult" loading="lazy"></figure>
 <div class="am-md"><ul><li><strong>工具声明（<code>ToolSpec</code>）</strong>：Runner 读取 <code>tools.specs</code>，获取供模型阅读的工具名称、用途说明与参数 JSON Schema。</li><li><strong>调用请求（<code>ToolCall</code>）</strong>：模型发起调用时，Runner 将包含调用 ID、工具名与原始参数字符串的 <code>ToolCall</code> 传给 <code>tools.execute(call)</code>。</li><li><strong>真实回执（<code>ToolResult</code>）</strong>：工具系统返回带有原 <code>call_id</code> 的执行结果（含文件内容、权限拒绝或执行错误），供 Runner 关联回下一轮模型请求。</li></ul></div></div></section>
-<section class="lesson-section" id="module-tools-interaction"><h3>2. 与相关模块的协作边界</h3><div class="lesson-body"><div class="am-md"><ul><li><strong>初始化期配置（Application → Tools）</strong>：应用启动时将工具定义列表、工作目录 <code>workspace</code> 与权限规则 <code>Policy</code> 注入 <code>ToolRegistry</code>。</li><li><strong>请求期声明传递（Tools → Runner → Model）</strong>：Runner 读取公开的 <code>ToolSpec</code> 列表并交由 <a href="model.html#module-model">Model</a> 编码发送给模型；底层函数引用与安全规则留在本地。</li><li><strong>执行期权限拦截（Tools ↔ <a href="policy.html#module-policy">Policy</a>）</strong>：收到模型调用后，Tools 先校验参数并结合目标文件状态生成 <code>ActionRequest</code>（如区分 <code>create</code> 与 <code>overwrite</code>），经 Policy 批准后才真正执行底层函数。</li><li><strong>结果持久化与错误分流（Tools → Runner → <a href="state.html#module-state">State</a>）</strong>：参数错误、权限拒绝和预期的文件读取失败均封装为带 <code>call_id</code> 的 <code>ToolResult</code>，由 Runner 写入会话记录并带入下一轮；未捕获的代码 Bug 则直接抛出异常停止运行。</li></ul><p><strong>实现方案的三个正交维度：</strong>工具粒度（专用结构化工具／通用命令工具／聚合业务工具）、执行位置（进程内函数／独立 Worker／远程沙箱）与调度方式（串行／并行／异步长任务）。本项目当前采用<strong>专用结构化文件工具 + 进程内函数 + 串行执行</strong>，其余扩展方案见下方折叠区。</p></div></div></section>
+<section class="lesson-section" id="module-tools-interaction"><h3>2. 与相关模块的协作边界</h3><div class="lesson-body"><div class="am-md"><ul><li><strong>初始化期配置（Application → Tools）</strong>：应用启动时将工具定义列表、工作目录 <code>workspace</code> 与权限规则 <code>Policy</code> 注入 <code>ToolRegistry</code>。</li><li><strong>请求期声明传递（Tools → Runner → Model）</strong>：Runner 读取公开的 <code>ToolSpec</code> 列表并交由 <a href="model.html#module-model">Model</a> 编码发送给模型；底层函数引用与安全规则留在本地。</li><li><strong>执行期权限拦截（Tools ↔ <a href="policy.html#module-policy">Policy</a>）</strong>：收到模型调用后，Tools 先校验参数并结合目标文件状态生成 <code>ActionRequest</code>（如区分 <code>create</code> 与 <code>overwrite</code>），经 Policy 批准后才真正执行底层函数。</li><li><strong>大输出拦截与暂存（Tools ↔ <a href="context.html#module-context">Context Manager</a>）</strong>：当工具执行结果超出体积安全阈值时，自动在工具边界拦截并将完整内容写入磁盘暂存文件，发给 Context Manager 的回执仅保留首尾预览与分页补读指针，杜绝单步撑爆上下文。</li><li><strong>外部扩展与 MCP 集成（Tools ↔ <a href="extensions.html#module-extensions">Extensions</a>）</strong>：通过适配器将远程 MCP Server 或外部 Skills 工具动态挂载进 <code>ToolRegistry</code>，统一纳入参数校验与本地 Policy 安全审查管线。</li><li><strong>故障中断与幂等凭据（Tools ↔ <a href="recovery.html#module-recovery">Recovery</a> / <a href="state.html#module-state">State</a>）</strong>：为带物理副作用的操作绑定全局唯一幂等键（Idempotency Key），在遭遇进程崩溃重启时提供物证探查（Evidence Probe），防止由于网络超时或回执丢失引发重复执行。</li><li><strong>结果持久化与错误分流（Tools → Runner → <a href="state.html#module-state">State</a>）</strong>：参数错误、权限拒绝和预期的文件读取失败均封装为带 <code>call_id</code> 的 <code>ToolResult</code>，由 Runner 写入会话记录并带入下一轮；未捕获的代码 Bug 则直接抛出异常停止运行。</li></ul><p><strong>实现方案的三个正交维度：</strong>工具粒度（专用结构化工具／通用命令工具／聚合业务工具）、执行位置（进程内函数／独立 Worker／远程沙箱）与调度方式（串行／并行／异步长任务）。本项目当前采用<strong>专用结构化文件工具 + 进程内函数 + 串行执行</strong>，其余扩展方案见下方折叠区。</p></div></div></section>
 
 <details class="reference-extra"><summary>按需阅读：业界主流对比、沙箱技术选型、Composio/MCP 集成与高级调度</summary>
 <p>本区汇总了业界主流 Agent 的工具方案对比、开箱即用的沙箱与外部集成生态选型，供架构设计与生产选型时参考；第一轮阅读可直接跳到下方当前实现。</p>
 
 <section class="lesson-section" id="module-tools-industry-comparison">
 <span id="module-tools-p1-panel-E"></span>
-<h3>3. 业界主流 Agent 系统的工具方案对比</h3>
+<h3>3. 业界主流 Agent 系统的工具方案全景与对比</h3>
 <div class="lesson-body"><div class="am-md">
-<p>在真实的工程实践中，不同的 Agent 系统根据其面向的场景（编码、通用任务、企业自动化），在工具形态与执行方式上有明显不同的侧重：</p>
+<p>在真实的工程实践中，不同的 Agent 系统根据其面向的场景（本地编码、全自主开发、企业自动化、极简命令行），在工具形态与执行方式上有明显不同的侧重。直接看横向对比表往往抽象难懂，以下先逐个拆解业界最具代表性的四大工具架构方案：</p>
 
+<h4>3.1 方案一：本地精准 Patch 与受控命令（Claude Code）</h4>
+<p>这是针对<strong>本地日常编程与代码重构</strong>设计的经典方案。它的核心是：<strong>告别整文件重写，用局部精确 Patch 节省 Token 并防范截断，同时在宿主机上受控运行命令。</strong></p>
+<ul>
+<li><strong>痛点与解决思路</strong>：
+  <p>大模型修改代码时，最容易犯两个错误：一是遇到千行大文件时全量重写，输出到一半被模型最大输出 Token 截断，导致原文件代码被腰斩损坏；二是直接全量重写容易在无意中改动其他无关行。Claude Code 放弃了粗暴的 <code>write_file</code> 全量重写，专门设计了局部 Patch 工具。</p>
+</li>
+<li><strong>核心工作流与工具形态</strong>：
+  <ul>
+  <li><strong>精确行替换 Patch 工具</strong>：模型发起修改时，必须明确提供 <code>old_string</code>（原代码片段）与 <code>new_string</code>（替换后的代码片段）。工具在本地做严格的单次精准匹配替换；若匹配失败则立即拒绝，防止改错位置。</li>
+  <li><strong>受控 Bash 执行与轻量沙箱</strong>：提供通用终端命令工具，但结合操作系统原生沙箱机制（如 macOS 上的 <code>sandbox-exec</code>）或路径校验，严格限制只允许读写当前项目目录，阻止修改系统核心文件。</li>
+  <li><strong>原生 MCP 扩展</strong>：原生支持通过 MCP（Model Context Protocol）协议挂载外部工具服务，实现即插即用。</li>
+  </ul>
+</li>
+<li><strong>架构取舍与适用场景</strong>：
+  <ul>
+  <li><strong>优势</strong>：修改精准、极其节省 Token；零容器启动延迟，开发者体验极快。</li>
+  <li><strong>局限与代价</strong>：直接依赖宿主机的开发环境（必须本地装好 Node/Python 才能跑测试）；轻量沙箱防君子不防黑客，不适合执行不可信的外部恶意代码。</li>
+  </ul>
+</li>
+</ul>
+
+<h4>3.2 方案二：全隔离容器沙箱与自主交互（OpenHands / 原 OpenDevin）</h4>
+<p>这是面向<strong>完全自主的软件开发（Full-autonomous Software Development）</strong>设计的方案。它的核心是：<strong>模型拥有最高 root 权限，但必须全量关在 Docker 容器内部运行，与宿主机绝对物理隔离。</strong></p>
+<ul>
+<li><strong>痛点与解决思路</strong>：
+  <p>全自主 Agent 不仅要改代码，还要自行 <code>apt-get install</code> 安装系统依赖、启动数据库、甚至在后台运行 Web 服务和跑测试。如果在开发者本机直接执行，一旦模型产生幻觉运行 <code>rm -rf /</code> 或恶意脚本，开发者的电脑将彻底瘫痪。因此，必须将“执行环境”直接放进容器。</p>
+</li>
+<li><strong>核心工作流与交互机制</strong>：
+  <ul>
+  <li><strong>每个任务独立 Docker 容器</strong>：任务启动时自动拉起一个纯净的 Docker 容器沙箱，把工作区代码挂载进容器。模型在容器内拥有 root 权限，可以随意安装依赖、编译运行。</li>
+  <li><strong>Action / Observation 事件流协议</strong>：Runner 将模型的意图封装为结构化的 <code>Action</code>（如执行终端命令 <code>CmdRunAction</code>、浏览网页 <code>BrowseInteractiveAction</code>），由容器内的 Runtime 执行后，统一将标准输出、截图或文件状态包装为 <code>Observation</code> 回传。</li>
+  <li><strong>多模态浏览器交互（BrowserGym）</strong>：内置无头浏览器沙箱，工具不仅能跑命令行，还能让模型像真实人类一样点击页面按钮、滚动审查前端界面，实现真正的端到端开发与验证。</li>
+  </ul>
+</li>
+<li><strong>架构取舍与适用场景</strong>：
+  <ul>
+  <li><strong>优势</strong>：极致安全，容器内搞砸了直接销毁，绝对不影响宿主机；环境高度干净可复现。</li>
+  <li><strong>局限与代价</strong>：强依赖宿主机已安装并常驻 Docker 服务；每次启动容器有秒级冷启动延迟；跨容器文件同步和网络端口映射开销较大。</li>
+  </ul>
+</li>
+</ul>
+
+<h4>3.3 方案三：分层洋葱中间件与存储解耦（Deep Agents）</h4>
+<p>这是面向<strong>企业级复杂任务流与无状态云端架构</strong>设计的方案。它的核心是：<strong>通过洋葱式中间件拦截工具调用，实现存储后端彻底解耦和大结果自动截断转存。</strong></p>
+<ul>
+<li><strong>痛点与解决思路</strong>：
+  <p>在企业级云原生环境中，Agent 往往作为无状态服务运行，任务可能在任意 Pod 节点执行，无法假定本地存在固定磁盘；同时，工具调用（如 <code>git diff</code> 或数据库查询）经常输出几万行超大文本，若直接塞回上下文会瞬间撑爆模型预算。</p>
+</li>
+<li><strong>核心工作流与机制（源码依据）</strong>：
+  <ul>
+  <li><strong>专用文件系统中间件（<code>FilesystemMiddleware</code>）</strong>：在工具执行的调用链上套入一层中间件，统一拦截所有工具返回。</li>
+  <li><strong>抽象存储后端协议（<code>BackendProtocol</code>）</strong>：将“工具接口”（read_file / write_file）与“底层物理存储”彻底解耦。底层可以无缝切换为本地磁盘（LocalBackend）、云端对象存储（S3Backend）或临时内存（StateBackend）。</li>
+  <li><strong>大结果截断与自动另存（<code>wrap_tool_call</code>）</strong>：当工具执行结果超出预算阈值时，中间件自动截断内容，将完整内容存入临时存储文件，仅向模型返回首尾预览与文件索引（详见 <a href="context.html#module-context-p1-panel-D">Context Manager 方案 C</a>）。</li>
+  </ul>
+</li>
+<li><strong>架构取舍与适用场景</strong>：
+  <ul>
+  <li><strong>优势</strong>：天然契合分布式与云端沙箱架构；统一兜底防爆 Token，存储后端随需替换。</li>
+  <li><strong>局限与代价</strong>：中间件封装层级深，相比于简单的函数直接调用，增加了框架抽象复杂度和调用链排错成本。</li>
+  </ul>
+</li>
+</ul>
+
+<h4>3.4 方案四：轻量注册表与读写分流调度（pi）</h4>
+<p>这是面向<strong>极致轻量、高可控编码 Harness</strong> 设计的方案。它的核心是：<strong>保持极小的单机运行时体积，并在调度器中通过读写分流严格控制并发安全。</strong></p>
+<ul>
+<li><strong>痛点与解决思路</strong>：
+  <p>当现代大模型具备单轮发起多个工具调用（Multi-Tool Calls）能力时，很多框架盲目地将所有工具调用全盘并发执行。如果模型同时发起了“写入文件 A”和“读取文件 A”，或者同时修改两个关联文件，并发乱序会导致严重的数据损坏和竞态冲突（Race Condition）。</p>
+</li>
+<li><strong>核心工作流与调度机制（以 pi 源码为例）</strong>：
+  <ul>
+  <li><strong>调度器读写严格分流（<code>agent-loop.ts</code>）</strong>：调度器在执行工具批次时，检查工具元数据。对于只读工具（如多文件并发 <code>read_file</code>、<code>search</code>），安全开启受限并发以提升速度；一旦识别到具有副作用的写入工具（如 <code>write_file</code>）或命令执行，强制中断并发，按严格顺序单步串行执行。</li>
+  <li><strong>轻量内存注册表</strong>：直接使用 TypeScript / Python 原生函数与元数据映射表，不引入复杂的第三方工具包装库，保证执行开销降到微秒级。</li>
+  </ul>
+</li>
+<li><strong>架构取舍与适用场景</strong>：
+  <ul>
+  <li><strong>优势</strong>：零冗余依赖、运行极速；以极低的实现成本完美规避了多工具并发时的并发写冲突。</li>
+  <li><strong>局限与代价</strong>：默认仅提供本地轻量防护，缺乏企业级多租户沙箱与云端跨节点状态管理。</li>
+  </ul>
+</li>
+</ul>
+
+<h4>3.5 四大方案综合对比矩阵</h4>
 <div class="am-table-wrap"><table>
 <thead>
 <tr>
@@ -67,25 +151,84 @@
 
 <section class="lesson-section" id="module-tools-sandbox-solutions">
 <span id="module-tools-p1-panel-D"></span>
-<h3>4. 执行放在哪里：开箱即用的沙箱（Sandbox）技术选型</h3>
+<h3>4. 执行放在哪里：沙箱技术原理与 4 种执行后端演进</h3>
 <div class="lesson-body"><div class="am-md">
 <p><strong>为什么生产环境中不能只用“进程内普通函数”？</strong></p>
 <p>在原型开发时，让 Agent 直接在主进程中执行 Python 函数最简单。但一旦引入 Shell 执行、网络请求或代码运行，进程内方案面临三大致命缺陷：</p>
 <ul>
-<li><strong>主进程崩溃扩散</strong>：工具发生内存溢出、死循环或底层段错误（Segfault）时，会导致整个 Agent 挂掉。</li>
-<li><strong>宿主环境破坏风险</strong>：模型生成的危险命令（如误删系统文件、篡改环境变量）会直接破坏宿主机。</li>
+<li><strong>主进程崩溃扩散</strong>：工具发生死循环、内存溢出（OOM）或底层段错误（Segfault）时，整个 Agent 连同会话状态直接退出暴毙。</li>
+<li><strong>宿主环境破坏风险</strong>：模型生成的危险命令（如误删系统文件、篡改环境变量）会直接破坏开发者的电脑。</li>
 <li><strong>资源与网络失控</strong>：无法对单次工具执行限制 CPU 核心、内存上限与网络访问范围。</li>
 </ul>
 
-<h4>4 种执行后端的演进层次</h4>
+<h4>4 种执行后端的演进层次与技术原理</h4>
+<p>为了解决上述痛点，工程上探索出了 4 种逐层加固的执行后端。每一层都在<strong>“运行性能与实现复杂度”</strong>与<strong>“隔离安全性与防逃逸能力”</strong>之间做出了权衡：</p>
+
+<h4>4.1 层次一：进程内函数（In-Process）——“在同一个程序里直接跑”</h4>
 <ul>
-<li><strong>进程内函数（In-Process）</strong>：零序列化开销、延迟最低（&lt;1ms），适合可信、无副作用且耗时极短的本地辅助计算。</li>
-<li><strong>独立 Worker 子进程</strong>：通过管道或 RPC 通信，能独立设置超时、捕获崩溃；但单独起子进程并不自动隔离宿主文件与网络。</li>
-<li><strong>容器沙箱（Docker / Podman）</strong>：基于 Linux 命名空间（Namespaces）与控制组（cgroups），适合本地开发与企业私有云部署。</li>
-<li><strong>微虚拟机沙箱（MicroVM，如 Firecracker）</strong>：硬件级虚拟化强隔离，冷启动达毫秒级，是多租户云端沙箱的黄金标准。</li>
+<li><strong>工作机制</strong>：就像调用本地普通 Python 函数一样（<code>result = func(args)</code>），完全在同一个进程的内存空间内完成传参和返回。</li>
+<li><strong>术语解读：为什么说“零序列化开销、延迟最低（&lt;1ms）”？</strong>
+  <p>参数和返回值直接在内存中传递 Python 对象指针，不需要把数据打包转换成 JSON 文本（即“序列化”），也不需要通过操作系统网络栈或管道收发。因此调用几乎瞬间完成，耗时不到 1 毫秒。</p>
+</li>
+<li><strong>致命缺陷（它防不住什么？）</strong>：
+  <ul>
+  <li><strong>同生共死</strong>：工具函数如果执行了 <code>sys.exit()</code>、陷入死循环、或者调用的底层 C 扩展发生崩溃（Segmentation Fault），整个 Agent 进程会被操作系统直接杀死，正在进行的任务全丢。</li>
+  <li><strong>零权限防线</strong>：工具拥有与当前登录用户完全相同的系统权限。如果模型生成了 <code>rm -rf ~</code> 或读取了 <code>~/.ssh/id_rsa</code>，宿主机会直接遭受永久性破坏。</li>
+  </ul>
+</li>
+<li><strong>推荐场景</strong>：可信、纯粹的本地无害计算（如格式转换、数学运算、JSON 解析），以及从零跑通 MVP 闭环的学习阶段。</li>
 </ul>
 
-<h4>开箱即用的成熟沙箱技术选型</h4>
+<h4>4.2 层次二：独立 Worker 子进程（Subprocess / Worker）——“另开一个进程跑，挂了不影响主干”</h4>
+<ul>
+<li><strong>工作机制</strong>：主进程通过操作系统的 <code>subprocess.Popen</code> 或独立后台服务另外启动一个子进程，主进程与子进程之间通过管道（标准输入输出 stdin/stdout）或本地 RPC（如 gRPC、Unix Domain Socket）收发 JSON 消息。</li>
+<li><strong>术语解读：解决了什么？</strong>
+  <ul>
+  <li><strong>捕获崩溃与隔离故障</strong>：子进程哪怕因为内存溢出（OOM）或者死循环炸掉，挂掉的也只是那个独立的子进程，操作系统会返回一个错误退出码。Agent 主进程安然无恙，能够把“执行异常终止”作为失败回执反馈给模型。</li>
+  <li><strong>支持强制超时（Kill）</strong>：主进程可以设置超时计时器（例如 30 秒）。一旦超时，主进程直接调用系统指令 <code>process.kill()</code> 强行干掉卡死的子进程，主循环绝不会被永远阻塞。</li>
+  </ul>
+</li>
+<li><strong>致命缺陷：为什么说“单独起子进程并不自动隔离宿主文件与网络”？</strong>
+  <p>这是初学者最容易产生安全幻觉的地方！子进程虽然换了一个独立的“进程号（PID）”，<strong>但它依然运行在你的物理宿主机上，使用的依然是你当前的操作系统用户权限</strong>。它依然能直接读取你电脑上的个人文档、依然能访问你的内网数据库、依然能执行删除命令。<strong>它隔离了“进程稳定性（防崩溃）”，但根本没有隔离“系统资源访问（防破坏）”</strong>。</p>
+</li>
+<li><strong>推荐场景</strong>：执行耗时较长、容易偶发卡死或崩溃的脚本（如运行单测、编译构建），且执行的代码和命令基本可信。</li>
+</ul>
+
+<h4>4.3 层次三：容器沙箱（Docker / Podman）——“给程序罩上虚拟文件系统与资源上限”</h4>
+<ul>
+<li><strong>工作机制</strong>：利用现代 Linux 操作系统的原生内核特性，为工具的执行套上一个轻量隔离罩：
+  <ul>
+  <li><strong>Linux 命名空间（Namespaces，隔离“视野”）</strong>：欺骗容器内的程序，给它一个完全独立的虚拟系统视图——它只能看到容器镜像里的文件，看不到宿主机的真实硬盘（除非显式挂载）；它看到的进程列表里只有它自己，看不到宿主机的其他软件；它拥有独立的虚拟网卡。</li>
+  <li><strong>控制组（cgroups，卡死“资源上限”）</strong>：给隔离罩设置物理限额——例如“最多只能占用 1 核 CPU、最多占用 512MB 内存”。一旦超出限制，由操作系统内核强制限制或杀掉容器内进程，绝不会把宿主机其他业务卡死。</li>
+  </ul>
+</li>
+<li><strong>术语解读：解决了什么？</strong>
+  <p>实现了<strong>宿主系统防护</strong>。模型在容器内即使执行 <code>rm -rf /</code>，破坏的也只是容器内的临时镜像层，对开发者的真实电脑毫发无损；任务结束后直接销毁容器，环境瞬间恢复纯净。</p>
+</li>
+<li><strong>局限与安全隐患</strong>：
+  <ul>
+  <li><strong>共享同一个操作系统内核（内核逃逸风险）</strong>：容器并不是真正的独立电脑，所有容器与宿主机共用同一个 Linux 内核。如果宿主机内核存在未修复的安全漏洞（Kernel Exploit），恶意代码有可能穿透容器控制物理机（即“容器逃逸”），因此公有云多租户环境不敢单独依赖 Docker。</li>
+  <li><strong>秒级冷启动延迟</strong>：拉起一个完整的容器通常需要 1 ~ 3 秒，对于每一步频繁交互的小工具来说显得偏重。</li>
+  </ul>
+</li>
+<li><strong>推荐场景</strong>：本地安全开发环境（如 OpenHands）、企业自建的私有沙箱服务、标准化的 CI/CD 编译测试。</li>
+</ul>
+
+<h4>4.4 层次四：微虚拟机沙箱（MicroVM，如 Firecracker / E2B）——“毫秒级冷启动的硬件级虚拟机”</h4>
+<ul>
+<li><strong>工作机制</strong>：利用现代 CPU 芯片自带的硬件辅助虚拟化技术（如 Intel VT-x、AMD-V），动态虚拟出一台<strong>拥有独立 Linux 操作系统内核、独立虚拟内存与虚拟硬件的极微型电脑</strong>。</li>
+<li><strong>术语解读：为什么说“硬件级虚拟化强隔离，冷启动达毫秒级，是多租户云端沙箱的黄金标准”？</strong>
+  <ul>
+  <li><strong>硬件级物理强隔离（杜绝逃逸）</strong>：与容器共享内核不同，每个 MicroVM 都运行着一个完全属于它自己的独立 Linux 内核。哪怕黑客在沙箱内获得了最高 root 权限并搞崩了内核，他撞上的依然是物理 CPU 硬件层建立的虚拟化隔离墙，物理上绝不可能渗透到宿主机或其他租户的沙箱中。</li>
+  <li><strong>毫秒级极速冷启动（颠覆传统虚拟机）</strong>：传统的 VMware 或 VirtualBox 虚拟机开机之所以要等半分钟，是因为它要模拟声卡、软驱、USB、显卡等成百上千种复杂老旧的硬件；而专为云原生设计的 MicroVM（如 AWS 开发开源的 Firecracker）剥离了所有无用的硬件模拟，只保留运行极简系统所需的极少数虚拟设备，<strong>开机冷启动仅需 100 ~ 200 毫秒</strong>！既拥有虚拟机的绝对安全，又拥有堪比容器的即时响应速度。</li>
+  <li><strong>极致轻量与高密度</strong>：一个微虚拟机启动时仅占用几兆字节的基础内存，单台物理服务器可安全并发托管上千个相互隔离的用户沙箱。</li>
+  </ul>
+</li>
+<li><strong>代价与要求</strong>：底层硬件必须支持 CPU 虚拟化指令集（如 KVM），无法在不支持嵌套虚拟化的简易云主机或某些虚拟机内部直接运行。</li>
+<li><strong>推荐场景</strong>：公有云多租户 Agent 平台（如 E2B、Modal）、需要为任意不可信陌生用户执行任意代码的生产级 AI 服务。</li>
+</ul>
+
+<h4>4.5 开箱即用的成熟沙箱技术选型</h4>
 <div class="am-table-wrap"><table>
 <thead>
 <tr>
@@ -244,10 +387,10 @@
 <p>工具元数据可以增加 <code>effect_class</code>、并发分组、超时和是否可查询回执。调度器据此限制并发；这些元数据必须由可信实现提供，不能直接把外部服务器自报的“只读”当成授权证明。耗时较长的异步任务宜返回 <code>job_id</code>，再通过事件通知或轮询回执推进，不能让整个 Agent 循环长时间同步阻塞。</p>
 
 <h4>B. 幂等性与结果未知时的重试</h4>
-<p>考虑外部创建报告或提交工单的调用：服务已经创建资源，但返回前因网络抖动中断。程序只知道结果未知，不能简单按失败直接重试。正确设计需要为每次逻辑调用分配稳定幂等键（Idempotency Key），并在重试前主动查询外部系统回执或资源状态。</p>
+<p>考虑外部创建报告或提交工单的调用：服务已经创建资源，但返回前因网络抖动中断。程序只知道结果未知，不能简单按失败直接重试。正确设计需要为每次逻辑调用分配稳定幂等键（Idempotency Key），并在重试前主动查询外部系统回执或资源状态（详见 <a href="state.html#session-loop">State 模块四大动作状态与中断安全恢复</a>）。</p>
 
 <h4>C. 大段结果截断与精确代码编辑</h4>
-<p>工具输出不可预知地过大时，必须支持截断、总量提示与溢出转存（详见<a href="../stages/stage-6.html#stage-6">阶段 6</a>）。在代码修改场景下，生产级 Agent（如 Claude Code、Cursor）普遍弃用“整文件全量重写”，转而采用带行号定位或原文本锚点的<strong>精确 Patch 替换工具</strong>，既能大幅节省 Token 预算，又大幅降低外部文件被意外截断覆盖的风险。</p>
+<p>工具输出不可预知地过大时，必须支持截断、总量提示与溢出转存（详见 <a href="context.html#module-context-p1-panel-D">Context Manager 方案 C（大段工具结果另存与首尾预览）</a>）。在代码修改场景下，生产级 Agent（如 Claude Code、Cursor）普遍弃用“整文件全量重写”，转而采用带行号定位或原文本锚点的<strong>精确 Patch 替换工具</strong>，既能大幅节省 Token 预算，又大幅降低外部文件被意外截断覆盖的风险。</p>
 </div></div>
 </section>
 </details><section class="lesson-section" id="module-tools-p2-panel-B"><h3>8. 本项目当前选择与生产级演进路径</h3><div class="lesson-body"><div class="am-md">
