@@ -12,7 +12,189 @@
 <div class="am-md"><ul><li><strong>工具声明（<code>ToolSpec</code>）</strong>：Runner 读取 <code>tools.specs</code>，获取供模型阅读的工具名称、用途说明与参数 JSON Schema。</li><li><strong>调用请求（<code>ToolCall</code>）</strong>：模型发起调用时，Runner 将包含调用 ID、工具名与原始参数字符串的 <code>ToolCall</code> 传给 <code>tools.execute(call)</code>。</li><li><strong>真实回执（<code>ToolResult</code>）</strong>：工具系统返回带有原 <code>call_id</code> 的执行结果（含文件内容、权限拒绝或执行错误），供 Runner 关联回下一轮模型请求。</li></ul></div></div></section>
 <section class="lesson-section" id="module-tools-interaction"><h3>2. 与相关模块的协作边界</h3><div class="lesson-body"><div class="am-md"><ul><li><strong>初始化期配置（Application → Tools）</strong>：应用启动时将工具定义列表、工作目录 <code>workspace</code> 与权限规则 <code>Policy</code> 注入 <code>ToolRegistry</code>。</li><li><strong>请求期声明传递（Tools → Runner → Model）</strong>：Runner 读取公开的 <code>ToolSpec</code> 列表并交由 <a href="model.html#module-model">Model</a> 编码发送给模型；底层函数引用与安全规则留在本地。</li><li><strong>执行期权限拦截（Tools ↔ <a href="policy.html#module-policy">Policy</a>）</strong>：收到模型调用后，Tools 先校验参数并结合目标文件状态生成 <code>ActionRequest</code>（如区分 <code>create</code> 与 <code>overwrite</code>），经 Policy 批准后才真正执行底层函数。</li><li><strong>结果持久化与错误分流（Tools → Runner → <a href="state.html#module-state">State</a>）</strong>：参数错误、权限拒绝和预期的文件读取失败均封装为带 <code>call_id</code> 的 <code>ToolResult</code>，由 Runner 写入会话记录并带入下一轮；未捕获的代码 Bug 则直接抛出异常停止运行。</li></ul><p><strong>实现方案的三个正交维度：</strong>工具粒度（专用结构化工具／通用命令工具／聚合业务工具）、执行位置（进程内函数／独立 Worker／远程沙箱）与调度方式（串行／并行／异步长任务）。本项目当前采用<strong>专用结构化文件工具 + 进程内函数 + 串行执行</strong>，其余扩展方案见下方折叠区。</p></div></div></section>
 
-<details class="reference-extra"><summary>按需阅读：工具粒度、执行环境、并发与恢复</summary><p>下面是按需求扩展时的参考方案，第一轮阅读可直接跳到当前实现。</p><figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-stage-2-1-panel-B-1.svg" width="173" height="567" alt="流程图：ToolCall、按名称和版本查找工具、解析与参数校验、资源与权限检查、执行后端、回执与产物引用、Runner" loading="lazy"></figure><section class="lesson-section" id="module-tools-p1-panel-C"><h3>3. 工具应负责多大范围的操作</h3><div class="lesson-body"><div class="am-md"><h4>A. 专用结构化工具</h4>
+<details class="reference-extra"><summary>按需阅读：业界主流对比、沙箱技术选型、Composio/MCP 集成与高级调度</summary>
+<p>本区汇总了业界主流 Agent 的工具方案对比、开箱即用的沙箱与外部集成生态选型，供架构设计与生产选型时参考；第一轮阅读可直接跳到下方当前实现。</p>
+
+<section class="lesson-section" id="module-tools-industry-comparison">
+<span id="module-tools-p1-panel-E"></span>
+<h3>3. 业界主流 Agent 系统的工具方案对比</h3>
+<div class="lesson-body"><div class="am-md">
+<p>在真实的工程实践中，不同的 Agent 系统根据其面向的场景（编码、通用任务、企业自动化），在工具形态与执行方式上有明显不同的侧重：</p>
+
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>代表系统</th>
+<th>工具形态与粒度</th>
+<th>执行环境与隔离</th>
+<th>外部集成协议</th>
+<th>核心优势与适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Claude Code</strong><br>(Anthropic)</td>
+<td>专用文件操作（精确行替换 Patch）+ 受控通用 Bash</td>
+<td>本地进程内执行，结合 macOS / Linux 轻量沙箱（如 sandbox-exec）</td>
+<td>内置专用工具 + 原生支持 MCP 协议连接外部能力</td>
+<td>专注于本地编码任务；通过精准 Patch 避免全量覆盖，减少 Token 与并发冲突</td>
+</tr>
+<tr>
+<td><strong>OpenHands</strong><br>(原 OpenDevin)</td>
+<td>通用 Bash + 文件编辑 + 浏览器自动化交互（BrowserGym）</td>
+<td><strong>Docker 容器强隔离</strong>（每个任务启动独立容器沙箱）</td>
+<td>内部 Action/Observation 协议，支持接入自定义外部工具</td>
+<td>面向完全自主的软件开发；所有命令在容器内运行，彻底杜绝宿主机破坏</td>
+</tr>
+<tr>
+<td><strong>Deep Agents</strong><br>(LangChain)</td>
+<td>专用文件系统中间件（<code>FilesystemMiddleware</code>）</td>
+<td>抽象存储后端协议（<code>BackendProtocol</code>），支持本地或云存储</td>
+<td>兼容 LangChain 工具生态与标准 MCP Server</td>
+<td>企业级通用任务；通过洋葱中间件统一处理大输出截断、暂存与上下文注入</td>
+</tr>
+<tr>
+<td><strong>pi</strong><br>(精简 Coding Harness)</td>
+<td>专用文件读写与搜索工具 + 终端命令</td>
+<td>本地轻量执行，在调度器中区分只读与写操作</td>
+<td>轻量内部注册表，按元数据分发</td>
+<td>最小化运行时开销；通过执行策略在安全与并发间取得平衡</td>
+</tr>
+</tbody>
+</table></div>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-tools-sandbox-solutions">
+<span id="module-tools-p1-panel-D"></span>
+<h3>4. 执行放在哪里：开箱即用的沙箱（Sandbox）技术选型</h3>
+<div class="lesson-body"><div class="am-md">
+<p><strong>为什么生产环境中不能只用“进程内普通函数”？</strong></p>
+<p>在原型开发时，让 Agent 直接在主进程中执行 Python 函数最简单。但一旦引入 Shell 执行、网络请求或代码运行，进程内方案面临三大致命缺陷：</p>
+<ul>
+<li><strong>主进程崩溃扩散</strong>：工具发生内存溢出、死循环或底层段错误（Segfault）时，会导致整个 Agent 挂掉。</li>
+<li><strong>宿主环境破坏风险</strong>：模型生成的危险命令（如误删系统文件、篡改环境变量）会直接破坏宿主机。</li>
+<li><strong>资源与网络失控</strong>：无法对单次工具执行限制 CPU 核心、内存上限与网络访问范围。</li>
+</ul>
+
+<h4>4 种执行后端的演进层次</h4>
+<ul>
+<li><strong>进程内函数（In-Process）</strong>：零序列化开销、延迟最低（&lt;1ms），适合可信、无副作用且耗时极短的本地辅助计算。</li>
+<li><strong>独立 Worker 子进程</strong>：通过管道或 RPC 通信，能独立设置超时、捕获崩溃；但单独起子进程并不自动隔离宿主文件与网络。</li>
+<li><strong>容器沙箱（Docker / Podman）</strong>：基于 Linux 命名空间（Namespaces）与控制组（cgroups），适合本地开发与企业私有云部署。</li>
+<li><strong>微虚拟机沙箱（MicroVM，如 Firecracker）</strong>：硬件级虚拟化强隔离，冷启动达毫秒级，是多租户云端沙箱的黄金标准。</li>
+</ul>
+
+<h4>开箱即用的成熟沙箱技术选型</h4>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>成熟工具 / 方案</th>
+<th>底层隔离机制</th>
+<th>冷启动耗时</th>
+<th>开箱即用能力</th>
+<th>推荐适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>E2B</strong><br>(<a href="https://e2b.dev/">e2b.dev</a>)</td>
+<td>Firecracker microVM<br>（微虚拟机强隔离）</td>
+<td><strong>150 ~ 200 ms</strong></td>
+<td>提供 Python / TS SDK，内置 Bash、Python、Node 运行环境，带文件系统 API、桌面 GUI 录屏与长任务监控</td>
+<td><strong>云端 Agent 首选</strong>：需要让 Agent 运行任意用户代码、数据分析或终端编译，且绝不容忍逃逸</td>
+</tr>
+<tr>
+<td><strong>Docker / Devcontainer</strong></td>
+<td>Linux 容器技术<br>（Namespaces + cgroups）</td>
+<td>1 ~ 3 秒</td>
+<td>成熟的 Docker SDK，可自由定制依赖镜像，支持挂载临时卷与限制内存/CPU</td>
+<td><strong>自建私有化环境</strong>：已有内部 K8s / 容器基础设施，适合像 OpenHands 一样在本地启动临时容器运行</td>
+</tr>
+<tr>
+<td><strong>Daytona</strong><br>(<a href="https://www.daytona.io/">daytona.io</a>)</td>
+<td>Docker / 远程云环境管理</td>
+<td>几秒到几十秒</td>
+<td>开源的开发环境基础设施编排，自动管理工作区生命周期、Git 凭据与远程连接</td>
+<td><strong>团队化编码 Agent</strong>：需要为多用户批量分配标准化、安全的在线代码开发环境</td>
+</tr>
+<tr>
+<td><strong>Bubblewrap (bwrap)</strong></td>
+<td>Linux 原生无特权命名空间</td>
+<td><strong>&lt; 10 ms</strong></td>
+<td>Linux 自带轻量命令行工具，一行命令绑定只读挂载点、虚拟 proc、隔离网络，无需常驻守护进程</td>
+<td><strong>本地轻量级部署</strong>：在 Linux 服务器上跑轻量 CLI 工具，以最低性能损耗防范恶意文件越界</td>
+</tr>
+</tbody>
+</table></div>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-tools-composio-mcp">
+<h3>5. 工具集成平台与标准协议：Composio 与 MCP</h3>
+<div class="lesson-body"><div class="am-md">
+<p><strong>从“手写 Tool 函数”到“生态化接入”的核心痛点：</strong></p>
+<p>在实际业务中，让 Agent 接入外部系统（如 GitHub、Slack、Jira、Salesforce、Gmail）时，最繁琐的往往不是编写工具的 JSON Schema，而是：</p>
+<ul>
+<li><strong>复杂的认证管理</strong>：每个 SaaS 都有不同的 OAuth2 授权回调、Token 自动刷新和密钥安全存储。</li>
+<li><strong>海量接口维护成本</strong>：第三方 API 版本升级、参数变更会导致自定义 Tool 频繁失效。</li>
+<li><strong>生态割裂</strong>：为某个框架写的工具难以直接复用到其他 Agent 项目中。</li>
+</ul>
+
+<h4>解决方案 A：Composio（开箱即用的企业级 SaaS 工具平台）</h4>
+<p><strong>Composio (<a href="https://composio.dev/">composio.dev</a>)</strong> 是目前业界最成熟的 Agent 工具托管与集成平台：</p>
+<ul>
+<li><strong>全托管身份认证</strong>：内置处理 200+ 主流应用（GitHub、Slack、Jira、Notion、Gmail、Salesforce 等）的用户 OAuth2 授权、Token 刷新与多租户权限隔离。</li>
+<li><strong>即插即用 SDK</strong>：一行代码直接将第三方服务的读写操作转化为标准工具对象，原生支持 LangChain、LlamaIndex、OpenAI SDK 等。</li>
+<li><strong>原生支持 MCP 桥接</strong>：Composio 可以直接将其托管的所有应用工具一键发布为标准的 <strong>MCP Server</strong>，无需修改宿主架构即可消费。</li>
+</ul>
+
+<h4>解决方案 B：MCP（Model Context Protocol，开放标准协议）</h4>
+<p><strong>MCP (<a href="https://modelcontextprotocol.io/">modelcontextprotocol.io</a>)</strong> 由 Anthropic 提出，旨在成为 AI 工具领域的“LSP（Language Server Protocol）”：</p>
+<ul>
+<li><strong>Client-Host-Server 架构</strong>：Agent Harness 充当 Host/Client，外部数据源与服务充当独立的 MCP Server。通过基于 JSON-RPC 的标准协议交换工具定义（<code>tools/list</code>）与调用回执（<code>tools/call</code>）。</li>
+<li><strong>丰富的成熟社区生态</strong>：官方与开源社区已维护大量现成的 MCP Server，包括数据库查询（Postgres、SQLite）、代码仓库（GitHub、Git）、浏览器自动化（Puppeteer）与本地文件服务。</li>
+<li><strong>宿主统一适配</strong>：Harness 的 <code>ToolRegistry</code> 只需通过一个 <code>MCPClient</code> 驱动层，就能动态发现并加载远端 MCP Server 暴露的所有工具，将其适配为内部统一的 <code>ToolSpec</code>。</li>
+</ul>
+
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>集成方案</th>
+<th>谁负责认证与 API 维护</th>
+<th>通信方式</th>
+<th>主要优势</th>
+<th>主要代价 / 限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本项目本地函数</strong></td>
+<td>开发者完全自研</td>
+<td>本地进程内直接调用</td>
+<td>零外部依赖，调试透明，适合核心专有业务</td>
+<td>接入新 SaaS 成本高，需自行实现 OAuth 与重试</td>
+</tr>
+<tr>
+<td><strong>Composio 平台</strong></td>
+<td>Composio 托管服务</td>
+<td>HTTPS API / 本地 SDK / MCP 桥接</td>
+<td>开箱即用 200+ SaaS，彻底省去 OAuth 维护成本</td>
+<td>依赖外部商业服务，需网络出网与凭据托管信任</td>
+</tr>
+<tr>
+<td><strong>原生 MCP 协议</strong></td>
+<td>各独立的 MCP Server 提供方</td>
+<td>标准 JSON-RPC（stdio 子进程或 SSE/HTTP）</td>
+<td>开放行业标准，跨模型/跨框架完全互通，生态丰富</td>
+<td>需维护 Client 连接生命周期，需额外保证外部 RPC 幂等</td>
+</tr>
+</tbody>
+</table></div>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-tools-p1-panel-C"><h3>6. 工具应负责多大范围的操作（粒度设计）</h3><div class="lesson-body"><div class="am-md"><h4>A. 专用结构化工具</h4>
 <p>例如 <code>read_file(path, offset, limit)</code> 和 <code>write_file(path, content)</code>，每个工具有少量明确参数。实现可以准确限制路径、大小和作用，模型也更容易理解返回值。</p>
 <p>它适合学习和操作范围明确的业务。代价是需要维护较多工具，组合能力取决于提供的操作；工具数量增大后还要处理 Schema 占用和发现问题。</p>
 <h4>B. 通用能力工具</h4>
@@ -52,35 +234,34 @@
 <p><a href="https://www.anthropic.com/engineering/writing-tools-for-agents">Anthropic 工具设计实践</a>讨论名称、说明和返回内容对决策的影响。它们应作为任务评测变量；“工具越少越好”和“越专用越好”都需要具体任务证据。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-tools-p1-panel-D"><h3>4. 执行放在哪里</h3><div class="lesson-body"><div class="am-md"><p><strong>进程内函数</strong>依赖少、延迟低，适合可信、耗时和输出大小可控的小工具；但阻塞、崩溃和主进程共享权限是明显限制。</p>
-<p><strong>独立 Worker 进程</strong>通过结构化协议执行，方便限制输出和强制终止。它需要进程监督和资源清理；单独启动进程并没有自动隔离主机文件和网络。</p>
-<p><strong>远程服务或沙箱后端</strong>通过 RPC 提交动作，返回任务 ID 和回执，适合更强隔离与独立扩容。它引入认证、网络故障、版本兼容和无法确认结果等问题，需要与状态记录和恢复机制一起设计。</p>
-<p>工具 API 与执行后端可以分开。例如同一个 <code>read_file</code> 访问本地工作区、受限容器或远程逻辑文件系统；Runner 继续使用同一 <code>ToolCall</code>，后端负责真实资源映射。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p1-panel-E"><h3>5. 真实实现怎样做</h3><div class="lesson-body"><div class="am-md"><p><strong>Deep Agents，源码核对。</strong> <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/filesystem.py">FilesystemMiddleware</a> 提供模型可调用的文件工具，并通过后端协议访问存储；<code>wrap_tool_call</code> 在工具返回结果时处理超大内容。<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/backends/protocol.py">BackendProtocol</a> 区分文件能力与执行能力。可借鉴的是分别处理工具定义、工具结果和实际执行后端。</p>
-<p><strong>pi，源码核对。</strong> <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">agent-loop.ts</a> 根据执行设置和工具的串行要求选择串行或并行批次。可借鉴的是让执行策略由程序决定，不能因为模型一次返回多个调用就自动并行执行所有会修改外部资源的操作。</p>
-<p><strong>MCP，协议文档。</strong> <a href="https://modelcontextprotocol.io/specification/2025-11-25/architecture">架构规范</a>把外部能力放在服务器、连接放在客户端、授权和聚合放在宿主。MCP 可以统一发现与调用，但业务幂等、核对操作结果和访问范围仍需应用定义，详见<a href="extensions.html#module-extensions">扩展教程</a>。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p1-panel-F"><h3>6. 串行、并行和长任务怎样选择</h3><div class="lesson-body"><div class="am-md"><p>互不依赖的只读操作适合受限并发；同一文件的“读 → 改 → 检查”有依赖，应保持顺序。并行写入不同路径也可能共享索引或全局状态，因此仅比较文件名不足以判断独立性。</p>
-<p>工具元数据可以增加 <code>effect_class</code>、并发分组、超时和是否可查询回执。调度器据此限制并发；这些元数据必须由可信实现提供，不能直接把外部服务器自报的“只读”当成授权证明。</p>
-<p>长任务宜返回 <code>job_id</code>，再通过事件或间隔查询获取后续进度。返回任务 ID 只表示已受理，不能视为产物已完成。</p>
-</div></div>
-</section>
-<section class="lesson-section" id="module-tools-p1-panel-G"><h3>7. 执行结果、幂等与结果未知时的处理</h3><div class="lesson-body"><div class="am-md"><p>考虑外部创建报告的调用：服务已经创建资源，但返回前网络断开。程序只知道结果未知，不能简单按失败重试。正确设计需要先保存逻辑调用 ID，执行时使用稳定幂等键，随后查询回执或真实资源。</p>
-<p>后续接入远程工具时，再增加逻辑调用 ID、每次尝试的 ID、操作成功或结果未知的状态，以及外部系统的记录。当前没有实现这套远程协议。</p>
-</div>
 
-<div class="am-md"><p>同一逻辑调用的重试复用幂等键；用户有意再次执行的新动作应分配新的 ID。只按参数哈希对所有调用去重，会误拦用户有意重复执行的操作。更完整的恢复设计见 <a href="state.html#module-state">State</a>。</p>
+<section class="lesson-section" id="module-tools-p1-panel-F">
+<span id="module-tools-p1-panel-G"></span>
+<span id="module-tools-p2-panel-A"></span>
+<h3>7. 调度控制、幂等性与大结果处理</h3><div class="lesson-body"><div class="am-md">
+<h4>A. 串行、并行与长任务</h4>
+<p>互不依赖的只读操作适合受限并发；同一文件的“读 → 改 → 检查”有依赖，应保持顺序。并行写入不同路径也可能共享索引或全局状态，因此仅比较文件名不足以判断独立性。</p>
+<p>工具元数据可以增加 <code>effect_class</code>、并发分组、超时和是否可查询回执。调度器据此限制并发；这些元数据必须由可信实现提供，不能直接把外部服务器自报的“只读”当成授权证明。耗时较长的异步任务宜返回 <code>job_id</code>，再通过事件通知或轮询回执推进，不能让整个 Agent 循环长时间同步阻塞。</p>
+
+<h4>B. 幂等性与结果未知时的重试</h4>
+<p>考虑外部创建报告或提交工单的调用：服务已经创建资源，但返回前因网络抖动中断。程序只知道结果未知，不能简单按失败直接重试。正确设计需要为每次逻辑调用分配稳定幂等键（Idempotency Key），并在重试前主动查询外部系统回执或资源状态。</p>
+
+<h4>C. 大段结果截断与精确代码编辑</h4>
+<p>工具输出不可预知地过大时，必须支持截断、总量提示与溢出转存（详见<a href="../stages/stage-6.html#stage-6">阶段 6</a>）。在代码修改场景下，生产级 Agent（如 Claude Code、Cursor）普遍弃用“整文件全量重写”，转而采用带行号定位或原文本锚点的<strong>精确 Patch 替换工具</strong>，既能大幅节省 Token 预算，又大幅降低外部文件被意外截断覆盖的风险。</p>
 </div></div>
 </section>
-<section class="lesson-section" id="module-tools-p2-panel-A"><h3>8. 大段结果与精确编辑</h3><div class="lesson-body"><div class="am-md"><p>大结果应带总量、预览范围、截断标记和补读引用。Context 可以选择少发一些内容，但完整回执仍应有位置可查；模型不应把预览当成全量结果。</p>
-<p>下一阶段的编辑工具可要求 <code>expected_sha256</code> 和必须匹配的原文片段，写入前重读并比较版本，发现外部修改就拒绝。它能减少因原始内容过时而覆盖他人新改动的情况，却不自动解决所有跨进程竞态；需要结合原子替换、锁或隔离工作区。</p>
-</div></div>
-</section>
-</details><section class="lesson-section" id="module-tools-p2-panel-B"><h3>9. 本项目当前选择与未实现范围</h3><div class="lesson-body"><div class="am-md"><ul><li><strong>本项目当前选择</strong>：采用 <strong>专用结构化文件工具 + 进程内普通函数 + 串行执行</strong>，默认注册 <code>list_files</code>、<code>read_file</code>、<code>search_text</code> 和 <code>write_file</code>。</li><li><strong>尚未实现（按需扩展）</strong>：通用 Shell / SQL 执行器、MCP 外部工具接入、独立 Worker 进程、沙箱隔离、并行工具调度与远程幂等重试。</li></ul><h4 id="module-tools-policy-interface">Tools 与 Policy 的衔接流程</h4><ol><li><strong>注册时声明权限</strong>：工具注册时通过数据字段声明所需权限（<code>read</code> / <code>write</code> / <code>list</code>）和路径参数名（如 <code>path_parameter="path"</code>），无需传入自定义权限回调。</li><li><strong>执行前生成动作</strong>：<code>ToolRegistry</code> 根据权限声明、已校验参数与目标文件状态生成 <code>ActionRequest</code>（写入操作会自动区分 <code>create</code> 与 <code>overwrite</code>），统一调用 <code>Policy.evaluate()</code>。</li><li><strong>按决定放行或拦截</strong>：获得许可才调用实际工具函数；被拒绝则直接返回 <code>policy_denied</code> 回执，底层函数不会运行（详见 <a href="policy.html#module-policy-interface">Policy 教程</a> 与 <a href="../stages/stage-2.html#stage-2">阶段 2</a>）。</li></ol></div></div></section>
-<section class="lesson-section" id="module-tools-p2-panel-C"><h3>10. 动手练习与期望达到的效果</h3><div class="lesson-body"><div class="am-md"><p>以新增统计文件行数的工具 <code>count_lines</code> 为例，由于它需要读取文件，注册时直接声明 <code>permission="read"</code> 与 <code>path_parameter="path"</code>：</p><pre><code>tools.register(
+</details><section class="lesson-section" id="module-tools-p2-panel-B"><h3>8. 本项目当前选择与生产级演进路径</h3><div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>本项目当前选择（学习 MVP）</strong>：采用 <strong>专用结构化文件工具 + 进程内普通函数 + 串行执行</strong>，默认注册 <code>list_files</code>、<code>read_file</code>、<code>search_text</code> 和 <code>write_file</code>。
+<p><em>选择理由</em>：避免在一开始引入 Docker、微虚拟机或复杂的 OAuth 凭据，让读者用最低认知成本彻底跑通 <code>ToolSpec</code> 注册、模型参数校验与 <code>ToolResult</code> 回执的闭环流程。</p></li>
+<li><strong>向生产级演进路径（开箱即用平滑升级）</strong>：
+<ul>
+<li><strong>升级执行环境为沙箱</strong>：上层 <code>ToolRegistry</code> 与 Runner 契约完全保持不变；仅需将底层写入或命令执行函数对接为 <strong>E2B</strong>（<code>sandbox.filesystem.write</code>）或本地 <strong>Docker</strong> 容器，即可瞬间具备高隔离安全性。</li>
+<li><strong>接入海量 SaaS 或外部工具</strong>：利用通用 <strong>MCP 客户端</strong>（或 <strong>Composio</strong> 的 MCP 导出服务），将外部服务声明动态载入 <code>ToolRegistry</code>，实现零代码维护扩展。</li>
+</ul></li>
+</ul>
+<h4 id="module-tools-policy-interface">Tools 与 Policy 的衔接流程</h4><ol><li><strong>注册时声明权限</strong>：工具注册时通过数据字段声明所需权限（<code>read</code> / <code>write</code> / <code>list</code>）和路径参数名（如 <code>path_parameter="path"</code>），无需传入自定义权限回调。</li><li><strong>执行前生成动作</strong>：<code>ToolRegistry</code> 根据权限声明、已校验参数与目标文件状态生成 <code>ActionRequest</code>（写入操作会自动区分 <code>create</code> 与 <code>overwrite</code>），统一调用 <code>Policy.evaluate()</code>。</li><li><strong>按决定放行或拦截</strong>：获得许可才调用实际工具函数；被拒绝则直接返回 <code>policy_denied</code> 回执，底层函数不会运行（详见 <a href="policy.html#module-policy-interface">Policy 教程</a> 与 <a href="../stages/stage-2.html#stage-2">阶段 2</a>）。</li></ol></div></div></section>
+<section class="lesson-section" id="module-tools-p2-panel-C"><h3>9. 动手练习与期望达到的效果</h3><div class="lesson-body"><div class="am-md"><p>以新增统计文件行数的工具 <code>count_lines</code> 为例，由于它需要读取文件，注册时直接声明 <code>permission="read"</code> 与 <code>path_parameter="path"</code>：</p><pre><code>tools.register(
     count_lines, ReadFileArguments,
     permission="read", path_parameter="path",
 )</code></pre><p>在项目根目录运行完整示例 <a href="../../examples/count_lines.py">count_lines.py</a>（不调用模型）：</p><pre><code>uv run python -m examples.count_lines</code></pre><p><strong>期望达到的效果：</strong></p><ul><li><strong>零侵入扩展</strong>：新增工具只需编写普通函数并调用 <code>register()</code>，无需修改 <code>registry.py</code> 或 <code>Runner</code>（见 <a href="../../tests/test_tools.py">test_tools.py</a>）。</li><li><strong>权限检查自动生效</strong>：开启读取权限时正常返回行数（3 行）；关闭读取权限时自动被 <code>ToolRegistry</code> 拦截并返回 <code>policy_denied</code> 回执。</li></ul></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="model.html#module-model">← Model：适配模型服务与通信协议</a><a href="policy.html#module-policy">Policy：在执行前检查操作权限 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
