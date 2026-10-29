@@ -15,71 +15,311 @@
 <ul><li><strong>Session 保存发生过什么</strong>：按会话保存问题、回答与工具回执，供查询或续接对话。</li><li><strong>Memory 保存值得复用什么</strong>：保存选定的事实或偏好，说明来自哪里、适用于哪个项目或用户。</li><li><strong>Context 决定本次发送什么</strong>：把本次问题、选中的历史和适用记忆组装成模型输入，并检查完整请求的预算。</li></ul>
 <p>一次使用记忆的任务可以分为以下步骤：</p>
 <ol><li><strong>应用确定范围</strong>：根据当前工作区或用户配置，指定可读取的记忆来源。</li><li><strong>Memory 读取资料</strong>：返回内容及其来源；条目多时，也可以先查找与任务相关的条目。</li><li><strong>Context 检查输入</strong>：将记忆与其他输入一起计量，再决定是否能够发送。</li><li><strong>模型参考资料回答</strong>：需要操作文件时提出工具调用，执行仍经过 Tools 与 Policy。</li></ol>
+<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 920 620" width="920" height="620" role="img" aria-label="通用交互：应用启动时从工作区读取 Memory 生成快照，Runner 加载会话历史并在每步请求前交由 Context Manager 按预算组装；模型响应与工具回执写回 Session，Memory 不重复追加写入会话历史">
+<defs><marker id="memory-interface-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+<g fill="none" stroke="currentColor" stroke-width="1.3">
+  <rect x="16" y="16" width="136" height="44" rx="8"/>
+  <rect x="195" y="16" width="136" height="44" rx="8"/>
+  <rect x="375" y="16" width="136" height="44" rx="8"/>
+  <rect x="555" y="16" width="150" height="44" rx="8"/>
+  <rect x="750" y="16" width="130" height="44" rx="8"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="15">
+  <text x="84" y="44">工作区 / Memory</text>
+  <text x="263" y="44">Runner / 应用入口</text>
+  <text x="443" y="44">Session / 记录层</text>
+  <text x="630" y="44">Context Manager</text>
+  <text x="815" y="44">Model</text>
+</g>
+<g stroke="currentColor" opacity=".25" stroke-dasharray="5 5">
+  <path d="M84 60 V570 M263 60 V570 M443 60 V570 M630 60 V570 M815 60 V570"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#memory-interface-arrow)">
+  <path d="M263 105 H84"/>
+  <path d="M263 190 H443"/>
+  <path d="M263 285 H630"/>
+  <path d="M263 400 H815"/>
+  <path d="M263 505 H443"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#memory-interface-arrow)">
+  <path d="M84 145 H263"/>
+  <path d="M443 230 H263"/>
+  <path d="M630 345 H263"/>
+  <path d="M815 445 H263"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="14">
+  <text x="173" y="98">启动时读取 MEMORY.md</text>
+  <text x="173" y="138">返回快照 (source + content)</text>
+  <text x="353" y="180">加载已完成历史 Turn 块</text>
+  <text x="353" y="222">有序历史（不含独立 Memory）</text>
+  <text x="446" y="266">系统指令、历史块、Memory 快照、</text>
+  <text x="446" y="282">当前任务消息、工具定义与输入预算</text>
+  <text x="446" y="325">组装本轮请求视图（含 Memory 参考消息）</text>
+  <text x="446" y="341">与预算决策清单（超限则报错）</text>
+  <text x="539" y="392">用筛选后的完整输入请求模型</text>
+  <text x="539" y="437">回答或工具调用（ModelResponse）</text>
+  <text x="353" y="495">追加本轮提问、响应与工具回执</text>
+  <text x="353" y="513">（Memory 内容不向 Session 重复灌入）</text>
+  <text x="460" y="595">实线：主动调用或传入快照；虚线：返回数据。Memory 在任务启动时一次性读入并锁定不可变快照，供循环内每步复核预算，不向 SessionLog 重复灌入。</text>
+</g>
+</svg><figcaption>通用协作边界：Memory 在任务启动时锁定快照，Context Manager 只读筛选并注入参考消息，SessionLog 仅保存实际对话交互。</figcaption></figure>
 <p>记忆可以由用户直接维护，也可以从会话记录中提取。因此 Session 能提供写入来源，但 Memory 不必依赖自动扫描历史。模型提出的候选与用户已经确认的事实要分清；记忆中的“允许覆盖文件”也不能替代实际权限检查。</p>
 <p>没有记忆与读取失败是两种结果：前者可以正常继续，后者应按应用约定明确处理，不能悄悄当成“没有记忆”。</p></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-C"><h3>3. Memory 存在哪里？（四种常见存储位置）</h3><div class="lesson-body"><div class="am-md">
-<p>设计 Memory 时，首先要明确<strong>“什么内容值得存”</strong>以及<strong>“存在哪里”</strong>：</p>
-<ul><li><strong>存什么内容</strong>：只存跨会话反复使用的<strong>项目事实与偏好</strong>（如依赖工具、代码规范）和<strong>经过验证的排障经验</strong>（现象、原因与解法）。如果某套操作已经成为固定执行流程，则适合整理成 <a href="extensions.html#module-extensions">Skill</a>。</li></ul>
-<p>按系统复杂度从低到高，Memory 常见有四种存放位置：</p>
-<h4>A. 单份项目或全局 Markdown 文件（如 <code>&lt;workspace&gt;/MEMORY.md</code>、<code>AGENTS.md</code>）</h4>
-<p>直接存放在项目工作区根目录（仅对当前项目生效）或用户全局配置目录（如 <code>~/.agent/MEMORY.md</code>，对当前用户的所有项目生效）。纯文本最容易打开查看、手动修改和纳入版本控制；适合条目不多、以核心项目约定为主的阶段。</p>
-<h4>B. 索引文件 + 分主题 Markdown 文件（如 <code>MEMORY.md</code> + <code>memories/*.md</code>）</h4>
-<p>主文件只存放简短目录与一句话摘要，详细的模块说明或排障记录拆分到独立主题文件中。适合知识按主题明显分块、单文件已经过长的场景。</p>
-<h4>C. 结构化数据库表（如 SQLite <code>memories</code> 表）</h4>
-<p>将每条记忆存为数据库记录（包含 <code>id</code>、适用范围 <code>scope</code>、正文 <code>content</code>、来源 <code>source</code>、状态 <code>status</code>、更新时间 <code>updated_at</code> 等字段）。适合需要按项目/状态精确过滤、保留更正轨迹或由程序并发写入的场景。</p>
+<section class="lesson-section" id="module-memory-p1-panel-C"><span id="module-memory-p1-panel-F"></span><h3>3. Memory 的存储介质与数据结构（从纯文本到多维命名空间）</h3><div class="lesson-body"><div class="am-md">
+<p>设计 Memory 时，首先要划分<strong>“存什么内容”</strong>以及<strong>“采用什么数据结构和存储介质”</strong>：</p>
+<ul>
+<li><strong>存什么内容（核心原则）</strong>：只存跨会话反复使用的<strong>项目事实与规范</strong>（如依赖管理工具、编码约束）和<strong>经过验证的排障经验</strong>（现象、原因与解法）。临时报错、单行代码或瞬时测试结果应在需要时通过工具重新核对，不属于持久记忆；固定的多步执行流程则适合打包成 <a href="extensions.html#module-extensions">Skill</a>。</li>
+</ul>
+<p>按系统复杂度从低到高，业界常见的存储形态与数据结构分为四类：</p>
+<h4>A. 单份 Markdown 纯文本（如 <code>&lt;workspace&gt;/MEMORY.md</code>、<code>CLAUDE.md</code>）</h4>
+<p>直接存放在项目工作区根目录（仅对当前项目生效）或用户全局配置目录（如 <code>~/.agent/MEMORY.md</code>）。纯文本天然具备极高的可读性，便于开发者直接查看修改，并能直接纳入 Git 进行代码审查（PR）。适合规则条目较少、以核心项目约定为主的阶段。</p>
+<h4>B. 目录索引 + 分主题 Markdown 文件（如 <code>MEMORY.md</code> + <code>memories/*.md</code>）</h4>
+<p>主文件只保留精简的目录与一句话摘要，详细的模块规范或故障案例拆分到独立主题文件中。适合知识按模块或主题明显分块、单文件已经过长导致阅读困难的场景。</p>
+<h4>C. 结构化关系表与层次化命名空间（如 SQLite <code>memories</code> 表、LangGraph <code>BaseStore</code>）</h4>
+<p>将每条知识保存为包含完整元数据的结构化条目。适合多租户系统、多项目隔离，或需要程序并发读写、保留更正审计轨迹的场景。一个标准的结构化条目通常包含以下元数据：</p>
+<ul>
+<li><strong>来源（Source）</strong>：记录产生该知识的原始会话 ID、用户任务或文档链接，便于后续追溯和人工核实。</li>
+<li><strong>适用范围（Scope）</strong>：明确知识属于全局用户、组织团队还是特定项目，在读取和检索时作为硬性过滤条件。</li>
+<li><strong>有效状态（Status）</strong>：标记当前为有效（<code>active</code>）、已废弃（<code>superseded</code>）还是已删除（<code>deleted</code>），避免检索出过期规则。</li>
+<li><strong>确认依据（Confirmation）</strong>：区分是由用户明确声明的事实，还是模型生成的候选建议；未经人类确认的模型猜测不能作为硬规则生效。</li>
+</ul>
 <h4>D. 向量索引或混合检索库（如 SQLite FTS + Embedding 向量库）</h4>
-<p>在结构化条目之上额外建立关键词倒排索引与语义向量索引。适合记忆条目非常多、用户提问用词与原文字面差异较大的场景，但会引入向量计算与检索评测成本。</p></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-D"><h3>4. 什么时候、怎么增删改查（CRUD）？</h3><div class="lesson-body"><div class="am-md">
-<p>明确了存在哪里之后，还要定下<strong>什么时候触发、由谁执行“增、查、改、删”</strong>。注意区分“存在哪里（存储介质）”与“谁来写（人工 vs 模型工具 vs 后台提取）”是两个正交的选择：</p>
-<h4>增（Create：什么时候写入、谁来写？）</h4>
+<p>在结构化条目之上额外建立关键词倒排索引与语义向量索引。适合条目极多、用户提问用词与记忆原文字面差异较大的场景，但会引入向量计算、分块嵌入和检索评测的额外工程成本。</p>
+</div></div></section>
+<section class="lesson-section" id="module-memory-p1-panel-D"><span id="module-memory-p1-panel-G"></span><h3>4. 核心机制：写路径（维护/提炼）与读路径（检索/注入）</h3><div class="lesson-body"><div class="am-md">
+<p>明确了数据结构后，必须定下 Memory 的两条核心流水线：<strong>知识如何沉淀落盘（写路径）</strong>与<strong>知识如何进入模型输入（读路径）</strong>。注意：“存在哪里”与“谁来读写”是正交的工程选择。</p>
+
+<h4>4.1 写路径（Write Pipeline）：知识如何沉淀落盘？</h4>
+<p>知识写入可以由人工主导，也可以由模型或后台流程辅助。无论底层是 Markdown 还是数据库，写入都可以归纳为三条通道：</p>
+</div>
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/memory-write-paths.svg" width="840" height="580" alt="Memory 写入与知识沉淀的三条通道" loading="lazy"><figcaption>Memory 写入与沉淀机制：人工录入 vs 对话工具调用 vs 离线反思提炼。</figcaption></figure>
+<div class="am-md">
 <ul>
-<li><strong>方式 1：用户手动编辑文件（最简单可靠）</strong>：当用户确认一条长期约定（如“本项目用 <code>uv run</code>”）时，直接打开 <code>MEMORY.md</code> 写入。注意：在普通对话里模型口头回答“好的，我记住了”只会留在当前 <code>SessionLog</code>，不会自动写入记忆文件。</li>
-<li><strong>方式 2：模型在对话中调用记忆工具写入</strong>：用户明确要求“请记住这条规则”时，模型发起 <code>memory_write</code> 或文件写入工具调用，经 <code>Policy</code> 权限检查或用户确认后落盘。</li>
-<li><strong>方式 3：会话结束后后台自动提炼</strong>：任务或会话结束时，后台流程扫描 <code>SessionLog</code>，提炼出值得复用的事实写入记忆库。省去人工整理，但必须额外防范“把模型猜错的结论当成事实写入”以及重复写入问题。</li>
+<li><strong>通道 A：人工直接录入与命令维护（最稳健，零幻觉）</strong>：用户确认一条长期约定后，直接编辑 <code>MEMORY.md</code> 或在终端输入 <code>/memory</code> 命令。注意：普通对话中模型口头回答“好的，我记住了”只会追加在 <code>SessionLog</code> 中，绝不自动篡改物理记忆文件。</li>
+<li><strong>通道 B：对话中模型主动调用工具（即时响应，受权限约束）</strong>：用户明确要求“请记住这条规范”时，模型发起 <code>memory_write</code> 工具调用；该动作必须经由 <code>Policy</code> 权限检查或人工弹窗确认后方可落盘。</li>
+<li><strong>通道 C：会话后离线反思提炼（高自动化，须去噪去重）</strong>：任务或会话结束后，后台异步 Reflection 任务扫描 <code>SessionLog</code>，提炼出值得复用的事实批量写入。该通道不阻塞在线交互，但必须增加防幻觉校验，防止把模型的临时猜测沉淀为永久事实。</li>
+<li><strong>统一写入治理关卡</strong>：所有通道在落盘前均须完成三件事：<strong>绑定作用域（Scope）</strong>防止越界；<strong>去噪核查</strong>剔除瞬时报错；<strong>冲突替代</strong>若新旧约定矛盾，更新正文并标记旧条目为 <code>superseded</code>。</li>
 </ul>
-<h4>查（Read / Query：什么时候读取、怎么放进模型请求？）</h4>
+
+<h4>4.2 读路径（Read Pipeline）：知识如何进入模型输入？</h4>
+<p>知识保存后，必须在恰当的时机组装到模型请求中才能真正生效。常见的读取注入方式同样有三条通道：</p>
+</div>
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/memory-read-paths.svg" width="840" height="580" alt="Memory 读取与注入模型的三条通道" loading="lazy"><figcaption>Memory 读取与注入机制：启动全量加载 vs 请求前动态检索 vs 运行期按需查阅。</figcaption></figure>
+<div class="am-md">
 <ul>
-<li><strong>方式 1：每次任务启动时全量读取（适合短文件）</strong>：<code>run_task()</code> 启动时直接读取当前工作区的 <code>MEMORY.md</code> 全文，交给 <code>Context</code> 组装成参考资料消息放进 <code>ModelRequest</code>。优点是稳定直接、无需模型先调工具找文件；代价是每次请求都要占用这部分输入预算。</li>
-<li><strong>方式 2：每次请求前按关键词或向量检索（适合数据库 / 向量库）</strong>：在 <code>Context</code> 组装请求前，先按当前项目范围过滤，再用本次用户问题检索最相关的 Top-K 条记忆放入请求。</li>
-<li><strong>方式 3：模型按需调用工具读取（适合索引 + 主题文件）</strong>：任务启动时只向模型提供简短目录索引；当模型判断需要某个主题的细节时，再主动调用读取或检索工具拉取正文。</li>
+<li><strong>通道 1：任务启动时全量加载（短规则首选，零延迟）</strong>：<code>run_task()</code> 启动时自动读取当前工作区的 <code>MEMORY.md</code> 全文，由 <code>Context Manager</code> 组装为系统参考消息。优点是稳定直接、模型无需先调工具找文件；代价是每次请求都要消耗固定输入预算。</li>
+<li><strong>通道 2：每次请求前动态检索（多租户、海量条目首选）</strong>：在 <code>Context</code> 组装每步请求前，先按项目范围硬过滤，再用当前用户问题做关键词（FTS）或向量相似度（Embedding）计算，仅提取 Top-K 条相关记忆注入输入。</li>
+<li><strong>通道 3：运行期模型按需查阅（大文档、渐进披露首选）</strong>：初始输入仅提供简短的主题目录或核心索引；当模型在多步执行中遇到专业问题时，自主发起 <code>read_memory</code> 或 <code>search_memory</code> 工具调用按需翻查正文。</li>
 </ul>
-<h4>改（Update：约定变化时怎么更新、新旧冲突听谁的？）</h4>
+
+<h4>4.3 读写协同的三大工程铁律</h4>
 <ul>
-<li><strong>文件方案</strong>：直接修改 <code>MEMORY.md</code> 中的对应内容。为避免同一次多步任务执行中途上下文突然变化，任务执行期间应锁定启动时读取的快照，修改后的内容在<strong>下一次任务</strong>启动时生效。</li>
-<li><strong>数据库与索引方案</strong>：按条目 <code>id</code> 更新正文并同步刷新检索索引；若需保留历史审计，可将旧条目标记为 <code>superseded</code>（已替代）并插入新条目。</li>
-<li><strong>新旧冲突优先级</strong>：当旧会话历史（<code>SessionLog</code>）里残留着旧做法，而当前读取的 <code>Memory</code> 已更新为新约定时，系统指令必须明确优先级：<strong>本次用户明确要求 &gt; 当前读取的 Memory &gt; 历史对话中的旧默认约定</strong>。</li>
+<li><strong>铁律一：单次任务内锁定不可变快照</strong>：多步任务执行中途如果允许底层记忆文件被随时改动，会导致第 1 步与第 2 步模型看到的项目约定不一致，引发严重的推理混乱。因此，修改后的记忆只能在<strong>下一次任务</strong>生效，当前任务内部必须锁定启动时读取的内存快照。</li>
+<li><strong>铁律二：三层冲突消解优先级</strong>：当新旧约定发生冲突时，不能让模型凭运气猜测，系统指令必须声明明确的裁决准则：<strong>本次用户明确要求 &gt; 当前读取的 Memory 默认约定 &gt; 历史对话中的旧记录</strong>。</li>
+<li><strong>铁律三：停止注入 vs 物理抹除</strong>：删除 Memory 的本质是<strong>停止在后续任务中作为背景资料自动加载</strong>。它绝不能、也不应该去重写或篡改过去已保存在 <code>SessionLog</code> 里的真实对话与工具审计历史。</li>
 </ul>
-<h4>删（Delete / Forget：什么时候删除、删除的边界在哪？）</h4>
+</div></div></section>
+<section class="lesson-section" id="module-memory-p1-panel-E"><h3>5. 主流 Agent 的 Memory 架构全景与源码方案对比</h3><div class="lesson-body"><div class="am-md">
+<p>在不同类型的 Agent 系统中，由于交互目标、执行环境和记忆生命周期不同，Memory 的设计呈现出截然不同的架构流派。以下结合固定开源源码与官方机制，系统拆解业界最具代表性的五大方案：</p>
+
+<h4>5.1 方案一：文件约定与层级目录发现（pi / Claude Code / Cursor）</h4>
+<p>这是代码开发类 Agent 最主流、最轻量的方案。其核心逻辑是：<strong>不依赖任何外部数据库，直接将纯文本文件作为知识载体，利用操作系统的目录树结构实现规则的层级继承与自动发现。</strong></p>
 <ul>
-<li><strong>文件方案</strong>：删掉 <code>MEMORY.md</code> 中的过期段落，或直接清空、删除文件；下一次任务启动时便不再注入该内容。</li>
-<li><strong>数据库与自动提炼方案</strong>：将条目标记为 <code>deleted</code> 并同步从检索索引中移除；若开启了后台自动提炼，还必须阻止后台从旧 <code>SessionLog</code> 里把同一内容再次提取回来。</li>
-<li><strong>删除的边界</strong>：删除 Memory 的作用是<strong>停止在后续任务中自动加载该知识</strong>，但它不会自动抹掉旧会话 <code>SessionLog</code> 里已经发生过的历史问答。</li>
-</ul></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-E"><h3>5. 源码比较：pi 与 Deep Agents 怎样加载项目知识？</h3><div class="lesson-body"><div class="am-md">
-<p>两者都能从文件提供持续可用的项目背景。pi 将相关文件称为项目上下文；Deep Agents 使用 MemoryMiddleware。这里比较的是<strong>文件怎样进入模型输入</strong>，不能据此推断它们都具备自动提取或结构化记忆库。</p>
-<h4>pi：从目录发现上下文文件</h4>
-<ol><li><strong>初始化与数据</strong>：资源加载器根据 <code>cwd</code> 和 <code>agentDir</code> 查找上下文文件，保存 <code>path</code> 与 <code>content</code>；包含全局来源与目录层级来源。</li><li><strong>调用与输入</strong>：<code>buildSystemPrompt()</code> 接收已加载的上下文文件，将路径与正文放进系统提示词的项目上下文部分。</li><li><strong>读取与失败</strong>：<code>loadContextFileFromDir()</code> 读取文件，遇到读取异常会输出警告；这是一种实现选择，应用也可以选择明确失败。</li></ol>
-<p>固定版本依据：<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/resource-loader.ts#L70-L159">resource-loader.ts 的文件发现与读取</a>、<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/system-prompt.ts#L144-L152">system-prompt.ts 的输入组装</a>，提交 <code>9d2ec7f</code>。</p>
-<h4>Deep Agents：显式配置文件来源</h4>
-<ol><li><strong>初始化与数据</strong>：创建 <code>MemoryMiddleware</code> 时传入 backend 与 <code>sources</code>；文件内容以路径为键保存在 <code>memory_contents</code>。</li><li><strong>调用与输入</strong>：<code>before_agent()</code> 在状态尚未包含记忆时下载来源文件；默认情况下，模型调用包装器经 <code>modify_request()</code> 将格式化的记忆加入系统消息。</li><li><strong>读取与失败</strong>：文件不存在时跳过；其他下载错误抛出异常。已有 <code>memory_contents</code> 时不会在这个钩子里重新加载，更新何时可见取决于状态如何刷新。</li></ol>
-<p>固定版本依据：<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L195-L243">初始化参数</a>、<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L281-L313">before_agent()</a>、<a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L347-L402">请求组装与调用</a>，提交 <code>97f856d</code>。</p>
-<p><strong>本教程的归纳</strong>：目录发现便于继承项目约定，但需要解释加载范围与顺序；显式来源便于控制读哪些文件，但需要管理配置与刷新时机。两者的文件内容都需要进入模型输入才能生效，保存文件本身还不够。</p></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-F"><h3>6. 什么时候才需要结构化条目？</h3><div class="lesson-body"><div class="am-md">
-<p>一份人工维护的短文件，可以用文件路径标明来源，用工作区限制适用范围。需要逐条更正、查询或自动整理时，再增加条目结构。</p>
-<details><summary>自动提取与结构化存储需要补充的信息</summary><ul><li><strong>来源</strong>：记录对应会话、任务或原始资料的位置，方便核对。</li><li><strong>适用范围</strong>：明确属于哪个用户或项目，查询时先限制范围。</li><li><strong>有效状态</strong>：区分正在使用、被更正和已删除的内容，避免查询返回旧值。</li><li><strong>确认依据</strong>：区分用户明确提供的事实与模型候选；模型不能替用户生成确认记录。</li></ul><p>只有需要保留更正过程时，才增加版本关联；只有知识具有明确有效期时，才增加过期时间。这些字段服务于具体行为，不是 Memory 的统一格式。</p></details></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-G"><h3>7. 更正与遗忘时的三个核心边界</h3><div class="lesson-body"><div class="am-md">
-<p>无论采用文件还是数据库方案，处理知识的更正与遗忘时，都必须把清三个关键边界：</p>
+<li><strong>数据载体与多层作用域</strong>：
+  <ul>
+  <li><strong>全局用户级（User-Level）</strong>：存放在用户根目录（如 <code>~/.claude/CLAUDE.md</code> 或 <code>~/.pi/agent/</code>），记录跨所有项目的通用偏好（如“使用中文回答”、“默认使用 TypeScript 严格模式”）。</li>
+  <li><strong>项目仓库级（Project-Level）</strong>：存放在工作区根目录（如 <code>CLAUDE.md</code>、<code>AGENT.md</code>、<code>.cursorrules</code>），记录当前代码库的构建工具、测试命令与架构约束。</li>
+  <li><strong>子目录与路径级（Path-Level）</strong>：存放在特定模块目录（如 <code>.claude/rules/*.md</code> 或 <code>.cursor/rules/*.mdc</code>），通过 glob 路径规则仅在编辑特定文件时动态激活。</li>
+  </ul>
+</li>
+<li><strong>读取与加载机制（以 pi 源码为例）</strong>：
+  <p>在 pi 源码中，<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/resource-loader.ts#L70-L159">resource-loader.ts</a> 的 <code>DefaultResourceLoader</code> 实现了目录递归扫描：</p>
+  <ol>
+  <li><strong>向上递归发现</strong>：从当前工作区 <code>cwd</code> 出发向上遍历父目录，结合全局 <code>agentDir</code>，查找所有上下文文件并读取为 <code>{ path, content }</code> 对象。读取异常时记录警告而不中断主流程。</li>
+  <li><strong>组装系统提示词</strong>：在 <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/system-prompt.ts#L144-L152">system-prompt.ts</a> 中，<code>buildSystemPrompt()</code> 遍历已加载的上下文文件，将文件路径与正文格式化为系统提示词中的 <code>projectContext</code> 独立段落。</li>
+  </ol>
+</li>
+<li><strong>工程实践（以 Claude Code 为例）</strong>：
+  <p>Claude Code 通过 <code>CLAUDE.md</code> 体系实现了灵活的记忆管理：支持开发者通过终端命令 <code>/memory</code> 实时查看和人工编辑生效的记忆列表；在较新版本中，还支持模型在识别到明确的项目约定后，提炼出单条事实供用户确认后存入 <code>.claude/</code> 记忆目录。</p>
+</li>
+<li><strong>架构取舍与适用场景</strong>：
+  <ul>
+  <li><strong>优势</strong>：高透明度、零外部依赖；纯文本天然支持通过 Git 进行版本控制、差异比对与代码审查（PR），非常契合团队工程协作。</li>
+  <li><strong>局限与代价</strong>：缺乏动态语义检索能力。当规范文件体积庞大时，每次请求全量拼入系统提示词会大量挤占模型的输入 Token 预算。</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.2 方案二：中间件切入与存储抽象解耦（Deep Agents）</h4>
+<p>在云原生、多租户或容器化沙箱环境中，Agent 的执行节点往往是无状态的，无法直接假定本地存在固定物理文件。Deep Agents 展现了<strong>将记忆抽象为独立中间件并解耦底层存储</strong>的标准架构。</p>
 <ul>
-<li><strong>单次任务内锁定不可变快照</strong>：多步任务执行中途如果允许底层记忆文件被随时改动，会导致第 1 步和第 2 步发给模型的项目约定不一致，引发推理混乱。因此，修改后的记忆只能在<strong>下一次任务</strong>生效，当前任务必须锁定启动时读取的快照。</li>
-<li><strong>冲突消解遵循三层优先级</strong>：当新旧约定发生冲突时，不能靠运气让模型猜，系统指令必须声明规则：<strong>本次用户明确要求 &gt; 当前读取的 Memory 默认约定 &gt; 会话历史中的旧默认记录</strong>。</li>
-<li><strong>区分“停止注入”与“物理抹除”</strong>：删除 Memory 的本质是<strong>停止在后续任务中作为背景资料自动加载</strong>。它不能、也不应该自动去重写或篡改过去已保存在 <code>SessionLog</code> 里的真实问答历史。</li>
-</ul></div></div></section>
-<section class="lesson-section" id="module-memory-p2-panel-A"><h3>8. 本项目当前选择：一份人工维护的项目文件</h3><div class="lesson-body"><div class="am-md">
-<p><strong>阶段 0–4 已实现</strong>会话保存、续接与上下文预算；Memory 尚未实现。<strong>阶段 5 已选择</strong>工作区根目录的 <code>MEMORY.md</code>：由用户编辑，每次任务开始时读取，路径与正文一起进入预算检查，同一任务使用同一份内容。</p>
-<p>选择它是因为少量项目约定可以直接检查，不需要先解决提取准确率与检索质量。初始化位置、现有源码入口和拟议调用流程见 <a href="../stages/stage-5.html#stage-5-p1-panel-C">阶段 5：怎样接入现有闭环</a>。</p></div></div></section>
-<section class="lesson-section" id="module-memory-p2-panel-B"><h3>9. 期望达到的效果</h3><div class="lesson-body"><div class="am-md">
+<li><strong>核心抽象与生命周期钩子</strong>：
+  <p>Deep Agents 在 <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L195-L243">memory.py</a> 中定义了 <code>MemoryMiddleware</code>，通过框架提供的中间件机制切入 Agent 生命周期：</p>
+  <ol>
+  <li><strong>显式来源声明</strong>：创建中间件时传入待读取的来源路径列表 <code>sources</code> 和底层存储后端 <code>backend</code>（可以是本地目录、内存 Mock，或 S3 等远程对象存储）。</li>
+  <li><strong>前置拉取（<code>before_agent</code>）</strong>：在 <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L281-L313">before_agent(state)</a> 钩子中，中间件检查当前 Agent State；若尚未加载记忆，则通过 <code>backend.read()</code> 异步拉取 <code>sources</code> 中的全部内容，写入 State 中的 <code>memory_contents</code> 字典。</li>
+  <li><strong>请求注入（<code>modify_request</code>）</strong>：在 <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L347-L402">modify_request(request, state)</a> 中，中间件将格式化后的 <code>memory_contents</code> 拼接到 <code>SystemMessage</code> 发给模型。</li>
+  </ol>
+</li>
+<li><strong>架构取舍与适用场景</strong>：
+  <ul>
+  <li><strong>优势</strong>：存储后端可插拔，运行时与物理宿主环境彻底解耦；多租户权限可由后端统一审计，非常适合无服务器（Serverless）或分布式 Agent。</li>
+  <li><strong>局限与代价</strong>：来源必须在 Agent 启动前由配置或外部调用方显式指定，无法在执行中根据文件系统的目录结构自发嗅探或动态扩展。</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.3 方案三：类操作系统分层内存与模型自管理（MemGPT / Letta）</h4>
+<p>在需要超长周期、无限对话的个人助手或虚拟伴侣场景中，上下文窗口即使达到数百万 Token 也无法承受长年累月的原始交互。MemGPT（现为 Letta）率先提出了<strong>借鉴现代计算机操作系统分层存储架构（Hierarchical Memory）</strong>的经典方案，并把记忆的增删改查完全交由模型自主驱动。</p>
+<ul>
+<li><strong>三层存储体系（类比计算机体系结构）</strong>：
+  <ol>
+  <li><strong>工作上下文（Working Context / 内存 RAM）</strong>：留在当前上下文窗口内的核心提示区。其中专门划出一块<strong>核心记忆区（Core Memory）</strong>，分为 <code>persona</code>（Agent 的人设准则与长期使命）和 <code>human</code>（用户的关键画像与硬性偏好）。这部分内容在每一步请求中都全量可见，容量严格受限。</li>
+  <li><strong>回想存储（Recall Storage / 二级缓存）</strong>：按时间顺序追加保存的完整对话事件与历史交互记录，支持按时间窗口或全文关键词搜索。</li>
+  <li><strong>归档存储（Archival Storage / 外存磁盘）</strong>：由外部数据库（通常为向量数据库）持久化存储的海量事实知识库，容量理论上无上限。</li>
+  </ol>
+</li>
+<li><strong>模型自管理工具（Agent-Driven Tools）</strong>：
+  <p>不同于系统静默组装，MemGPT 将记忆的维护赋予模型一组显式的内置工具：</p>
+  <ul>
+  <li><code>core_memory_append(name, content)</code> / <code>core_memory_replace(name, old_content, new_content)</code>：模型在对话中察觉到用户的新事实时，主动发起工具调用更新自己的 <code>human</code> 或 <code>persona</code> 区块。</li>
+  <li><code>archival_memory_insert(content)</code>：模型主动把复杂背景、文档总结或重要推导沉淀到长期向量库中。</li>
+  <li><code>archival_memory_search(query, page)</code>：当当前工作内存缺乏某领域知识时，模型主动发起语义检索工具调用，从归档库中翻查历史资料。</li>
+  </ul>
+</li>
+<li><strong>架构取舍与适用场景</strong>：
+  <ul>
+  <li><strong>优势</strong>：突破上下文窗口物理上限，赋予 Agent 跨越数月甚至数年的“自主成长”能力，适合终身学习助手与沉浸式 NPC。</li>
+  <li><strong>局限与代价</strong>：严重依赖模型的自反思与决策准确性。在实际工程中，模型容易产生“记忆幻觉”、误将废话频繁存入 Core Memory 挤占宝贵空间，或在不需要的时候频繁调用检索工具增加延迟与成本。</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.4 方案四：多租户命名空间与语义检索键值库（LangGraph / LangChain Long-Term Memory）</h4>
+<p>在企业级应用中，Agent 往往需要同时服务数千名用户、处理跨多个团队的项目知识，因此<strong>多租户隔离、权限归属与混合检索能力</strong>成为首要考量。LangGraph 的 Long-Term Memory 体系提供了工业级的抽象实现。</p>
+<ul>
+<li><strong>核心抽象与数据模型（BaseStore）</strong>：
+  <p>LangGraph 引入了跨会话持久化的 <a href="https://docs.langchain.com/oss/python/langchain/long-term-memory">BaseStore</a>（底层可对接 Postgres、Redis 等存储），采用层级化的 <code>(namespace, key, value)</code> 三元组组织数据：</p>
+  <ul>
+  <li><strong>命名空间隔离（Namespace）</strong>：通过元组实现多维作用域路由。例如：
+    <ul>
+    <li>个人偏好：<code>("users", user_id, "profile")</code></li>
+    <li>团队规范：<code>("orgs", org_id, "teams", team_id, "rules")</code></li>
+    <li>任务文档：<code>("projects", project_id, "docs")</code></li>
+    </ul>
+  </li>
+  <li><strong>键值读写与向量混合检索</strong>：支持 <code>store.get(namespace, key)</code> 精确获取，更支持 <code>store.search(namespace, query="...", limit=K)</code> 在指定命名空间下直接调用向量模型进行 Top-K 语义检索。</li>
+  </ul>
+</li>
+<li><strong>双通道写入管道（Two-Lane Writing）</strong>：
+  <ul>
+  <li><strong>实时通道（In-Loop Tool）</strong>：对话过程中，Agent 可以直接调用记忆更新工具，经业务校验后写入指定命名空间。</li>
+  <li><strong>异步反思通道（Offline Reflection Node）</strong>：会话结束后，系统在后台启动一个独立的反思 Agent（Reflection Node）。该节点扫描本次对话的 <code>SessionLog</code>，提取出有价值的新事实、合并冲突偏好后调用 <code>store.put()</code> 批量落库，完全不增加用户在线问答的等待耗时。</li>
+  </ul>
+</li>
+<li><strong>架构取舍与适用场景</strong>：
+  <ul>
+  <li><strong>优势</strong>：租户隔离边界清晰，权限管控严格；既能精确读取关键配置，又能模糊匹配非结构化经验，非常适合企业级 SaaS 平台。</li>
+  <li><strong>局限与代价</strong>：架构非常重，必须依赖外部数据库、Embedding 服务与后台反思调度任务，初始搭建与运维成本高。</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.5 方案五：事件驱动事实沉淀与用户可控画像（OpenAI ChatGPT / Codex / AgentScope Java）</h4>
+<p>为了让普通用户无需理解文件格式或命名空间，面向消费者的通用助手多采用<strong>由大模型自动提炼事实（Fact List），并配合前端可视化面板供用户审计与管理</strong>的方案。</p>
+<ul>
+<li><strong>机制与交互流程</strong>：
+  <ol>
+  <li><strong>隐式提炼与事件触发</strong>：用户在对话中透露出持久特征（如“我平时在 macOS 上用 zsh，写 Python 优先使用 3.12”），服务端模型在推理输出时附带一个结构化的 <code>Memory Update Event</code>。</li>
+  <li><strong>前端感知与审计面板</strong>：界面给出轻量级提示（如“已更新记忆”）。用户随时可在设置中打开“个人记忆管理面板”，查看所有已保存的单条事实条目，并支持单条编辑或彻底删除。</li>
+  <li><strong>上下文选择性注入</strong>：每次发起新任务时，系统根据相关性算法或全部有效事实，将条目格式化为简洁的列表（如 <code>- User prefers Python 3.12</code>）作为系统指令的一部分随请求发送。</li>
+  <li><strong>AgentScope Java 的实践</strong>：在 <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/memory.md">AgentScope Java memory.md</a> 中，系统专门设计了 <code>LongTermMemory</code> 接口与压缩整理流程，明确区分了“完整的执行历史（Session Log）”与“经提炼后的长期记忆条目（LongTermMemory）”。</li>
+  </ol>
+</li>
+<li><strong>架构取舍与适用场景</strong>：
+  <ul>
+  <li><strong>优势</strong>：对终端用户极度友好，无需学习任何特定命令或维护格式；用户可直观审查和纠错。</li>
+  <li><strong>局限与代价</strong>：自动提炼容易将短期上下文（如“我这周在度假”）误判为永久偏好；当新旧偏好冲突时，若缺乏人工干预，系统容易在多条相互矛盾的记忆间摇摆。</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.6 五大主流方案综合对比矩阵</h4>
+<div class="am-table-wrap">
+<table>
+<thead>
+<tr>
+<th>方案流派</th>
+<th>代表系统</th>
+<th>存储介质</th>
+<th>知识作用域</th>
+<th>写入方式与主体</th>
+<th>读取与注入方式</th>
+<th>核心优势</th>
+<th>主要代价与瓶颈</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>文件约定与层级发现</strong></td>
+<td>pi、Claude Code、Cursor</td>
+<td>工作区 Markdown / MDC 纯文本</td>
+<td>全局用户级 → 项目级 → 子目录级</td>
+<td>用户人工维护为主；或专有命令 / 确认后落盘</td>
+<td>任务启动时扫描目录全量读取，拼入 System Prompt</td>
+<td>高透明度、零外部依赖、天然支持 Git 代码审查</td>
+<td>文件变大后侵占上下文预算，无语义检索</td>
+</tr>
+<tr>
+<td><strong>中间件与存储解耦</strong></td>
+<td>Deep Agents</td>
+<td>抽象 Backend（本地/S3/内存）</td>
+<td>应用启动时显式声明的来源路径</td>
+<td>应用配置或专用存储接口写入</td>
+<td><code>before_agent</code> 异步拉取，<code>modify_request</code> 注入系统消息</td>
+<td>存储可替换，极度契合云原生容器与沙箱</td>
+<td>无法自发发现文件，需外部管理配置与刷新</td>
+</tr>
+<tr>
+<td><strong>分层内存与自管理</strong></td>
+<td>MemGPT / Letta</td>
+<td>Working Context + 向量库 + 事件库</td>
+<td>Core Memory（人设与用户）+ 全局归档库</td>
+<td>模型在对话中自主调用内置工具更新自身记忆</td>
+<td>Core Memory 每步全量可见，归档库由模型按需调工具检索</td>
+<td>支持无限轮次演进，真正实现 Agent 自主成长</td>
+<td>重度依赖模型决策水平，易产生幻觉与无效工具调用</td>
+</tr>
+<tr>
+<td><strong>多租户命名空间 Store</strong></td>
+<td>LangGraph</td>
+<td>Postgres / Redis + 向量索引</td>
+<td>严格分层的 <code>(namespace, key, value)</code></td>
+<td>工具实时更新 + 后台 Reflection 节点离线提炼</td>
+<td>图节点依赖注入，支持 Key 精确查找与向量语义搜索</td>
+<td>租户与权限隔离清晰，支持混合复杂查询与离线提炼</td>
+<td>架构重，需外置数据库与后台反思调度流水线</td>
+</tr>
+<tr>
+<td><strong>事件驱动画像事实</strong></td>
+<td>ChatGPT、Codex、AgentScope</td>
+<td>结构化 Fact List 数据库</td>
+<td>单个用户全局画像或项目偏好</td>
+<td>模型检测到偏好自动触发事件写入；用户面板可编辑</td>
+<td>请求前筛选相关条目，格式化为事实列表拼入请求</td>
+<td>用户零门槛、体验自然丝滑，支持可视化纠错</td>
+<td>容易误记临时特征，新旧冲突时需要消解逻辑</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></div></section>
+<section class="lesson-section" id="module-memory-p2-panel-A"><h3>6. 本项目当前选择：一份人工维护的项目文件</h3><div class="lesson-body"><div class="am-md">
+<p><strong>阶段 0–5 已实现</strong>会话保存、续接、上下文预算与项目记忆。<strong>阶段 5 使用</strong>工作区根目录的 <code>MEMORY.md</code>：由用户编辑，每次任务开始时读取，路径与正文一起进入预算检查，同一任务使用同一份内容。</p>
+<p>选择它是因为少量项目约定可以直接检查，不需要先解决提取准确率与检索质量。文件读取见 <a href="../../learn_agent/memory.py">memory.py</a>；初始化位置、源码入口和调用流程见 <a href="../stages/stage-5.html#stage-5-p1-panel-C">阶段 5：怎样接入现有闭环</a>。</p></div></div></section>
+<section class="lesson-section" id="module-memory-p2-panel-B"><h3>7. 期望达到的效果</h3><div class="lesson-body"><div class="am-md">
 <ul><li><strong>跨会话复用</strong>：新会话获得当前项目的已保存知识，而无需加载其他会话的全部历史。</li><li><strong>范围与来源明确</strong>：能查明读取的是哪个项目的哪份资料。</li><li><strong>更正及时生效</strong>：修改或删除记忆后，新任务不再从记忆来源加载旧内容。</li><li><strong>预算和权限有效</strong>：记忆计入输入预算，工具执行仍由 Policy 决定。</li></ul>
-<p>具体检查步骤见 <a href="../stages/stage-5.html#stage-5-p1-panel-D">阶段 5：实现后怎样验证</a>。</p></div></div></section>
+<p>具体检查步骤见 <a href="../stages/stage-5.html#stage-5-p1-panel-D">阶段 5：怎样验证</a>。</p></div></div></section>
 <nav class="chapter-nav" aria-label="章节导航"><a href="quality.html#module-quality">← Quality：观测与评测</a><a href="extensions.html#module-extensions">Extensions：接入 Skills、Hooks 和外部工具 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 </body></html>

@@ -13,63 +13,307 @@
 <section class="lesson-section" id="module-memory-interaction"><h3>2. How Session, Memory, and Context Cooperate</h3><div class="lesson-body"><div class="am-md">
 <ul><li><strong>Session records what happened</strong>: Questions, responses, and tool results for inspection or continuation.</li><li><strong>Memory stores what is worth reusing</strong>: Selected facts or preferences with their source and applicable project or user.</li><li><strong>Context constructs the current input</strong>: Combine the question, selected history, and applicable memory within the full request budget.</li></ul>
 <ol><li><strong>Application chooses scope</strong>: Identify allowed sources from the workspace or user configuration.</li><li><strong>Memory supplies content</strong>: Return text and sources, optionally finding relevant entries when there are many.</li><li><strong>Context checks input</strong>: Count memory together with other content before sending.</li><li><strong>Model uses the reference</strong>: Proposed tool calls still go through Tools and Policy.</li></ol>
+<figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 920 620" width="920" height="620" role="img" aria-label="General collaboration: the application reads Memory at startup into an immutable snapshot; Runner loads session history and Context Manager packs it into ModelRequest under budget constraints; Model responses and tool receipts are appended to SessionLog without duplicating Memory.">
+<defs><marker id="memory-interface-arrow-en" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+<g fill="none" stroke="currentColor" stroke-width="1.3">
+  <rect x="16" y="16" width="136" height="44" rx="8"/>
+  <rect x="195" y="16" width="136" height="44" rx="8"/>
+  <rect x="375" y="16" width="136" height="44" rx="8"/>
+  <rect x="555" y="16" width="150" height="44" rx="8"/>
+  <rect x="750" y="16" width="130" height="44" rx="8"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="15">
+  <text x="84" y="44">Workspace / Memory</text>
+  <text x="263" y="44">Runner / App Entry</text>
+  <text x="443" y="44">Session / Store</text>
+  <text x="630" y="44">Context Manager</text>
+  <text x="815" y="44">Model</text>
+</g>
+<g stroke="currentColor" opacity=".25" stroke-dasharray="5 5">
+  <path d="M84 60 V570 M263 60 V570 M443 60 V570 M630 60 V570 M815 60 V570"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#memory-interface-arrow-en)">
+  <path d="M263 105 H84"/>
+  <path d="M263 190 H443"/>
+  <path d="M263 285 H630"/>
+  <path d="M263 400 H815"/>
+  <path d="M263 505 H443"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#memory-interface-arrow-en)">
+  <path d="M84 145 H263"/>
+  <path d="M443 230 H263"/>
+  <path d="M630 345 H263"/>
+  <path d="M815 445 H263"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="14">
+  <text x="173" y="98">Read MEMORY.md at startup</text>
+  <text x="173" y="138">Return snapshot (source + content)</text>
+  <text x="353" y="180">Load completed history turns</text>
+  <text x="353" y="222">Ordered turns (no duplicate memory)</text>
+  <text x="446" y="266">System prompt, history turns, Memory snapshot,</text>
+  <text x="446" y="282">current messages, tools &amp; budget</text>
+  <text x="446" y="325">Build request view (with Memory message)</text>
+  <text x="446" y="341">&amp; decision list (overflow fails explicitly)</text>
+  <text x="539" y="392">Invoke model with filtered request</text>
+  <text x="539" y="437">Answer or tool calls (ModelResponse)</text>
+  <text x="353" y="495">Append questions, responses &amp; receipts</text>
+  <text x="353" y="513">(Memory is not re-appended to Session)</text>
+  <text x="460" y="595">Solid lines: calls or snapshot handoff; dashed lines: returns. Memory is read once at task start as an immutable snapshot for per-step budget checks, and is not duplicated into SessionLog.</text>
+</g>
+</svg><figcaption>General collaboration boundary: Memory locks an immutable snapshot at task start, Context Manager filters and injects reference messages into requests, and SessionLog stores only actual conversation exchanges.</figcaption></figure>
 <p>Users can maintain memory directly, or an extraction process can propose content from Session. Automatic history scanning is optional. Separate model candidates from confirmed facts. Text claiming permission cannot replace Policy checks.</p><p>No memory and a failed read are different results. Handle failures explicitly according to the application contract.</p></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-C"><h3>3. Where Is Memory Stored? (Four Common Storage Locations)</h3><div class="lesson-body"><div class="am-md">
-<p>Designing Memory starts with two questions: <strong>what is worth storing</strong> and <strong>where it lives</strong>:</p>
-<ul><li><strong>What to store</strong>: Only keep reusable <strong>project facts and preferences</strong> (such as dependency tools or coding conventions) and <strong>verified troubleshooting lessons</strong> (symptoms, root causes, and fixes). Once a procedure becomes a fixed, repeatable workflow, package it as a <a href="extensions.html#module-extensions">Skill</a> instead.</li></ul>
-<p>Ordered from simplest to most complex, Memory is commonly stored in four places:</p>
-<h4>A. A Single Project or Global Markdown File (e.g., <code>&lt;workspace&gt;/MEMORY.md</code>, <code>AGENTS.md</code>)</h4>
-<p>Stored directly at the project workspace root (scoped to the current project) or in a user config directory such as <code>~/.agent/MEMORY.md</code> (scoped across the user's projects). Plain text is easy to inspect, edit by hand, and track in Git—ideal when you have a concise set of core project conventions.</p>
+<section class="lesson-section" id="module-memory-p1-panel-C"><span id="module-memory-p1-panel-F"></span><h3>3. Storage Media &amp; Data Structures: From Plain Text to Multi-Dimensional Namespaces</h3><div class="lesson-body"><div class="am-md">
+<p>Designing Memory begins with two structural decisions: <strong>what is worth storing</strong> and <strong>what data structures and storage media to use</strong>:</p>
+<ul>
+<li><strong>What to Store (Core Principle)</strong>: Only keep reusable <strong>project facts and conventions</strong> (such as package managers or style rules) and <strong>verified troubleshooting lessons</strong> (symptoms, root causes, and fixes). Transient error logs, single lines of code, or ephemeral test runs should be re-inspected via tools on demand, not preserved as enduring memory; fixed multi-step execution workflows belong in a <a href="extensions.html#module-extensions">Skill</a>.</li>
+</ul>
+<p>Ordered from simplest to most feature-complete, four common storage formats and data structures prevail:</p>
+<h4>A. A Single Markdown File (e.g., <code>&lt;workspace&gt;/MEMORY.md</code>, <code>CLAUDE.md</code>)</h4>
+<p>Stored directly at the project workspace root (scoped to the current project) or in a user configuration directory (e.g., <code>~/.agent/MEMORY.md</code>). Plain text is human-readable, easy to inspect or edit by hand, and trackable via Git for PR reviews. Ideal when a project has a compact set of core conventions.</p>
 <h4>B. An Index File Plus Topic Markdown Files (e.g., <code>MEMORY.md</code> + <code>memories/*.md</code>)</h4>
-<p>The main file holds a short directory and one-line summaries, while detailed module notes or troubleshooting records live in separate topic files. Useful when knowledge splits naturally by topic and a single file would grow too large.</p>
-<h4>C. A Structured Database Table (e.g., a SQLite <code>memories</code> Table)</h4>
-<p>Each memory is stored as a row with fields such as <code>id</code>, <code>scope</code>, <code>content</code>, <code>source</code>, <code>status</code>, and <code>updated_at</code>. Useful when you need exact filtering by project or status, correction audit trails, or concurrent programmatic writes.</p>
-<h4>D. A Vector Index or Hybrid Retrieval Store (e.g., SQLite FTS + Embeddings)</h4>
-<p>Adds full-text and semantic vector indexes on top of structured entries. Useful when entries are numerous and user phrasing varies widely from the stored text, at the cost of embedding generation, index maintenance, and retrieval evaluation.</p></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-D"><h3>4. When and How Does CRUD Happen?</h3><div class="lesson-body"><div class="am-md">
-<p>Once the storage location is chosen, you must define <strong>when each Create, Read, Update, and Delete (CRUD) operation happens and who executes it</strong>. Note that <em>where memory is stored</em> and <em>who writes it</em> (manual edit vs. model tool vs. background extraction) are independent choices:</p>
-<h4>Create: When Is Memory Added, and Who Writes It?</h4>
+<p>The main index keeps concise summaries and directory links, while detailed module notes or troubleshooting guides live in dedicated topic files. Useful when knowledge splits naturally by domain and a single file grows unwieldy.</p>
+<h4>C. Structured Tables &amp; Hierarchical Namespaces (e.g., SQLite <code>memories</code>, LangGraph <code>BaseStore</code>)</h4>
+<p>Every memory is persisted as a structured record with metadata. Essential for multi-tenant platforms, multi-project isolation, programmatic concurrent access, and audit trails. A robust structured entry typically carries:</p>
 <ul>
-<li><strong>Option 1: User edits the file manually (simplest and most reliable)</strong>: When the user confirms a lasting convention (e.g., “use <code>uv run</code> in this project”), they write it into <code>MEMORY.md</code>. Note that the model saying “Understood, I'll remember” in chat only appends to <code>SessionLog</code>—it does not modify <code>MEMORY.md</code>.</li>
-<li><strong>Option 2: Model calls a memory tool during conversation</strong>: When the user says “remember this rule”, the model proposes a <code>memory_write</code> or file-write tool call, which is persisted after passing <code>Policy</code> checks or user confirmation.</li>
-<li><strong>Option 3: Background extraction after a session or turn ends</strong>: A background job scans <code>SessionLog</code> and extracts reusable facts into the memory store. This saves manual upkeep but requires safeguards against storing unverified model guesses or duplicate entries.</li>
+<li><strong>Source</strong>: The originating session ID, user task, or reference document URL for traceability.</li>
+<li><strong>Scope</strong>: Explicit boundaries (global user, team/org, or specific workspace) used as strict query filters.</li>
+<li><strong>Status</strong>: Active (<code>active</code>), replaced (<code>superseded</code>), or deleted (<code>deleted</code>) to prevent pulling obsolete rules.</li>
+<li><strong>Confirmation</strong>: Distinguishes user-verified facts from model-proposed candidates; unconfirmed model guesses must never act as hard constraints.</li>
 </ul>
-<h4>Read / Query: When Is Memory Read, and How Does It Enter the Request?</h4>
+<h4>D. Vector Indexes &amp; Hybrid Retrieval Stores (e.g., SQLite FTS + Embeddings)</h4>
+<p>Layers full-text inverted indexes and semantic embedding vectors on top of structured entries. Helpful when entries number in the thousands and phrasing diverges from stored text, at the cost of embedding computation, chunking, and retrieval tuning.</p>
+</div></div></section>
+<section class="lesson-section" id="module-memory-p1-panel-D"><span id="module-memory-p1-panel-G"></span><h3>4. Core Mechanisms: Write Pipelines (Maintenance &amp; Extraction) and Read Pipelines (Retrieval &amp; Injection)</h3><div class="lesson-body"><div class="am-md">
+<p>With data structures defined, an Agent must establish two operational pipelines: <strong>how knowledge is written and preserved (Write Pipeline)</strong> and <strong>how knowledge enters model context (Read Pipeline)</strong>. Note that storage media and read/write execution actors are orthogonal choices.</p>
+
+<h4>4.1 Write Pipeline: How Is Knowledge Persisted?</h4>
+<p>Writing memory can be human-driven, model-driven, or automated in the background. Across Markdown and databases alike, writes follow three main channels:</p>
+</div>
+<figure class="am-diagram"><img class="lesson-svg" src="../../assets/diagrams/memory-write-paths.svg" width="840" height="580" alt="Three channels for Memory writing and knowledge persistence" loading="lazy"><figcaption>Memory write mechanisms: manual editing vs. in-conversation tool calls vs. offline background reflection.</figcaption></figure>
+<div class="am-md">
 <ul>
-<li><strong>Option 1: Load the full file at task start (best for short files)</strong>: At the start of <code>run_task()</code>, the application reads <code>workspace/MEMORY.md</code> in full and passes it to <code>Context</code> as a source-labeled reference message inside <code>ModelRequest</code>. It is predictable and does not rely on the model calling a file tool first, though every request pays the full token cost.</li>
-<li><strong>Option 2: Query by keyword or vector before each request (best for DB / vector stores)</strong>: Before assembling <code>Context</code>, filter by project scope and retrieve the Top-K entries matching the current user prompt, injecting only the matched items.</li>
-<li><strong>Option 3: On-demand tool reads by the model (best for index + topic files)</strong>: Inject only the short index at task start; when the model needs details on a specific topic, it calls a read or search tool on demand.</li>
+<li><strong>Channel A: Direct Manual Editing &amp; CLI Commands (Most Reliable, Zero Hallucination)</strong>: When a user confirms a lasting convention, they edit <code>MEMORY.md</code> directly or execute <code>/memory</code> in the CLI. Note: A model verbally agreeing “Understood, I'll remember that” in chat only appends to <code>SessionLog</code>—it never silently modifies the physical memory file.</li>
+<li><strong>Channel B: In-Conversation Tool Calls by the Model (Instant, Governed by Policy)</strong>: When a user instructs “remember this constraint”, the model emits a <code>memory_write</code> tool call, which persists only after passing <code>Policy</code> checks or explicit user consent.</li>
+<li><strong>Channel C: Post-Session Offline Reflection (Automated, Requires Denoising)</strong>: After a task or session completes, a background reflection task scans <code>SessionLog</code>, extracts reusable facts, and writes them in batches without blocking active user interaction. Guardrails must prevent saving model hallucinations or transient errors as facts.</li>
+<li><strong>Unified Persistence Governance Gate</strong>: All channels must pass three checks before disk write: <strong>Scope Binding</strong> (restrict to project/user ID), <strong>Denoising</strong> (strip transient errors), and <strong>Conflict Replacement</strong> (mark superseded versions and record trace metadata).</li>
 </ul>
-<h4>Update: How Are Conventions Corrected, and Which Source Wins on Conflict?</h4>
+
+<h4>4.2 Read Pipeline: How Does Knowledge Enter Model Input?</h4>
+<p>Saved knowledge must be assembled into model prompts at the appropriate moment to take effect. Three primary retrieval channels exist:</p>
+</div>
+<figure class="am-diagram"><img class="lesson-svg" src="../../assets/diagrams/memory-read-paths.svg" width="840" height="580" alt="Three channels for Memory reading and model injection" loading="lazy"><figcaption>Memory read mechanisms: startup full load vs. per-request dynamic retrieval vs. on-demand tool inspection.</figcaption></figure>
+<div class="am-md">
 <ul>
-<li><strong>File-based approach</strong>: Edit the text in <code>MEMORY.md</code> directly. To keep multi-step tasks consistent mid-run, lock the snapshot read at task start for all steps in the current task; edits take effect on the <strong>next task</strong>.</li>
-<li><strong>Database / index approach</strong>: Update the entry by <code>id</code> and refresh search indexes, or mark the old entry <code>superseded</code> and insert a new version to preserve history.</li>
-<li><strong>Conflict resolution priority</strong>: When old conversation history (<code>SessionLog</code>) still mentions an outdated convention while the newly read <code>Memory</code> has been updated, system instructions must enforce a clear priority order: <strong>Current explicit user request &gt; Currently loaded Memory &gt; Outdated default in conversation history</strong>.</li>
+<li><strong>Channel 1: Full Load at Task Start (Default for Short Files, Zero Tool Overhead)</strong>: At the start of <code>run_task()</code>, the harness reads <code>MEMORY.md</code> in full, and <code>Context Manager</code> injects it as reference messages. It requires no preliminary tool calls from the model, though every request incurs token usage for the memory text.</li>
+<li><strong>Channel 2: Dynamic Per-Request Retrieval (Best for Large Multi-Tenant Stores)</strong>: Before assembling each request, filter by scope and retrieve the Top-K relevant items using keyword search (FTS) or vector similarity (Embedding) against the current prompt.</li>
+<li><strong>Channel 3: On-Demand Tool Query by the Model (Best for Large Topic Docs)</strong>: Inject only an index or table of contents; when the model encounters domain-specific questions mid-run, it invokes <code>read_memory</code> or <code>search_memory</code> tools on demand.</li>
 </ul>
-<h4>Delete / Forget: When Is Memory Removed, and What Is the Boundary?</h4>
+
+<h4>4.3 Three Core Engineering Rules for Read/Write Harmony</h4>
 <ul>
-<li><strong>File-based approach</strong>: Delete the outdated lines or remove/empty <code>MEMORY.md</code>; starting with the next task, that content is no longer injected.</li>
-<li><strong>Database + automatic extraction approach</strong>: Mark the entry <code>deleted</code>, remove it from search indexes, and prevent background extractors from re-extracting the same fact from old <code>SessionLog</code> files.</li>
-<li><strong>Boundary of deletion</strong>: Deleting Memory <strong>stops automatic injection in future tasks</strong>, but it does not rewrite or erase past Q&amp;A exchanges already recorded in old <code>SessionLog</code> files.</li>
-</ul></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-E"><h3>5. Source Comparison: pi and Deep Agents</h3><div class="lesson-body"><div class="am-md">
-<p>Both provide persistent project background from files. pi calls these project context files; Deep Agents uses MemoryMiddleware. This comparison concerns <strong>how files reach model input</strong>, without implying automatic extraction or a structured memory database.</p>
-<h4>pi: Discover Context Files by Directory</h4><ol><li><strong>Configuration and data</strong>: The resource loader uses <code>cwd</code> and <code>agentDir</code>, collecting global and ancestor sources as path/content pairs.</li><li><strong>Input construction</strong>: <code>buildSystemPrompt()</code> takes loaded files and places paths and text in project context within the system prompt.</li><li><strong>Read failures</strong>: The directory loader logs a warning on read errors. An application can instead choose to fail explicitly.</li></ol>
-<p>Pinned references, commit <code>9d2ec7f</code>: <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/resource-loader.ts#L70-L159">discovery and reading</a>, <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/system-prompt.ts#L144-L152">input construction</a>.</p>
-<h4>Deep Agents: Configure Explicit Sources</h4><ol><li><strong>Configuration and data</strong>: <code>MemoryMiddleware</code> takes backend and <code>sources</code>, keeping path-keyed <code>memory_contents</code>.</li><li><strong>Runtime</strong>: <code>before_agent()</code> downloads sources if memory is absent from state. By default, model-call wrappers use <code>modify_request()</code> to append formatted memory to the system message.</li><li><strong>Failures and refresh</strong>: Missing files are skipped; other download errors raise. Existing memory state prevents reloading in this hook, so visibility of edits depends on state refresh.</li></ol>
-<p>Pinned references, commit <code>97f856d</code>: <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L195-L243">constructor</a>, <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L281-L313">loading</a>, <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L347-L402">request modification</a>.</p><p><strong>Tutorial interpretation</strong>: Discovery supports inherited conventions but requires clear scope and ordering. Explicit sources give direct control but require configuration and refresh management. In both cases, saving a file is insufficient until its contents reach model input.</p></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-F"><h3>6. When Do Structured Entries Help?</h3><div class="lesson-body"><div class="am-md">
-<p>A short manual file can use its path as the source and its workspace as the scope. Add entry structures when per-item queries, corrections, or automatic consolidation require them.</p><details><summary>Metadata for extraction and structured storage</summary><ul><li><strong>Source</strong>: Original session, task, or document location.</li><li><strong>Scope</strong>: Applicable user or project, enforced when querying.</li><li><strong>Status</strong>: Active, replaced, or deleted content.</li><li><strong>Confirmation</strong>: Distinguish user-provided facts from model candidates; a model cannot confirm on the user's behalf.</li></ul><p>Add version links when retaining correction history and expiry when facts have a known lifetime. These fields serve particular behaviors, rather than defining a universal memory schema.</p></details></div></div></section>
-<section class="lesson-section" id="module-memory-p1-panel-G"><h3>7. Three Core Boundaries in Correction and Forgetting</h3><div class="lesson-body"><div class="am-md">
-<p>Whether using files or a database, handling corrections and deletions requires keeping three core boundaries clear:</p>
+<li><strong>Rule 1: Lock an Immutable Snapshot Within a Task</strong>: If memory files shift mid-run, Step 1 and Step 2 will observe conflicting rules, causing hallucination. Edits take effect on the <strong>next task</strong>; the active task remains pinned to its startup snapshot.</li>
+<li><strong>Rule 2: Enforce a Three-Tier Conflict Resolution Precedence</strong>: When rules collide, do not leave it to model chance. System instructions must declare: <strong>Current explicit user request &gt; Currently loaded Memory default &gt; Outdated default in past session history</strong>.</li>
+<li><strong>Rule 3: Stopping Injection vs. Rewriting History</strong>: Deleting a memory means <strong>stopping automatic injection into future tasks</strong>. It does not—and must not—rewrite or erase past exchanges recorded in <code>SessionLog</code>.</li>
+</ul>
+</div></div></section>
+<section class="lesson-section" id="module-memory-p1-panel-E"><h3>5. Memory Architectures Across Mainstream Agents: A Comprehensive Comparison</h3><div class="lesson-body"><div class="am-md">
+<p>Different Agent systems adopt starkly different Memory architectures based on their operational environment, interaction goals, and memory lifecycles. Below is a systematic breakdown of five representative architectural paradigms grounded in pinned open-source code and official engineering mechanisms:</p>
+
+<h4>5.1 Paradigm 1: File Conventions &amp; Hierarchical Directory Discovery (pi / Claude Code / Cursor)</h4>
+<p>This is the predominant and most lightweight approach for coding agents. Its core principle is: <strong>store knowledge directly in plain-text files without external databases, relying on OS directory tree hierarchies for rule inheritance and automatic discovery.</strong></p>
 <ul>
-<li><strong>Lock an immutable snapshot within a single task</strong>: If memory files shift mid-task, Step 1 and Step 2 will see conflicting project rules, triggering confusion or hallucination. Edits must take effect on the <strong>next task</strong>, keeping the current task pinned to its initial snapshot.</li>
-<li><strong>Enforce a three-tier conflict resolution priority</strong>: When old and new conventions collide, do not rely on luck. System instructions must define the precedence: <strong>Current explicit user request &gt; Currently loaded Memory default &gt; Outdated default in conversation history</strong>.</li>
-<li><strong>Distinguish stopping injection from rewriting history</strong>: Deleting a memory simply means <strong>stopping automatic injection into future tasks</strong>. It does not—and should not—alter or erase past Q&amp;A records already saved in <code>SessionLog</code>.</li>
-</ul></div></div></section>
-<section class="lesson-section" id="module-memory-p2-panel-A"><h3>8. Project Choice: One Manually Maintained File</h3><div class="lesson-body"><div class="am-md">
-<p><strong>Stages 0–4 implement</strong> session persistence, continuation, and context budgets. Memory is not implemented. <strong>Stage 5 selects</strong> a user-edited <code>MEMORY.md</code> at the workspace root, read at task start, with source and text counted in the budget and one snapshot per task.</p><p>A few project conventions can be checked directly without first solving extraction accuracy or retrieval quality. See <a href="../stages/stage-5.html#stage-5-p1-panel-C">Stage 5 integration</a> for initialization, source entry points, and proposed runtime behavior.</p></div></div></section>
-<section class="lesson-section" id="module-memory-p2-panel-B"><h3>9. Expected Outcomes</h3><div class="lesson-body"><div class="am-md">
+<li><strong>Storage Medium and Multi-Tier Scopes</strong>:
+  <ul>
+  <li><strong>Global User-Level</strong>: Kept in the user home directory (e.g., <code>~/.claude/CLAUDE.md</code> or <code>~/.pi/agent/</code>), capturing universal developer preferences across all projects (e.g., “answer in concise style”, “use TypeScript strict mode by default”).</li>
+  <li><strong>Project Repository-Level</strong>: Kept at the workspace root (e.g., <code>CLAUDE.md</code>, <code>AGENT.md</code>, <code>.cursorrules</code>), defining project-wide build commands, test workflows, and architectural boundaries.</li>
+  <li><strong>Subdirectory &amp; Path-Level</strong>: Kept in module folders (e.g., <code>.claude/rules/*.md</code> or <code>.cursor/rules/*.mdc</code>), activated dynamically via glob matching only when touching corresponding files.</li>
+  </ul>
+</li>
+<li><strong>Discovery and Loading Mechanics (pi Source Analysis)</strong>:
+  <p>In pi, <code>DefaultResourceLoader</code> in <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/resource-loader.ts#L70-L159">resource-loader.ts</a> recursively scans parent directories:</p>
+  <ol>
+  <li><strong>Upward Discovery</strong>: Starting from <code>cwd</code> up through parent folders, combined with the global <code>agentDir</code>, it collects all context files into <code>{ path, content }</code> pairs, logging warnings on read errors without crashing.</li>
+  <li><strong>System Prompt Construction</strong>: In <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/system-prompt.ts#L144-L152">system-prompt.ts</a>, <code>buildSystemPrompt()</code> formats collected files into a dedicated <code>projectContext</code> section inside the system prompt.</li>
+  </ol>
+</li>
+<li><strong>Engineering Practice (Claude Code)</strong>:
+  <p>Claude Code uses <code>CLAUDE.md</code> files and provides a <code>/memory</code> command to view and edit active memory in place. Newer versions also support prompting users to save verified conventions into project memory subdirectories (<code>.claude/</code>) upon detecting recurring project patterns.</p>
+</li>
+<li><strong>Trade-Offs and Ideal Use Cases</strong>:
+  <ul>
+  <li><strong>Strengths</strong>: Highly transparent, zero external database dependencies, and natively trackable via Git for diffs, commits, and PR reviews.</li>
+  <li><strong>Costs &amp; Limitations</strong>: Lacks semantic retrieval. As files expand, injecting full text into system instructions consumes significant input token budget.</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.2 Paradigm 2: Middleware Interception &amp; Decoupled Storage Backend (Deep Agents)</h4>
+<p>In cloud-native, multi-tenant, or containerized sandbox settings, execution runtimes are often stateless and cannot assume local disk files. Deep Agents exemplifies <strong>abstracting memory into lifecycle middleware with pluggable storage backends</strong>.</p>
+<ul>
+<li><strong>Core Abstraction and Lifecycle Hooks</strong>:
+  <p>Deep Agents defines <code>MemoryMiddleware</code> in <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L195-L243">memory.py</a>, hooking into agent execution:</p>
+  <ol>
+  <li><strong>Explicit Source Declaration</strong>: The middleware receives a list of source paths (<code>sources</code>) and a storage abstraction (<code>backend</code>), which can be local disk, an in-memory mock, or cloud object stores (e.g., S3).</li>
+  <li><strong>Pre-Execution Fetch (<code>before_agent</code>)</strong>: In <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L281-L313">before_agent(state)</a>, it checks agent state. If memory is missing, it asynchronously downloads all sources via <code>backend.read()</code> into a <code>memory_contents</code> dictionary.</li>
+  <li><strong>Request Modification (<code>modify_request</code>)</strong>: In <a href="https://github.com/langchain-ai/deepagents/blob/97f856dcb08264ef78722a4687cab9133ec5fb7a/libs/deepagents/deepagents/middleware/memory.py#L347-L402">modify_request(request, state)</a>, it appends formatted <code>memory_contents</code> into the system message.</li>
+  </ol>
+</li>
+<li><strong>Trade-Offs and Ideal Use Cases</strong>:
+  <ul>
+  <li><strong>Strengths</strong>: Decouples memory from physical filesystem layout; ideal for serverless, ephemeral worker containers, and centralized access auditing.</li>
+  <li><strong>Costs &amp; Limitations</strong>: Sources must be declared in advance; cannot automatically sniff or discover files on disk without external configuration.</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.3 Paradigm 3: OS-Style Hierarchical Memory &amp; Self-Management (MemGPT / Letta)</h4>
+<p>For long-term companions or perpetual personal agents requiring months of interaction, context windows cannot hold raw history. MemGPT (now Letta) pioneered an <strong>OS-inspired hierarchical memory architecture</strong>, turning memory management into first-class model tools.</p>
+<ul>
+<li><strong>Three-Tier Storage Architecture (OS Analogy)</strong>:
+  <ol>
+  <li><strong>Working Context (RAM)</strong>: The active model context window. It contains a bounded <strong>Core Memory</strong> block split into <code>persona</code> (agent identity and enduring guidelines) and <code>human</code> (user profile, critical constraints). Always visible in every step, keeping strict size boundaries.</li>
+  <li><strong>Recall Storage (Secondary Cache)</strong>: Append-only persistent event history of all conversation turns and tool receipts, searchable via timestamps or keywords.</li>
+  <li><strong>Archival Storage (Disk)</strong>: Persistent vector database holding unbounded external documents, insights, and synthesized knowledge.</li>
+  </ol>
+</li>
+<li><strong>Agent-Driven Memory Tools</strong>:
+  <p>Rather than silent harness injection, the model actively invokes dedicated tools:</p>
+  <ul>
+  <li><code>core_memory_append(name, content)</code> / <code>core_memory_replace(name, old_content, new_content)</code>: The agent updates its own <code>human</code> or <code>persona</code> sections upon discovering persistent user facts.</li>
+  <li><code>archival_memory_insert(content)</code>: The agent offloads dense facts or verified learnings into long-term vector storage.</li>
+  <li><code>archival_memory_search(query, page)</code>: When working memory lacks relevant domain context, the agent performs semantic searches over archival storage on demand.</li>
+  </ul>
+</li>
+<li><strong>Trade-Offs and Ideal Use Cases</strong>:
+  <ul>
+  <li><strong>Strengths</strong>: Overcomes context window limits for perpetual, lifelong agent evolution.</li>
+  <li><strong>Costs &amp; Limitations</strong>: Strongly depends on model reasoning quality. Hallucinated facts can pollute Core Memory, and spurious tool calls add latency and inference cost.</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.4 Paradigm 4: Multi-Tenant Namespace &amp; Semantic Key-Value Store (LangGraph Long-Term Memory)</h4>
+<p>In enterprise settings serving thousands of users across organizational units, <strong>multi-tenant isolation, permission scoping, and hybrid retrieval</strong> are critical. LangGraph's Long-Term Memory architecture provides a robust implementation.</p>
+<ul>
+<li><strong>Core Abstraction and Data Model (BaseStore)</strong>:
+  <p>LangGraph introduces a cross-session <a href="https://docs.langchain.com/oss/python/langchain/long-term-memory">BaseStore</a> (backed by Postgres, Redis, etc.) using hierarchical <code>(namespace, key, value)</code> tuples:</p>
+  <ul>
+  <li><strong>Namespace Scoping</strong>: Namespaces route access cleanly:
+    <ul>
+    <li>User profile: <code>("users", user_id, "profile")</code></li>
+    <li>Team conventions: <code>("orgs", org_id, "teams", team_id, "rules")</code></li>
+    <li>Project documents: <code>("projects", project_id, "docs")</code></li>
+    </ul>
+  </li>
+  <li><strong>Hybrid Key-Value &amp; Vector Search</strong>: Supports exact lookups via <code>store.get(namespace, key)</code> and semantic Top-K searches via <code>store.search(namespace, query="...", limit=K)</code> with vector embeddings.</li>
+  </ul>
+</li>
+<li><strong>Dual-Lane Writing Pipeline</strong>:
+  <ul>
+  <li><strong>Online Lane (In-Loop Tool)</strong>: Agents call memory-write tools during execution for immediate, user-requested updates.</li>
+  <li><strong>Offline Lane (Background Reflection Node)</strong>: After a conversation finishes, a background reflection node scans the session log, extracts verified facts, resolves preference conflicts, and batches updates into the store without increasing user wait time.</li>
+  </ul>
+</li>
+<li><strong>Trade-Offs and Ideal Use Cases</strong>:
+  <ul>
+  <li><strong>Strengths</strong>: Precise multi-tenant boundaries, enterprise-grade access control, and hybrid key/vector retrieval.</li>
+  <li><strong>Costs &amp; Limitations</strong>: Heavy infrastructure requirements (databases, embedding pipelines, asynchronous worker orchestration).</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.5 Paradigm 5: Event-Driven Fact Extraction &amp; User-Auditable Profiles (ChatGPT / Codex / AgentScope Java)</h4>
+<p>To remove configuration friction for non-technical users, consumer-facing assistants use <strong>automatic model-driven fact extraction paired with a visible user management dashboard</strong>.</p>
+<ul>
+<li><strong>Mechanisms and Workflow</strong>:
+  <ol>
+  <li><strong>Implicit Extraction &amp; Event Emission</strong>: When a user states an enduring preference (e.g., “I use macOS and prefer Python 3.12”), the model emits a structured <code>Memory Update Event</code>.</li>
+  <li><strong>UI Feedback &amp; Management Dashboard</strong>: The UI displays a notification (e.g., “Saved to memory”). Users can inspect all saved fact items in settings, edit them, or delete stale entries.</li>
+  <li><strong>Selective Context Injection</strong>: At task start, relevant facts are formatted into a concise list (e.g., <code>- User prefers Python 3.12</code>) and prepended to system instructions.</li>
+  <li><strong>AgentScope Java Practice</strong>: In <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/memory.md">AgentScope Java memory.md</a>, the system provides a <code>LongTermMemory</code> abstraction that explicitly separates full execution history (Session Log) from consolidated long-term memory items.</li>
+  </ol>
+</li>
+<li><strong>Trade-Offs and Ideal Use Cases</strong>:
+  <ul>
+  <li><strong>Strengths</strong>: Zero friction for end users; intuitive visual auditing and correction controls.</li>
+  <li><strong>Costs &amp; Limitations</strong>: Automatic extractors risk mistaking transient remarks for permanent preferences; conflicting preferences require reconciliation logic.</li>
+  </ul>
+</li>
+</ul>
+
+<h4>5.6 Comparative Matrix: Mainstream Agent Memory Paradigms</h4>
+<div class="am-table-wrap">
+<table>
+<thead>
+<tr>
+<th>Paradigm</th>
+<th>Representative Systems</th>
+<th>Storage Medium</th>
+<th>Knowledge Scope</th>
+<th>Writing Actor &amp; Timing</th>
+<th>Reading &amp; Injection</th>
+<th>Core Strengths</th>
+<th>Key Costs &amp; Bottlenecks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>File Conventions &amp; Hierarchy</strong></td>
+<td>pi, Claude Code, Cursor</td>
+<td>Workspace Markdown / MDC plain text</td>
+<td>Global user → Project root → Subdirectories</td>
+<td>Manual edits; or explicit commands / confirmation</td>
+<td>Full read at task start, injected into System Prompt</td>
+<td>Transparent, zero DB dependencies, Git-friendly PR reviews</td>
+<td>Token budget bloat on large files, no semantic search</td>
+</tr>
+<tr>
+<td><strong>Middleware &amp; Storage Decoupling</strong></td>
+<td>Deep Agents</td>
+<td>Pluggable backend (Local / S3 / Memory)</td>
+<td>Explicit source paths declared at start</td>
+<td>Application config or storage APIs</td>
+<td><code>before_agent</code> downloads sources, <code>modify_request</code> injects</td>
+<td>Pluggable backends, cloud-native container &amp; sandbox friendly</td>
+<td>Cannot self-discover files; requires external configuration</td>
+</tr>
+<tr>
+<td><strong>Hierarchical Memory &amp; Self-Management</strong></td>
+<td>MemGPT / Letta</td>
+<td>Working Context + Vector DB + Event Store</td>
+<td>Core Memory (Persona &amp; User) + Archival DB</td>
+<td>Model invokes internal tools to update its own memory</td>
+<td>Core Memory fully visible each step; Archival searched on demand</td>
+<td>Perpetual evolution across unbounded conversation rounds</td>
+<td>Heavy reliance on model judgment; risk of hallucinated memory</td>
+</tr>
+<tr>
+<td><strong>Multi-Tenant Namespace Store</strong></td>
+<td>LangGraph</td>
+<td>Postgres / Redis + Vector Index</td>
+<td>Hierarchical <code>(namespace, key, value)</code></td>
+<td>In-loop tools + Offline Reflection nodes</td>
+<td>Dependency injection into graph; exact keys + Top-K vectors</td>
+<td>Strict tenant isolation, rich querying &amp; background pipelines</td>
+<td>Heavy architecture requiring DB and async scheduler setup</td>
+</tr>
+<tr>
+<td><strong>Event-Driven Fact Profiles</strong></td>
+<td>ChatGPT, Codex, AgentScope</td>
+<td>Structured Fact List database</td>
+<td>User-level profile or project preferences</td>
+<td>Model triggers update events on detected facts; UI editable</td>
+<td>Filtered fact list prepended to system instructions</td>
+<td>Frictionless user UX, visually auditable and editable</td>
+<td>Risk of saving transient statements; conflict resolution needed</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></div></section>
+<section class="lesson-section" id="module-memory-p2-panel-A"><h3>6. Project Choice: One Manually Maintained File</h3><div class="lesson-body"><div class="am-md">
+<p><strong>Stages 0–5 implement</strong> session persistence, continuation, context budgets, and project memory. <strong>Stage 5 uses</strong> a user-edited <code>MEMORY.md</code> at the workspace root, read at task start, with source and text counted in the budget and one snapshot per task.</p><p>A few project conventions can be checked directly without first solving extraction accuracy or retrieval quality. See <a href="../stages/stage-5.html#stage-5-p1-panel-C">Stage 5 integration</a> for initialization, source entry points, and runtime behavior; file loading is in <a href="../../../learn_agent/memory.py">memory.py</a>.</p></div></div></section>
+<section class="lesson-section" id="module-memory-p2-panel-B"><h3>7. Expected Outcomes</h3><div class="lesson-body"><div class="am-md">
 <ul><li><strong>Cross-session reuse</strong>: A new session receives project knowledge without all previous conversation history.</li><li><strong>Clear scope and source</strong>: Identify which project's material was read.</li><li><strong>Effective corrections</strong>: New tasks no longer load old content from memory after edits or deletion.</li><li><strong>Budgets and permissions</strong>: Count memory in input; keep tool execution under Policy.</li></ul><p>See the <a href="../stages/stage-5.html#stage-5-p1-panel-D">Stage 5 verification steps</a>.</p></div></div></section>
 <nav class="chapter-nav" aria-label="Chapter navigation"><a href="quality.html#module-quality">← Quality: Observability &amp; Evaluation</a><a href="extensions.html#module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools →</a></nav></article><footer class="footer"><p>Maintain this HTML page directly; general principles and stage practices are linked together.</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>

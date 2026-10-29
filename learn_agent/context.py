@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from .memory import ProjectMemory
 from .models import ModelMessage, ModelRequest, ModelResponse, TextMessage
 from .models.openai_chat import estimate_input_tokens
 from .tools import ToolCall, ToolResult, ToolSpec
@@ -147,8 +148,9 @@ def select_context(
     required_turn_ids: frozenset[str] = frozenset(),
     budget: ContextBudget = DEFAULT_BUDGET,
     meter: InputMeter = DEFAULT_METER,
+    memory: ProjectMemory | None = None,
 ) -> ContextSelection:
-    """从最旧的可选任务开始整块移除，每次对完整候选请求重新计量。"""
+    """记忆作为必需参考资料；从最旧的可选任务开始整块移除并重新计量。"""
     ids = [turn.turn_id for turn in history]
     if len(set(ids)) != len(ids):
         raise ValueError("历史任务 ID 不能重复。")
@@ -157,8 +159,23 @@ def select_context(
         raise ValueError(f"必需历史任务不存在或尚未完成：{sorted(missing)}")
     kept = list(history)
     dropped: list[str] = []
+    references = (
+        (
+            TextMessage(
+                "user",
+                f"【项目参考资料】\n来源文件: {memory.source}\n内容:\n{memory.content}",
+            ),
+        )
+        if memory is not None
+        else ()
+    )
     while True:
-        messages = (system, *(message for turn in kept for message in turn.messages), *current)
+        messages = (
+            system,
+            *(message for turn in kept for message in turn.messages),
+            *references,
+            *current,
+        )
         request = ModelRequest(messages, tools, budget.max_output_tokens)
         used = meter.measure(request)
         decision = ContextDecision(

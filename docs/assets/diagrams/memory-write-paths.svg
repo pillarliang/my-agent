@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 580" role="img" aria-labelledby="write-title write-desc">
+<title id="write-title">Memory 写入与知识沉淀的三条通道</title>
+<desc id="write-desc">展示用户直接录入、对话中工具调用以及会话后离线反思三种写入沉淀路径，及其校验、去噪与持久化流程。</desc>
+<style>
+  text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; fill: #172133; font-size: 15px; }
+  .head { font-size: 18px; font-weight: 650; }
+  .title { font-size: 20px; font-weight: 700; fill: #172133; }
+  .small { font-size: 13.5px; fill: #526176; }
+  .badge { font-size: 12px; font-weight: 600; fill: #1d5fbf; }
+  .arrow { fill: none; stroke: #40516b; stroke-width: 1.6; }
+</style>
+<defs>
+  <marker id="write-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+    <path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/>
+  </marker>
+</defs>
+
+<!-- 顶部大标题 -->
+<text x="24" y="32" class="title" text-anchor="start">Memory 写入与知识沉淀的三条通道</text>
+
+<!-- 顶部三种写入触发源 -->
+<!-- 通道 A -->
+<rect x="24" y="55" width="248" height="145" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="40" y="85" class="head" text-anchor="start">通道 A：人工直接录入</text>
+<text x="40" y="112" class="small" text-anchor="start">• 触发主体：开发者手动编辑 / CLI</text>
+<text x="40" y="134" class="small" text-anchor="start">• 载体形式：MEMORY.md、CLAUDE.md</text>
+<text x="40" y="156" class="small" text-anchor="start">• 核心优势：100% 确定、零模型消耗</text>
+<text x="40" y="178" class="badge" text-anchor="start">【最稳健，零幻觉风险】</text>
+
+<!-- 通道 B -->
+<rect x="296" y="55" width="248" height="145" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="312" y="85" class="head" text-anchor="start">通道 B：对话中工具写入</text>
+<text x="312" y="112" class="small" text-anchor="start">• 触发主体：模型在会话中检测到规则</text>
+<text x="312" y="134" class="small" text-anchor="start">• 载体形式：memory_write 工具调用</text>
+<text x="312" y="156" class="small" text-anchor="start">• 核心控制：经 Policy 鉴权或用户确认</text>
+<text x="312" y="178" class="badge" text-anchor="start">【即时生效，受权限约束】</text>
+
+<!-- 通道 C -->
+<rect x="568" y="55" width="248" height="145" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="584" y="85" class="head" text-anchor="start">通道 C：会话后离线提炼</text>
+<text x="584" y="112" class="small" text-anchor="start">• 触发主体：后台独立 Reflection 任务</text>
+<text x="584" y="134" class="small" text-anchor="start">• 载体形式：扫描 SessionLog 提炼事实</text>
+<text x="584" y="156" class="small" text-anchor="start">• 核心优势：异步批量，不增加交互耗时</text>
+<text x="584" y="178" class="badge" text-anchor="start">【自动化高，须去重去噪】</text>
+
+<!-- 汇聚连线 -->
+<path d="M148 200 V235" class="arrow" marker-end="url(#write-arrow)"/>
+<path d="M420 200 V235" class="arrow" marker-end="url(#write-arrow)"/>
+<path d="M692 200 V235" class="arrow" marker-end="url(#write-arrow)"/>
+
+<!-- 中间校验与治理关卡 -->
+<rect x="24" y="240" width="792" height="130" rx="8" fill="#eff6ff" stroke="#7ca4d8" stroke-width="1.5"/>
+<text x="40" y="270" class="head" text-anchor="start">统一沉淀治理关卡（写入与持久化前的核心边界）</text>
+<text x="40" y="298" class="small" text-anchor="start">1. 作用域绑定（Scope）：绑定当前项目工作区路径或用户 ID，严防越界污染其他项目。</text>
+<text x="40" y="323" class="small" text-anchor="start">2. 去噪与防幻觉检验：严格剔除模型临时猜测与偶发报错，仅保留经确认的项目硬性事实与偏好。</text>
+<text x="40" y="348" class="small" text-anchor="start">3. 冲突判定与版本替代：遇到新旧约定冲突时，更新条目并标记旧约定为 superseded，留存溯源依据。</text>
+
+<!-- 向下箭头 -->
+<path d="M420 370 V405" class="arrow" marker-end="url(#write-arrow)"/>
+
+<!-- 底部持久化介质 -->
+<rect x="24" y="410" width="792" height="90" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
+<text x="40" y="438" class="head" text-anchor="start">持久化存储介质（按系统复杂度选择）</text>
+<text x="40" y="465" class="small" text-anchor="start">• 项目 Markdown 文件（MEMORY.md / AGENTS.md） —— 人工友好、支持 Git 协同审查</text>
+<text x="40" y="487" class="small" text-anchor="start">• 结构化数据库（SQLite / Postgres）/ 向量知识库 —— 支持多租户多维筛选与模糊语义检索</text>
+
+<!-- 底部核心铁律说明 -->
+<text x="24" y="534" class="head" text-anchor="start">核心铁律：单次任务内锁定不可变快照；沉淀 Memory 绝不物理篡改过去的真实 SessionLog。</text>
+<text x="24" y="558" class="small" text-anchor="start">无论哪种通道写入，更新只在下一次任务启动时读取生效；已发生的历史记录必须保持只追加审计完整性。</text>
+</svg>

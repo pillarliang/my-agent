@@ -6,7 +6,7 @@
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
 <div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="stage-6.html#stage-6" data-chapter="stage-6">阶段 6：根据真实失败选择长任务机制</a><a class="chapter-link" href="stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、应用与行为配置</div><a class="chapter-link" href="../modules/interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><div class="nav-group-title">三、Harness 核心</div><a class="chapter-link" href="../modules/loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="../modules/model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="../modules/tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="../modules/policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="../modules/state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="../modules/context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="../modules/quality.html#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">四、按需增加的能力</div><a class="chapter-link" href="../guides/long-tasks.html#capability-long-tasks" data-chapter="capability-long-tasks">长任务与知识复用</a><a class="chapter-link" href="../modules/memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="../guides/reliable-execution.html#capability-reliable-execution" data-chapter="capability-reliable-execution">可靠执行与隔离</a><a class="chapter-link" href="../modules/extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="../modules/orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">五、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">六、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
-<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/stages/stage-5.html#stage-5">English</a></p><article class="chapter" id="stage-5"><header class="chapter-header"><span class="kind">下一阶段 · 方案已选，代码尚未实现</span><h2>阶段 5：用 Memory 跨会话复用项目知识</h2></header>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/stages/stage-5.html#stage-5">English</a></p><article class="chapter" id="stage-5"><header class="chapter-header"><span class="kind">当前实现 · 项目记忆 MVP</span><h2>阶段 5：用 Memory 跨会话复用项目知识</h2></header>
 <section class="lesson-section" id="stage-5-p1-panel-A"><h3>1. 问题起点：新会话怎样记住项目约定？</h3><div class="lesson-body"><div class="am-md">
 <ul>
 <li><strong>用户（会话 A）</strong>：“这个项目使用 uv 管理依赖，以后运行 Python 命令时请使用 uv run。”</li>
@@ -35,8 +35,9 @@
 <p>后台自动提取、数据库表、向量检索与工具写入留待出现对应需求后再选，不列入本次 MVP。</p></div></div></section>
 <section class="lesson-section" id="stage-5-p1-panel-C"><h3>3. 怎样接入现有闭环？</h3><div class="lesson-body"><div class="am-md">
 <h4 id="stage-5-code-structure">3.1 初始化：工作区决定读取位置</h4>
-<p>现有 <a href="../../learn_agent/application.py">run_task()</a> 接收工作区与 Policy，并创建工具注册表和模型服务。拟在这里读取项目记忆，将路径和正文传给 Runner；读取逻辑先用有实际职责的函数实现。</p>
-<p>文件不存在或为空，表示该项目没有记忆；文件存在但无法读取、UTF-8 解码失败或实际路径越出工作区，则明确报错。读取发生在模型请求之前，不需要模型先调用工具寻找文件。</p>
+<p><a href="../../learn_agent/application.py">run_task()</a> 在创建模型连接之前加载项目记忆：</p>
+<ol><li><strong>核对环境</strong>：检查会话绑定的工作区，创建工具注册表。</li><li><strong>读取记忆</strong>：调用 <a href="../../learn_agent/memory.py">load_project_memory()</a>，取得包含来源相对路径和完整正文的不可变快照 <code>ProjectMemory(source, content)</code>；没有内容时返回 <code>None</code>。</li><li><strong>启动任务</strong>：创建模型服务，将快照传给 Runner。</li></ol>
+<p>文件不存在或只有空白，表示该项目没有记忆；文件无法读取、UTF-8 解码失败、不是普通文件、链接损坏或实际路径越出工作区，则明确报错。读取发生在模型请求之前，不需要模型先调用工具寻找文件。</p>
 <h4 id="stage-5-call-flow">3.2 运行：Memory 提供资料，Context 检查预算</h4>
 <ol>
 <li><strong>应用读取记忆</strong>：任务开始时取得当前工作区的文件路径与正文。</li>
@@ -45,9 +46,10 @@
 <li><strong>预算检查后再调用模型</strong>：本阶段把短记忆全文作为必需内容保留；仍按阶段 4 的规则裁剪可选历史。移除全部可选历史后仍超限，就停止请求，提示精简记忆或调整预算。</li>
 <li><strong>工具照常检查权限</strong>：模型提出工具调用后，仍由 ToolRegistry 经 Policy 判断并执行。</li>
 </ol>
-<p>上述接法需要扩展现有接口。目前 <code>run_task()</code>、<code>run_agent()</code> 与 <code>select_context()</code> 都没有独立的 Memory 参数。</p>
+<p><code>run_task()</code> 将快照传给 <a href="../../learn_agent/runner.py">run_agent(memory=...)</a>；Runner 每步调用 <code>select_context(memory=...)</code>，不会在任务中重新读取磁盘文件。直接使用 Runner 时，调用方负责提供快照。</p>
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/stage-5-loop-integration.svg" width="880" height="700" alt="当前实现：Runner 在启动时接收快照并在每次调用模型前传给 select_context，按预算核算与注入项目记忆" loading="lazy"><figcaption>当前实现：任务启动时读取并锁定不可变 Memory 快照；上下文选择将其组装为参考消息并核算预算；会话日志与记忆职责分明。</figcaption></figure>
 <h4 id="stage-5-request-order">3.3 记忆放在哪里，发生冲突时听谁的？</h4>
-<p>本阶段拟复用 <code>TextMessage</code>，以 <code>user</code> 角色发送一条项目记忆消息。消息内容的核心载荷是<strong>文件的完整正文</strong>，并附加<strong>来源文件相对路径</strong>作为标识。应用在任务启动时直接读取文件内容拼入请求，模型在第 1 步就能直接获知规则，无需再调用工具读取文件。</p>
+<p>本阶段复用 <code>TextMessage</code>，以 <code>user</code> 角色发送一条项目记忆消息。消息内容的核心载荷是<strong>文件的完整正文</strong>，并附加<strong>来源文件相对路径</strong>作为标识。应用在任务启动时直接读取文件内容拼入请求，模型在第 1 步就能直接获知规则，无需再调用工具读取文件。</p>
 <details open><summary>项目记忆消息（TextMessage）的组装格式示例</summary><pre class="am-code"><code>TextMessage(
     role="user",
     content=(
@@ -84,8 +86,8 @@
 <li><strong>SessionLog</strong>：继续保存用户问题、模型响应和工具回执，不把记忆正文在每轮重复写成对话消息。</li>
 <li><strong>Context</strong>：保留完整预算检查；文件已经保存，不代表它就能绕过预算进入请求。</li>
 </ul></div></div></section>
-<section class="lesson-section" id="stage-5-p1-panel-D"><h3>4. 实现后怎样验证？</h3><div class="lesson-body"><div class="am-md">
-<p>当前代码尚未实现自动加载 <code>MEMORY.md</code>。实现后，我们从<strong>基础增删改查</strong>、<strong>新旧约定冲突优先级</strong>、<strong>安全与预算边界</strong>三个维度逐步验证（先用本地协议测试直接检查发给模型的 <code>ModelRequest</code>，再用真实模型观察回答是否遵守约定）：</p>
+<section class="lesson-section" id="stage-5-p1-panel-D"><h3>4. 怎样验证？</h3><div class="lesson-body"><div class="am-md">
+<p><a href="../../tests/test_memory.py">test_memory.py</a> 使用真实临时文件和本机 HTTP 服务，检查 SDK 实际发出的消息、预算决策与工具回执。运行 <code>uv run pytest tests/test_memory.py</code> 不会请求外部模型。检查分为<strong>基础增删改查</strong>、<strong>新旧约定冲突优先级</strong>、<strong>安全与预算边界</strong>三个方面：</p>
 <h4>4.1 验证基础增删改查与项目隔离（检查 <code>ModelRequest.messages</code>）</h4>
 <ul>
 <li><strong>新增与跨会话读取（增 + 查）</strong>：
@@ -111,7 +113,7 @@
 </ul></li>
 </ul>
 <h4>4.2 验证新旧冲突优先级：当“旧历史”、“当前记忆”与“本次要求”冲突时听谁的？</h4>
-<p>修改 <code>MEMORY.md</code> 更正项目约定后，老会话的历史记录里往往还留着旧说法。在<strong>同一个会话</strong>中按以下 4 步对话，验证优先级规则（<strong>本次明确要求 &gt; 当前 <code>MEMORY.md</code> &gt; 历史旧约定</strong>）：</p>
+<p>修改 <code>MEMORY.md</code> 更正项目约定后，老会话的历史记录里往往还留着旧说法。在<strong>同一个会话</strong>中按以下 4 步对话，观察真实模型是否遵循优先级规则（<strong>本次明确要求 &gt; 当前 <code>MEMORY.md</code> &gt; 历史旧约定</strong>）。本地测试只验证系统指令与消息顺序，不能证明模型一定遵守；以下手工对话会请求真实模型并产生 API 用量：</p>
 <ol>
 <li><strong>第 1 步（在会话历史中留下旧约定）</strong>：
 <ul>

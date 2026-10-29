@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 700" role="img" aria-labelledby="title desc"><title id="title">阶段 5 当前实现：启动时加载不可变 Memory 快照，每次模型请求前核算预算并组装</title><desc id="desc">run_task 读取工作区 MEMORY.md 生成快照，Runner 锁定快照并在每次请求前交由 select_context 组装与核算预算；会话日志隔离保存。</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:16px}.head{font-size:19px;font-weight:650}.small{font-size:14.5px;fill:#526176}.box{fill:#f4f7fb;stroke:#c2cddd;stroke-width:1.5}.active{fill:#eff6ff;stroke:#7ca4d8;stroke-width:1.5}.memory{fill:#f0fdf4;stroke:#86efac;stroke-width:1.6}.planned{fill:#fffaf0;stroke:#b28a43;stroke-width:1.6}.arrow{fill:none;stroke:#40516b;stroke-width:1.6}.mem-arrow{fill:none;stroke:#16a34a;stroke-width:1.6}</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker><marker id="mem-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#16a34a"/></marker></defs>
+<text x="24" y="32" class="head">阶段 5 接入位置：启动读取 MEMORY.md 快照，每次请求模型前注入并核算预算</text>
+<rect x="24" y="56" width="410" height="106" rx="8" class="memory"/>
+<text x="40" y="86" class="head">入口 / run_task() · 加载项目记忆</text>
+<text x="40" y="112" class="small">1. load_project_memory() 读取工作区根目录 MEMORY.md</text>
+<text x="40" y="134" class="small">2. 生成 ProjectMemory(source, content) 不可变快照传给 Runner</text>
+<text x="40" y="154" class="small">3. 越界软链、非普通文件与编码损坏在请求模型前直接报错退出</text>
+<rect x="476" y="56" width="380" height="154" rx="8" class="box"/>
+<text x="492" y="86" class="head">SessionLog（可选）· 职责隔离</text>
+<text x="492" y="114" class="small">读取：提取已完成的历史 Turn 块供上下文裁剪</text>
+<text x="492" y="139" class="small">写入：原样追加当前任务的问题、响应与工具回执</text>
+<text x="492" y="164" class="small">隔离：Memory 正文不向 SessionLog 重复灌入</text>
+<text x="492" y="189" class="small">边界：删除 Memory 停止后续注入，不删改旧记录</text>
+<path d="M229 162 V204" class="mem-arrow" marker-end="url(#mem-arrow)"/>
+<text x="245" y="188" class="small" fill="#16a34a">快照锁定</text>
+<rect x="24" y="208" width="410" height="156" rx="8" class="active"/>
+<text x="40" y="238" class="head">run_agent() 循环 · 快照锁定</text>
+<text x="40" y="266" class="small">接收 ProjectMemory 快照，任务执行全程使用同一快照</text>
+<text x="40" y="291" class="small">多步工具循环中途修改磁盘文件，新内容在下个任务才生效</text>
+<text x="40" y="316" class="small">每步请求模型前将快照传给 select_context(memory=...)</text>
+<text x="40" y="341" class="small">若预算检查报错或模型调用异常，记录失败并安全停止</text>
+<path d="M476 130 H438" class="arrow" marker-end="url(#arrow)"/>
+<text x="457" y="120" class="small" text-anchor="middle">历史块</text>
+<path d="M434 240 H472" class="arrow" marker-end="url(#arrow)"/>
+<text x="455" y="260" class="small" text-anchor="middle">追加记录</text>
+<rect x="476" y="248" width="380" height="212" rx="8" class="planned"/>
+<text x="492" y="278" class="head">上下文选择与预算复核 · select_context()</text>
+<text x="492" y="306" class="small">1. 将 Memory 组装为带来源路径标识与正文的 user 消息</text>
+<text x="492" y="331" class="small">2. 顺序：系统指令 → 已选历史 → Memory 参考消息 → 当前任务</text>
+<text x="492" y="356" class="small">3. Memory 与当前问题一并作为必需内容参与 Token 预算核算</text>
+<text x="492" y="381" class="small">4. 超出预算时裁掉可选历史 Turn；必需超限时立即明确报错</text>
+<text x="492" y="406" class="small">5. 返回组装好的消息序列与保留／省略决策清单</text>
+<text x="492" y="431" class="small">优先级：本次要求 &gt; MEMORY.md 默认约定 &gt; 历史旧约定</text>
+<path d="M434 300 H472" class="mem-arrow" marker-end="url(#mem-arrow)"/>
+<path d="M476 340 H438" class="arrow" marker-end="url(#arrow)"/>
+<rect x="24" y="468" width="196" height="114" rx="8" class="box"/>
+<text x="40" y="498" class="head">Model · 协议调用</text>
+<text x="40" y="526" class="small">invoke(ModelRequest)</text>
+<text x="40" y="551" class="small">第 1 步直接获知项目约定</text>
+<text x="40" y="571" class="small">无需额外工具调用读文件</text>
+<rect x="238" y="468" width="196" height="114" rx="8" class="box"/>
+<text x="254" y="498" class="head">Tools + Policy · 授权</text>
+<text x="254" y="526" class="small">工具执行仍经 Policy 检查</text>
+<text x="254" y="551" class="small">Memory 中的文本声明绝不</text>
+<text x="254" y="571" class="small">能越权绕过 Policy 授权</text>
+<path d="M110 364 V464" class="arrow" marker-end="url(#arrow)"/>
+<path d="M140 468 V368" class="arrow" marker-end="url(#arrow)"/>
+<path d="M320 364 V464" class="arrow" marker-end="url(#arrow)"/>
+<path d="M350 468 V368" class="arrow" marker-end="url(#arrow)"/>
+<rect x="24" y="604" width="832" height="76" rx="8" class="box"/>
+<text x="40" y="632" class="head">当前实现：启动锁定不可变快照，零工具成本复用，预算与边界严密受控</text>
+<text x="40" y="658" class="small">阶段 5 实现了工作区 MEMORY.md 的跨会话开箱即用，并在单次任务内保证一致性；分主题拆分与检索留待条目增多后演进。</text>
+</svg>

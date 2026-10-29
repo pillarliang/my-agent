@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from .context import DEFAULT_BUDGET, ContextBudget
+from .memory import load_project_memory
 from .models import LLMService
 from .policy import PolicyEvaluator
 from .runner import RunResult, run_agent
@@ -30,10 +31,11 @@ def run_task(
     context_budget: ContextBudget = DEFAULT_BUDGET,
     required_turn_ids: frozenset[str] = frozenset(),
 ) -> RunResult:
-    """会话由入口持有；校验工作区后运行任务，最后关闭模型连接。"""
+    """会话由入口持有；校验工作区、读取记忆后运行任务，最后关闭模型连接。"""
     if session is not None:
         session.check_workspace(workspace)
     tools = ToolRegistry(definitions, workspace, policy)
+    memory = load_project_memory(workspace)
     model = LLMService()
     try:
         return run_agent(
@@ -43,6 +45,7 @@ def run_task(
             session=session,
             context_budget=context_budget,
             required_turn_ids=required_turn_ids,
+            memory=memory,
         )
     finally:
         model.close()

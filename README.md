@@ -1,6 +1,6 @@
 # Learn Agent：从独立 Loop 到受控工具执行
 
-教程入口：[模块职责图](docs/tutorial.html#system-map)。阶段 0–4 已实现；[阶段 3：会话与记录](docs/stages/stage-3.html#stage-3) 从纯对话推导保存、查询与续接，[阶段 4：上下文管理与预算](docs/stages/stage-4.html#stage-4) 已实现按完整任务裁剪与每步预算检查。
+教程入口：[模块职责图](docs/tutorial.html#system-map)。阶段 0–5 已实现；[阶段 3：会话与记录](docs/stages/stage-3.html#stage-3) 从纯对话推导保存、查询与续接，[阶段 4：上下文管理与预算](docs/stages/stage-4.html#stage-4) 已实现按完整任务裁剪与每步预算检查；[阶段 5：项目记忆](docs/stages/stage-5.html#stage-5) 已接入人工维护的 `MEMORY.md`。
 
 模块教程结合 pi、Codex 等 Agent 的源码比较实现原理；阶段实践只选择当前需要的一种方案，逐步完成各核心模块的 MVP。先让选定的核心模块串成端到端 Agent，整体跑通后再按真实问题做局部优化。参考方案用于理解与取舍，不要求全部实现。
 
@@ -82,9 +82,20 @@ uv run python examples/00_plain_loop.py
 
 阶段 2 先读 [Tools ↔ Policy 协议](docs/modules/policy.html#module-policy-interface)：工具识别动作，注册表以 `ActionRequest(operation, resource)` 统一询问 `Policy.evaluate()`，取得 `PolicyDecision(allowed, reason)`。拒绝返回 `policy_denied`；允许后才执行。[禁止覆盖实验](examples/policy_no_overwrite.py) 和 [Policy 测试](tests/test_policy.py) 验证权限是否生效，不涉及成果验收。
 
-下一步学习 [阶段 5：用 Memory 跨会话复用项目知识](docs/stages/stage-5.html#stage-5)。首版采用人工维护的项目记忆文件，代码尚未实现。后续依次为 [阶段 6：长任务机制](docs/stages/stage-6.html#stage-6)、[阶段 7：安全恢复](docs/stages/stage-7.html#stage-7) 和 [阶段 8：入口、扩展与编排](docs/stages/stage-8.html#stage-8)。
+[阶段 5：用 Memory 跨会话复用项目知识](docs/stages/stage-5.html#stage-5) 已实现。使用默认入口体验：
 
-当前代码实现到阶段 4。可直接读 [阶段 3：会话与记录](docs/stages/stage-3.html#stage-3)，从要记住什么逐步推导消息、任务、保存与读取，再对照 [session.py](learn_agent/session.py)。[Session / State 模块原理](docs/modules/state.html#session-purpose) 补充 pi / Codex 的方案比较；[阶段 4](docs/stages/stage-4.html#stage-4) 对照 [context.py](learn_agent/context.py) 理解预算、历史块、必需内容保护与选择清单。
+1. 在 `examples/workspace/MEMORY.md` 中写入已确认的项目约定，例如“测试命令使用 uv run pytest”，保存为 UTF-8。
+2. 运行 `uv run python -m learn_agent "项目默认怎样运行测试？"`，新会话会自动获得这份记忆。
+3. 修改、清空或删除文件，再启动任务，检查新内容是否生效。
+
+- **任务快照**：每次 `run_task()` 读取一次，同一任务中的所有请求共用该快照；记忆不重复写入会话消息。
+- **读取边界**：只读取当前工作区；缺失或空白文件不注入记忆，读取失败、编码损坏、损坏链接或链接越界会明确报错。
+- **预算与权限**：记忆正文和来源标签计入必需输入，超限时停止请求；工具操作仍由 Policy 判断。
+- **约定优先级**：本次用户的明确要求优先于记忆默认约定，记忆优先于历史中的旧默认约定。
+
+后续依次为 [阶段 6：长任务机制](docs/stages/stage-6.html#stage-6)、[阶段 7：安全恢复](docs/stages/stage-7.html#stage-7) 和 [阶段 8：入口、扩展与编排](docs/stages/stage-8.html#stage-8)。
+
+当前代码实现到阶段 5。可直接读 [阶段 3：会话与记录](docs/stages/stage-3.html#stage-3)，从要记住什么逐步推导消息、任务、保存与读取，再对照 [session.py](learn_agent/session.py)。[Session / State 模块原理](docs/modules/state.html#session-purpose) 补充 pi / Codex 的方案比较；[阶段 4](docs/stages/stage-4.html#stage-4) 对照 [context.py](learn_agent/context.py) 理解预算、历史块、必需内容保护与选择清单。
 
 普通函数注册时直接声明所需权限，例如 `tools.register(count_lines, ReadFileArguments, permission="read", path_parameter="path")`。路径来自本次调用的 path 参数；不再传动作说明函数。注册表统一生成动作、调用 Policy，允许才执行。声明需求不代表获得授权；write 会根据目标是否存在区分新建与覆盖。新增工具复用已有权限即可，不改 registry.py 或 Runner。
 
@@ -108,7 +119,7 @@ uv run pytest
 uv run python scripts/check_docs.py
 ```
 
-测试操作真实临时文件，并让实际 SDK 请求本机 HTTP 服务；覆盖不提供文件名的自然语言任务、按配置注册工具、目录发现、授权与拒绝、禁止覆盖、并发与符号链接，以及工具注册、资源边界、消息关联和模型协议。另检查独立任务的模型输入不会自动混入前一次调用的消息。[会话测试](tests/test_session.py) 另覆盖关闭重开、纯对话续接、完整工具消息、失败片段、文件损坏、锁与只读查询。[上下文测试](tests/test_context.py) 覆盖整块裁剪、必需历史、输出预留、真实 SDK 输入与循环内超限。固定协议响应不证明真实模型的任务能力；真实模型在连续任务中的表现需单独运行观察。
+测试操作真实临时文件，并让实际 SDK 请求本机 HTTP 服务；覆盖不提供文件名的自然语言任务、按配置注册工具、目录发现、授权与拒绝、禁止覆盖、并发与符号链接，以及工具注册、资源边界、消息关联和模型协议。另检查独立任务的模型输入不会自动混入前一次调用的消息。[会话测试](tests/test_session.py) 另覆盖关闭重开、纯对话续接、完整工具消息、失败片段、文件损坏、锁与只读查询。[上下文测试](tests/test_context.py) 覆盖整块裁剪、必需历史、输出预留、真实 SDK 输入与循环内超限。[记忆测试](tests/test_memory.py) 覆盖跨会话复用、工作区隔离、任务快照、修改与删除、损坏文件、预算和权限拦截。固定协议响应不证明真实模型的任务能力；真实模型在连续任务中的表现需单独运行观察。
 
 教程以 `docs/tutorial.html` 为总目录，阶段与模块分别在 `docs/stages/`、`docs/modules/` 中直接维护 HTML；共享样式、交互与复用 SVG 在 `docs/assets/`。浏览器可直接打开，不需要文档构建。编辑时按章节读取，避免把全书及图源一起带入上下文。
 
