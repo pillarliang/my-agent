@@ -350,7 +350,7 @@
   </tr>
   </tbody>
   </table></div>
-  <figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-recovery-action-states.svg" width="700" height="480" alt="Recovery 恢复系统与 Runner 的黑盒交互：断点登记、猝死定位、物证核查与四态安全分流" loading="lazy"><figcaption>Recovery 恢复系统与 Runner 的黑盒交互：断点登记、冷启动恢复、物证核查与四态分流闭环。</figcaption></figure>
+  <figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-recovery-action-states.svg" width="880" height="500" alt="动作四态流转与物证核查状态机：遵循 UML 规范，通过物证探查（Evidence Probe）将最危险的未知状态（unknown）分流化解，保障恢复的幂等性与安全性" loading="lazy"><figcaption>动作四态流转与物证核查状态机：遵循 UML 规范，通过物证探查（Evidence Probe）将最危险的未知状态（unknown）分流化解，保障恢复的幂等性与安全性。</figcaption></figure>
 </li>
 <li><strong>重新校验 Policy 权限（动态安全审查）</strong>：
   <p>即使在中断前该动作已被 Policy 批准，在恢复重试时<strong>必须按当前最新的 Policy 重新做一次权限检查</strong>。因为在系统崩溃到恢复的这段时间里，用户可能修改了权限配置（如撤销了写权限），绝不能以历史批准记录绕过当下的安全防线。</p>
