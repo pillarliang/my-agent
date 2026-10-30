@@ -1,117 +1,63 @@
-<svg xmlns="http://www.w3.org/2000/svg" class="lesson-svg" viewBox="0 0 920 540" width="920" height="540" role="img" aria-label="动作四态流转与物证核查状态机：包含初态、not_dispatched、running、unknown、completed 以及 paused_for_human，展示正常派发执行与系统猝死后通过物证探查分流化解的完整状态流转路径">
-<defs>
-  <marker id="state-flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
-</defs>
+<svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 700 480"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+/* Embedded previews can lose html[data-theme]; the fallbacks keep diagrams readable, and defined theme variables still win. */
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+/* Diagram tokens (docs/reference.md, "Diagram tokens"): each painted part reads an optional token and falls back to the look it always had,
+   so a theme that sets none of them draws the same diagram. Font family, size and weight are not tokens: diagram text is measured for the sans font. */
+.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); }
+.am-node-shape ~ .am-node-shape { filter: none; }
+.am-node--rect .am-node-shape, .am-node--er .am-node-shape { rx: var(--node-radius, 3px); }
+.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
+.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); }
+.am-node--hi text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-diagram .am-node--hi .am-node-text { fill: var(--hi-text, var(--accent, #1d5fbf)); }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
+.am-edge-label rect { fill: var(--paper, #ffffff); }
+.am-diagram .am-edge-label text { fill: var(--edge-label, var(--accent, #1d5fbf)); font-size: 11.5px; }
+.am-cluster { fill: var(--cluster-fill, var(--fill, #f3f5f8)); stroke: var(--cluster-stroke, var(--line-2, #d6dae1)); stroke-width: 1; stroke-dasharray: 4 3; }
+.am-diagram .am-cluster-label { fill: var(--ink-2, #4b5260); font: 11px var(--font-mono, monospace); }
+.am-lifeline { stroke: var(--lifeline-color, var(--ink-3, #8b929e)); stroke-width: 1; stroke-dasharray: 4 4; }
+.am-actor { fill: var(--actor-fill, var(--node-fill, var(--paper, #ffffff))); stroke: var(--actor-stroke, var(--node-stroke, var(--line, #1d2026))); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); rx: var(--node-radius, 2px); }
+.am-diagram .am-actor-text { fill: var(--actor-text, var(--node-text, var(--ink, #16181d))); }
+.am-note { fill: var(--note-fill, var(--warn-bg, #fdf3e2)); stroke: var(--note-stroke, var(--warn, #a8620a)); stroke-width: 1; rx: var(--node-radius, 2px); }
+.am-diagram .am-step { fill: var(--ink-3, #8b929e); font: 10px var(--font-mono, monospace); }
 
-<!-- 1. 初态 (Initial State: 经典微标) -->
-<circle cx="45" cy="90" r="12" fill="none" stroke="currentColor" stroke-width="1.3"/>
-<circle cx="45" cy="90" r="6" fill="currentColor"/>
-<text x="45" y="116" text-anchor="middle" font-size="11" fill="currentColor">初态</text>
+svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+</style>
+<defs><marker id="recovery-loop-interface-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
 
-<!-- 2. not_dispatched (尚未派发) -->
-<g fill="none" stroke="currentColor" stroke-width="1.3">
-  <rect x="110" y="55" width="190" height="70" rx="8"/>
-  <line x1="110" y1="84" x2="300" y2="84" stroke="currentColor" stroke-width="1" opacity=".2"/>
-</g>
-<g fill="currentColor">
-  <text x="205" y="75" text-anchor="middle" font-size="14" font-weight="600">not_dispatched</text>
-  <text x="205" y="101" text-anchor="middle" font-size="11.5" opacity=".75">尚未派发 · 底层动作未执行</text>
-  <text x="205" y="117" text-anchor="middle" font-size="11.5" opacity=".75">外部物理世界零残留、零污染</text>
-</g>
+<!-- 角色垂直生命线 -->
+<line class="am-lifeline" x1="160" y1="66" x2="160" y2="430"/>
+<line class="am-lifeline" x1="540" y1="66" x2="540" y2="430"/>
 
-<!-- 3. running (运行中) -->
-<g fill="none" stroke="currentColor" stroke-width="1.3">
-  <rect x="370" y="55" width="190" height="70" rx="8"/>
-  <line x1="370" y1="84" x2="560" y2="84" stroke="currentColor" stroke-width="1" opacity=".2"/>
-</g>
-<g fill="currentColor">
-  <text x="465" y="75" text-anchor="middle" font-size="14" font-weight="600">running</text>
-  <text x="465" y="101" text-anchor="middle" font-size="11.5" opacity=".75">正在执行 / 异步运行中</text>
-  <text x="465" y="117" text-anchor="middle" font-size="11.5" opacity=".75">进程活跃 · 等待返回物理回执</text>
-</g>
+<!-- 顶部两方实体卡片 -->
+<g><rect class="am-actor" x="40" y="20" width="240" height="46" rx="3"/><text class="am-actor-text" x="160" y="43" text-anchor="middle" dominant-baseline="central">Agent Loop（Runner / 恢复入口）</text></g>
+<g><rect class="am-actor" x="420" y="20" width="240" height="46" rx="3"/><text class="am-actor-text" x="540" y="43" text-anchor="middle" dominant-baseline="central">Recovery / Checkpoint 系统</text></g>
 
-<!-- 4. completed (已确认完成 · 正常终态) -->
-<g fill="none" stroke="currentColor" stroke-width="1.3">
-  <rect x="630" y="55" width="190" height="70" rx="8"/>
-  <line x1="630" y1="84" x2="820" y2="84" stroke="currentColor" stroke-width="1" opacity=".2"/>
-</g>
-<g fill="currentColor">
-  <text x="725" y="75" text-anchor="middle" font-size="14" font-weight="600">completed</text>
-  <text x="725" y="101" text-anchor="middle" font-size="11.5" opacity=".75">已确认完成 · 物理回执完备</text>
-  <text x="725" y="117" text-anchor="middle" font-size="11.5" opacity=".75">直接复用结果 · 跳过物理重做</text>
-</g>
+<!-- 步骤 1：运行期动作登记与切点落盘 -->
+<g><text x="350" y="98" text-anchor="middle">登记待执行动作（register_invocation: 幂等键、参数）</text><path class="am-edge" d="M160,111 H538" marker-end="url(#recovery-loop-interface-arrow)"/></g>
+<g><text x="350" y="142" text-anchor="middle">持久化检查点切点（status 标记为 unknown）</text><path class="am-edge am-edge--dashed" d="M540,155 H162" marker-end="url(#recovery-loop-interface-arrow)"/></g>
 
-<!-- 5. 终态 (Final State: 双同心圆) -->
-<circle cx="875" cy="90" r="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
-<circle cx="875" cy="90" r="7" fill="currentColor"/>
-<text x="875" y="118" text-anchor="middle" font-size="11" fill="currentColor">终态</text>
+<!-- 中途崩溃分割线 -->
+<line class="am-edge am-edge--dashed" x1="80" y1="182" x2="620" y2="182" stroke-dasharray="4 3"/>
+<text x="350" y="177" text-anchor="middle" font-size="11.5" fill="var(--warn, #a8620a)">⚡ 进程在操作中途遭遇 OOM / 断电猝死 · 内存清空 · 磁盘保留 Checkpoint ⚡</text>
 
-<!-- 6. unknown (极高危未知断点) -->
-<g fill="none" stroke="currentColor" stroke-width="1.6">
-  <rect x="355" y="195" width="220" height="75" rx="8"/>
-  <line x1="355" y1="225" x2="575" y2="225" stroke="currentColor" stroke-width="1" opacity=".25"/>
-</g>
-<g fill="currentColor">
-  <text x="465" y="216" text-anchor="middle" font-size="14" font-weight="600">unknown (极高危未知态)</text>
-  <text x="465" y="243" text-anchor="middle" font-size="11.5" opacity=".85">⚠ 中途猝死中断 · 物理状态未决！</text>
-  <text x="465" y="259" text-anchor="middle" font-size="11.5" opacity=".85">严禁自动重做！等待物证探查</text>
-</g>
+<!-- 步骤 2：冷启动专用入口拉起恢复 -->
+<g><text x="350" y="212" text-anchor="middle">独立恢复入口启动任务（resume_task(run_id)）</text><path class="am-edge" d="M160,225 H538" marker-end="url(#recovery-loop-interface-arrow)"/></g>
+<g><text x="350" y="254" text-anchor="middle">加载执行锚点与未闭合动作清单（Invocations 列表）</text><path class="am-edge am-edge--dashed" d="M540,267 H162" marker-end="url(#recovery-loop-interface-arrow)"/></g>
 
-<!-- 7. 判定节点：Evidence Probe 物证探查 (Choice 菱形) -->
-<g fill="none" stroke="currentColor" stroke-width="1.3">
-  <polygon points="465,315 510,340 465,365 420,340"/>
-</g>
-<text x="465" y="344" text-anchor="middle" font-size="12" font-weight="600" fill="currentColor">核查</text>
-<text x="465" y="378" text-anchor="middle" font-size="11.5" font-weight="600" fill="currentColor">Evidence Probe 物证探查</text>
+<!-- 步骤 3：四态核验与物证探查（分组框） -->
+<rect class="am-actor" x="70" y="285" width="560" height="96" rx="3" fill="none" style="fill:none"/>
+<text x="85" y="303" font-size="11.5" font-weight="600">未闭合调用按四态严格分流（严禁二元“成功/失败”）</text>
+<g><text x="350" y="325" text-anchor="middle">触发外部物证探查器（Evidence Probe: 校验目标存在与哈希）</text><path class="am-edge" d="M160,338 H538" marker-end="url(#recovery-loop-interface-arrow)"/></g>
+<g><text x="350" y="362" text-anchor="middle">物证匹配已生效 ➔ 合成回执转 completed，补齐 Session 记录</text><path class="am-edge am-edge--dashed" d="M540,375 H162" marker-end="url(#recovery-loop-interface-arrow)"/></g>
 
-<!-- 8. paused_for_human (人工介入挂起 · 终态之一) -->
-<g fill="none" stroke="currentColor" stroke-width="1.3">
-  <rect x="350" y="425" width="230" height="68" rx="8"/>
-  <line x1="350" y1="453" x2="580" y2="453" stroke="currentColor" stroke-width="1" opacity=".2"/>
-</g>
-<g fill="currentColor">
-  <text x="465" y="445" text-anchor="middle" font-size="14" font-weight="600">paused_for_human</text>
-  <text x="465" y="471" text-anchor="middle" font-size="11.5" opacity=".75">人工介入挂起 · 状态机熔断锁定</text>
-  <text x="465" y="487" text-anchor="middle" font-size="11.5" opacity=".75">等待人工排查环境并手动确认</text>
-</g>
+<!-- 步骤 4：动作闭合，继续推进 -->
+<g><text x="350" y="405" text-anchor="middle">动作全部闭合，更新检查点状态，携完整上下文推进下一轮循环</text><path class="am-edge" d="M160,418 H538" marker-end="url(#recovery-loop-interface-arrow)"/></g>
 
-<!-- ==================== 状态转换有向连线 ==================== -->
-<!-- 初态 -> not_dispatched -->
-<path d="M57 90 H110" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#state-flow-arrow)"/>
-<text x="83" y="82" text-anchor="middle" font-size="11" fill="currentColor">发起</text>
-
-<!-- not_dispatched -> running -->
-<path d="M300 80 H370" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#state-flow-arrow)"/>
-<text x="335" y="73" text-anchor="middle" font-size="11" fill="currentColor">[Policy获准]/派发</text>
-
-<!-- running -> completed -->
-<path d="M560 80 H630" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#state-flow-arrow)"/>
-<text x="595" y="73" text-anchor="middle" font-size="11" fill="currentColor">成功/回执落盘</text>
-
-<!-- completed -> 终态 -->
-<path d="M820 90 H861" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#state-flow-arrow)"/>
-<text x="840" y="82" text-anchor="middle" font-size="11" fill="currentColor">推下轮</text>
-
-<!-- running -> unknown (系统猝死中断) -->
-<path d="M465 125 V195" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#state-flow-arrow)"/>
-<text x="555" y="162" text-anchor="middle" font-size="11.5" font-weight="600" fill="currentColor">⚡ 进程猝死 (OOM / SIGKILL)</text>
-
-<!-- unknown -> 探查菱形 -->
-<path d="M465 270 V315" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#state-flow-arrow)"/>
-<text x="525" y="295" text-anchor="middle" font-size="11" fill="currentColor">冷启动恢复 (resume)</text>
-
-<!-- 探查菱形 -> completed (分支 A) -->
-<path d="M510 340 H725 V125" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#state-flow-arrow)"/>
-<text x="645" y="330" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">[A. 物证匹配：文件存在且哈希一致] / 合成回执并落盘</text>
-
-<!-- 探查菱形 -> not_dispatched (分支 B) -->
-<path d="M420 340 H205 V125" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#state-flow-arrow)"/>
-<text x="285" y="330" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">[B. 确认未发生：物理零污染] / 重置为未派发</text>
-
-<!-- 探查菱形 -> paused_for_human (分支 C) -->
-<path d="M465 365 V425" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#state-flow-arrow)"/>
-<text x="555" y="398" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">[C. 物证冲突或状态无法查明] / 安全熔断</text>
-
-<!-- 底部说明文字 -->
-<text x="460" y="525" text-anchor="middle" font-size="12" fill="currentColor" opacity=".8">标准 UML 状态流转图：实线表示状态转移，虚线表示异常跃迁与熔断。未知状态 (unknown) 绝不自动重做，统一由物证探查分流化解。</text>
+<!-- 底部说明框 -->
+<rect class="am-actor" x="70" y="435" width="560" height="32" rx="3" fill="none" style="fill:none"/>
+<text x="350" y="451" text-anchor="middle" font-size="12" fill="var(--ink-2, #4b5260)">核心原则：未知状态绝不盲目重做；物理物证查实才复用，未决则熔断转人工（HITL）</text>
 </svg>
