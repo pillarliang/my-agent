@@ -308,13 +308,48 @@
   <p>恢复操作必须通过专用的 <code>resume_task(run_id)</code> 入口执行，不与接收新提问的 <code>run_task(prompt)</code> 混用。严禁为了“图省事”直接在数据库中把未完成的任务强行改成 <code>completed</code>——这会导致日志中出现无回执的悬空 ToolCall，破坏大模型协议上下文的完整性。</p>
 </li>
 <li><strong>判断动作状态（严格区分四态与物证核查）</strong>：
-  <p>扫描 Checkpoint 中所有未闭合的工具调用，严禁只有二元的“成功/失败”：</p>
+  <p>扫描 Checkpoint 中所有未闭合的工具调用，<strong>严禁只有二元的“成功/失败”</strong>。在涉及写文件或调用外部支付等带副作用的操作时，二元判断是致命的：</p>
   <ul>
-    <li><code>completed</code>（已确认完成）：工具回执完备，<strong>直接复用已有结果</strong>，跳过工具执行。</li>
-    <li><code>not_dispatched</code>（尚未派发）：底层操作确认从未发生，可重新发起执行。</li>
-    <li><code>running</code>（后台异步执行中）：与外部任务句柄重新挂接并等待完成。</li>
-    <li><code>unknown</code>（结果未知）：<strong>极度危险状态</strong>。系统必须暂停自动执行，先触发“物证探查器（Evidence Probe）”核实外部状态；若无法确认，坚决挂起转交人工介入（Human-in-the-Loop）。</li>
+    <li><strong>若误判为“失败”并自动重做</strong>：若崩溃前底层文件已写完或外部 API 已扣款，盲目重跑会导致<strong>磁盘文件被二次覆盖破坏</strong>或<strong>产生重复扣款事故</strong>；</li>
+    <li><strong>若盲目判定为“成功”并继续推进</strong>：若崩溃前文件只写了一半损坏或请求失败，后续步骤会基于空气报错崩溃。</li>
   </ul>
+  <p>因此，系统必须通过以下<strong>四态模型</strong>真实反映动作在物理世界与检查点中的状态：</p>
+  <div class="am-table-wrap"><table>
+  <thead>
+  <tr>
+  <th>动作状态（<code>status</code>）</th>
+  <th>物理世界真实情况</th>
+  <th>在 Checkpoint 中的呈现形态</th>
+  <th>恢复引擎的应对策略</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+  <td><strong><code>completed</code></strong><br>（已确认完成）</td>
+  <td>工具在中断前已顺利执行完毕，执行回执完备。</td>
+  <td><code>status: "completed"</code>，附带完整 <code>result</code> 数据与完成时间戳。</td>
+  <td><strong>直接复用已有结果</strong>，跳过工具执行，零算力浪费推进下一轮模型推理。</td>
+  </tr>
+  <tr>
+  <td><strong><code>not_dispatched</code></strong><br>（尚未派发）</td>
+  <td>模型虽提出了 ToolCall，但 Harness 尚未调用底层函数，进程就已猝死。</td>
+  <td><code>status: "not_dispatched"</code>，物理尝试列表 <code>attempts: []</code> 为空。</td>
+  <td>外部世界零污染，<strong>按当前最新 Policy 重新审查权限</strong>后安全派发。</td>
+  </tr>
+  <tr>
+  <td><strong><code>running</code></strong><br>（后台运行中）</td>
+  <td>外部异步任务或长耗时子进程（如云端资源创建、微调作业）仍在后台运行。</td>
+  <td><code>status: "running"</code>，记录外部任务句柄 <code>job_id</code> 或 <code>pid</code>。</td>
+  <td><strong>重新挂接现有句柄</strong>继续轮询等待，严禁启动重复实例。</td>
+  </tr>
+  <tr>
+  <td><strong><code>unknown</code></strong><br>（结果未知）</td>
+  <td><strong>最危险的临界状态</strong>：底层操作进行中、网络返回途中或回执写入磁盘前猝死。</td>
+  <td><code>status: "unknown"</code>，包含 <code>idempotency_key</code>、未完成 <code>attempt</code> 与 <code>evidence_probe</code> 探查配置。</td>
+  <td><strong>严禁自动重试！</strong>触发物证探查器核实；若无法查明，强制挂起转交人工介入（<code>paused_for_human</code>）。</td>
+  </tr>
+  </tbody>
+  </table></div>
   <figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-recovery-action-states.svg" width="980" height="540" alt="动作四态与物证核查状态流转机制：completed 直接复用、not_dispatched 动态重审、running 挂接句柄、unknown 探查物证分流化解" loading="lazy"><figcaption>动作四态流转与物证核查状态机：通过物证探查（Evidence Probe）将最危险的未知状态（unknown）分流化解，保障恢复的幂等性与安全性。</figcaption></figure>
 </li>
 <li><strong>重新校验 Policy 权限（动态安全审查）</strong>：
@@ -329,47 +364,92 @@
 <section class="lesson-section" id="module-recovery-state-schema"><h3>5. 会话记录外需要补充哪些状态？（样本数据结构与场景案例）</h3><div class="lesson-body"><div class="am-md">
 <p>如果系统只保存普通的聊天记录（<code>[{"role": "user", ...}, {"role": "assistant", ...}]</code>），一旦崩溃就无法知道工具执行到底处在哪个临界点。因此，可靠 Harness 必须在对话文件外，独立维护一份<strong>任务运行检查点记录（Run Checkpoint）</strong>。</p>
 
-<h4>5.1 检查点元数据 Schema 样本（JSON）</h4>
+<h4>5.1 贯穿场景：Session、State 与 Checkpoint 的职责与数据结构样式对比</h4>
+<p>为了直观区分三者的职责边界与存储形态，考虑以下贯穿场景：</p>
+<ul>
+  <li><strong>用户</strong>：“请帮我生成一份审计报告 <code>reports/audit.log</code>，并调用扣费接口支付 10 元服务费。”</li>
+  <li><strong>模型</strong>：第 1 步先决定调用 <code>write_file(path="reports/audit.log", content="AUDIT OK")</code>。</li>
+  <li><em>（系统动作：底层文件刚写入磁盘，但在程序将执行回执写入日志之前，进程因 OOM 突然被系统强杀）</em></li>
+</ul>
+
+<p>此时，三类核心数据对象的表现形态与样式截然不同：</p>
+
+<h5>1. Session 数据结构（会话层 · 磁盘持久化 JSONL）</h5>
+<p><strong>核心职责</strong>：记录人类与模型的完整对话历史（Transcript），为后续多轮追问提供上下文，供人工审计回溯。崩溃发生时，末尾缺少对应的工具回执，处于悬空未闭合状态。</p>
 <pre><code>{
-  "run_id": "run_20261029_095201",
-  "session_id": "session_user_001",
-  "status": "interrupted",
-  "interrupted_at": "2026-10-29T09:52:15Z",
-  "resume_count": 0,
+  "session_id": "sess_20261030_001",
+  "created_at": "2026-10-30T10:00:00Z",
+  "working_dir": "/workspace/project_a",
+  "messages": [
+    {
+      "role": "user",
+      "content": "请帮我生成一份审计报告 reports/audit.log，并调用扣费接口支付 10 元服务费。"
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_write_001",
+          "name": "write_file",
+          "arguments": { "path": "reports/audit.log", "content": "AUDIT OK" }
+        }
+      ]
+    }
+    // 崩溃发生瞬间：尚未追加写入 ToolResultMessage！会话记录在此截断悬空
+  ]
+}</code></pre>
+
+<h5>2. State 数据结构（运行时状态 · 进程内存快照）</h5>
+<p><strong>核心职责</strong>：Agent Loop 在内存中的变量全集，指导当前这一秒往哪一步流转（下一步调模型、派发工具还是退出）。<strong>生命周期随进程生灭，进程一旦崩溃，内存数据全丢</strong>。</p>
+<pre><code>{
+  "active_session_id": "sess_20261030_001",
+  "current_run_id": "run_001",
+  "loop_phase": "dispatching_tool",
+  "step_index": 1,
   "budget": {
-    "max_steps": 8,
-    "current_step": 3,
-    "tokens_spent": 2150
+    "max_steps": 10,
+    "remaining_steps": 9,
+    "used_tokens": 1240
   },
-  "checkpoint": {
-    "step_id": 3,
-    "lifecycle_point": "tool_execution_interrupted",
-    "active_turn_id": "turn_003"
-  },
+  "runtime_handles": {
+    "active_subprocesses": [],
+    "model_client_connection": "&lt;HTTPConnection pool=0x7f88&gt;"
+  }
+}</code></pre>
+
+<h5>3. Checkpoint 数据结构（检查点 · 独立磁盘持久化控制面）</h5>
+<p><strong>核心职责</strong>：专为“崩溃恢复”独立固化的控制元数据。记录任务推进到了哪一步、各个工具调用的确认状态（严禁只有成功/失败二元值）、全局幂等键与物证探查策略，是冷启动重启时的法定裁判依据。</p>
+<pre><code>{
+  "run_id": "run_001",
+  "session_id": "sess_20261030_001",
+  "status": "interrupted",
+  "interrupted_at": "2026-10-30T10:00:05Z",
+  "step_id": 1,
+  "lifecycle_point": "tool_execution_interrupted",
   "invocations": [
     {
       "invocation_id": "inv_write_report_01",
-      "call_id": "call_llm_9921",
+      "call_id": "call_write_001",
       "tool_name": "write_file",
       "arguments": {
-        "path": "reports/summary.md",
-        "content": "# 执行总结\n所有测试用例已全部通过。"
+        "path": "reports/audit.log",
+        "content": "AUDIT OK"
       },
       "has_side_effect": true,
-      "idempotency_key": "idem_run20261029_s3_c1",
+      "idempotency_key": "idem_run001_s1_c1",
       "status": "unknown",
       "attempts": [
         {
           "attempt_id": 1,
-          "dispatched_at": "2026-10-29T09:52:14Z",
+          "dispatched_at": "2026-10-30T10:00:04Z",
           "finished_at": null,
           "error": "Process terminated by SIGKILL (OOM)"
         }
       ],
       "evidence_probe": {
         "strategy": "filesystem_stat",
-        "target": "reports/summary.md",
-        "expected_hash": "a1b2c3d4e5f6...",
+        "target": "reports/audit.log",
+        "expected_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "probe_result": "target_exists_and_hash_matched"
       }
     }
@@ -396,9 +476,9 @@
 </td>
 <td>
   1. 恢复命令读取 Checkpoint，发现 <code>inv_write_report_01</code> 状态为 <code>unknown</code>。<br>
-  2. <strong>阻止自动重写</strong>，触发 <code>filesystem_stat</code> 探查器核对文件存在性与哈希。<br>
-  3. 确认文件内容与模型要求一致（证明崩溃前已落盘），直接合成成功回执写入会话。<br>
-  4. 恢复状态标记为 <code>completed</code>，不消耗额外写算力，直接推进下一轮模型请求。
+  2. <strong>阻止自动重写</strong>，触发 <code>filesystem_stat</code> 探查器核对 <code>reports/audit.log</code> 的物理存在与内容哈希。<br>
+  3. 确认文件已完整落盘且哈希一致，直接合成成功回执补写入会话记录（Transcript）。<br>
+  4. 将 Checkpoint 中的动作状态由 <code>unknown</code> 修正为 <code>completed</code>，零算力浪费直接推进下一轮模型推理。
 </td>
 </tr>
 <tr>
