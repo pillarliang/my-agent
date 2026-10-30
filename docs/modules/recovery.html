@@ -350,7 +350,7 @@
   </tr>
   </tbody>
   </table></div>
-  <figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-recovery-action-states.svg" width="940" height="560" alt="动作四态流转与物证核查状态机：包含起始、状态流转、物证探查分流与结束环节，保障恢复的幂等性与安全性" loading="lazy"><figcaption>动作四态流转与物证核查状态机：具备清晰的起始、四态流转、物证判定分流与闭合结束环节。</figcaption></figure>
+  <figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-recovery-action-states.svg?v=2" width="940" height="560" alt="动作四态流转与物证核查状态机：包含起始、状态流转、物证探查分流与结束环节，保障恢复的幂等性与安全性" loading="lazy"><figcaption>动作四态流转与物证核查状态机：具备清晰的起始、四态流转、物证判定分流与闭合结束环节。</figcaption></figure>
 </li>
 <li><strong>重新校验 Policy 权限（动态安全审查）</strong>：
   <p>即使在中断前该动作已被 Policy 批准，在恢复重试时<strong>必须按当前最新的 Policy 重新做一次权限检查</strong>。因为在系统崩溃到恢复的这段时间里，用户可能修改了权限配置（如撤销了写权限），绝不能以历史批准记录绕过当下的安全防线。</p>
