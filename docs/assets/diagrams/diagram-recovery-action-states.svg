@@ -1,159 +1,171 @@
 <svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 980 540"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
-.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
-.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
-.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); rx: var(--node-radius, 4px); }
-.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
-.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); font-size: 12.5px; }
-.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
-.am-edge--dashed { stroke-dasharray: 4 3; }
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 12.5px; }
+.am-state-shape { fill: var(--paper, #ffffff); stroke: var(--line, #1d2026); stroke-width: 1.5; rx: 8px; }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: 1.4; }
+.am-edge--crash { stroke: #dc2626; stroke-width: 1.8; stroke-dasharray: 5 3; }
+.am-edge--probe { stroke: #ea580c; stroke-width: 1.5; }
+.am-edge--success { stroke: #16a34a; stroke-width: 1.5; }
+.am-edge--reset { stroke: #2563eb; stroke-width: 1.5; }
+.am-edge--danger { stroke: #dc2626; stroke-width: 1.5; }
 .am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
-.am-state-box--completed { fill: #f0fdf4; stroke: #22c55e; stroke-width: 1.3; rx: 4px; }
-.am-state-box--notdispatched { fill: #eff6ff; stroke: #3b82f6; stroke-width: 1.3; rx: 4px; }
-.am-state-box--running { fill: #faf5ff; stroke: #a855f7; stroke-width: 1.3; rx: 4px; }
-.am-state-box--unknown { fill: #fff1f2; stroke: #e11d48; stroke-width: 1.5; rx: 4px; }
-.am-action-card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.2; rx: 4px; }
-.am-probe-cluster { fill: #fff7ed; stroke: #ea580c; stroke-width: 1.4; rx: 5px; }
-.am-subcard-green { fill: #f0fdf4; stroke: #22c55e; stroke-width: 1.1; rx: 4px; }
-.am-subcard-blue { fill: #eff6ff; stroke: #3b82f6; stroke-width: 1.1; rx: 4px; }
-.am-subcard-red { fill: #fef2f2; stroke: #ef4444; stroke-width: 1.2; rx: 4px; }
-.am-badge--green { fill: #dcfce7; stroke: #16a34a; stroke-width: 0.8; rx: 2px; }
-.am-badge-text--green { font-size: 10.5px; font-weight: 600; fill: #15803d; }
-.am-badge--blue { fill: #dbeafe; stroke: #2563eb; stroke-width: 0.8; rx: 2px; }
-.am-badge-text--blue { font-size: 10.5px; font-weight: 600; fill: #1d4ed8; }
-.am-badge--purple { fill: #f3e8ff; stroke: #9333ea; stroke-width: 0.8; rx: 2px; }
-.am-badge-text--purple { font-size: 10.5px; font-weight: 600; fill: #7e22ce; }
-.am-badge--red { fill: #ffe4e6; stroke: #e11d48; stroke-width: 0.8; rx: 2px; }
-.am-badge-text--red { font-size: 10.5px; font-weight: 600; fill: #be123c; }
-.am-badge--orange { fill: #ffedd5; stroke: #ea580c; stroke-width: 0.8; rx: 2px; }
-.am-badge-text--orange { font-size: 10.5px; font-weight: 600; fill: #c2410c; }
-.am-terminal-bar { fill: #f0fdf4; stroke: #16a34a; stroke-width: 1.4; rx: 4px; }
-.am-terminal-bar--hitl { fill: #fef2f2; stroke: #dc2626; stroke-width: 1.4; rx: 4px; }
-svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+.am-arrow--crash { fill: #dc2626; }
+.am-arrow--probe { fill: #ea580c; }
+.am-arrow--success { fill: #16a34a; }
+.am-arrow--reset { fill: #2563eb; }
+.am-arrow--danger { fill: #dc2626; }
+.am-edge-tag rect { fill: var(--paper, #ffffff); stroke: #cbd5e1; stroke-width: 1; rx: 3px; }
+.am-edge-tag text { font-size: 11px; fill: #334155; }
+.am-edge-tag--crash rect { fill: #fef2f2; stroke: #fca5a5; }
+.am-edge-tag--crash text { fill: #b91c1c; font-weight: 600; }
+.am-edge-tag--success rect { fill: #f0fdf4; stroke: #86efac; }
+.am-edge-tag--success text { fill: #15803d; font-weight: 600; }
+.am-edge-tag--reset rect { fill: #eff6ff; stroke: #93c5fd; }
+.am-edge-tag--reset text { fill: #1d4ed8; font-weight: 600; }
+.am-edge-tag--danger rect { fill: #fff1f2; stroke: #fda4af; }
+.am-edge-tag--danger text { fill: #be123c; font-weight: 600; }
+.am-state-title { font-weight: 700; font-size: 13px; }
+.am-state-desc { font-size: 11px; fill: #64748b; }
+.am-choice { fill: #fff7ed; stroke: #ea580c; stroke-width: 1.5; }
 </style>
-<defs><marker id="action-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-crash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow--crash" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-probe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow--probe" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-success" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow--success" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-reset" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow--reset" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-danger" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow--danger" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
 
-<!-- 顶部扫描入口 -->
-<g class="am-node am-node--hi">
-  <rect class="am-node-shape" x="330" y="16" width="320" height="36"/>
-  <text x="490" y="34" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-weight="600">扫描 Checkpoint 中的未闭合调用 (Invocations)</text>
+<!-- ==================== 顶部标题与背景框 ==================== -->
+<text x="490" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">动作执行生命周期与恢复核查状态机 (Action State Machine)</text>
+
+<!-- ==================== 状态节点定义 ==================== -->
+
+<!-- 1. 初态 (Initial State: 实心圆) -->
+<circle cx="45" cy="85" r="11" fill="#1e293b"/>
+<text x="45" y="112" text-anchor="middle" font-size="10.5" fill="#64748b">初态</text>
+
+<!-- 2. 状态：not_dispatched -->
+<g transform="translate(100, 50)">
+  <rect class="am-state-shape" width="185" height="70" stroke="#3b82f6" fill="#f8faff"/>
+  <line x1="0" y1="28" x2="185" y2="28" stroke="#dbeafe" stroke-width="1.2"/>
+  <circle cx="16" cy="14" r="4" fill="#3b82f6"/>
+  <text x="26" y="18" class="am-state-title" fill="#1d4ed8">not_dispatched</text>
+  <text x="16" y="44" class="am-state-desc">尚未派发 · 底层动作从未执行</text>
+  <text x="16" y="60" class="am-state-desc">外部物理世界零残留、零污染</text>
 </g>
 
-<!-- 顶部分流主线连线（严格正交分流，零交叉） -->
-<path class="am-edge" d="M490,52 V72"/>
-<path class="am-edge" d="M123,72 H831"/>
-<path class="am-edge" d="M123,72 V96" marker-end="url(#action-arrow)"/>
-<path class="am-edge" d="M354,72 V96" marker-end="url(#action-arrow)"/>
-<path class="am-edge" d="M580,72 V96" marker-end="url(#action-arrow)"/>
-<path class="am-edge" d="M831,72 V96" marker-end="url(#action-arrow)"/>
+<!-- 3. 状态：running -->
+<g transform="translate(390, 50)">
+  <rect class="am-state-shape" width="185" height="70" stroke="#9333ea" fill="#faf5ff"/>
+  <line x1="0" y1="28" x2="185" y2="28" stroke="#f3e8ff" stroke-width="1.2"/>
+  <circle cx="16" cy="14" r="4" fill="#9333ea"/>
+  <text x="26" y="18" class="am-state-title" fill="#7e22ce">running</text>
+  <text x="16" y="44" class="am-state-desc">正在执行 / 后台异步运行中</text>
+  <text x="16" y="60" class="am-state-desc">底层进程活跃 · 等待返回回执</text>
+</g>
 
-<!-- ==================== 列 1：completed ==================== -->
-<rect class="am-state-box--completed" x="16" y="98" width="215" height="62"/>
-<rect class="am-badge--green" x="26" y="108" width="76" height="18"/>
-<text class="am-badge-text--green" x="64" y="117" text-anchor="middle" dominant-baseline="central">completed</text>
-<text x="110" y="117" font-size="12" font-weight="650" fill="#15803d" dominant-baseline="central">已确认完成</text>
-<text x="26" y="142" font-size="11" fill="#4b5563">工具回执完备 · 物理状态已闭合</text>
+<!-- 4. 状态：completed (终态之一) -->
+<g transform="translate(685, 50)">
+  <rect class="am-state-shape" width="185" height="70" stroke="#16a34a" fill="#f0fdf4"/>
+  <line x1="0" y1="28" x2="185" y2="28" stroke="#dcfce7" stroke-width="1.2"/>
+  <circle cx="16" cy="14" r="4" fill="#16a34a"/>
+  <text x="26" y="18" class="am-state-title" fill="#15803d">completed</text>
+  <text x="16" y="44" class="am-state-desc">已确认完成 · 物理回执完备</text>
+  <text x="16" y="60" class="am-state-desc">直接复用结果 · 跳过物理重做</text>
+</g>
 
-<!-- 列 1 连线与动作卡片 -->
-<path class="am-edge" d="M123,160 V186" marker-end="url(#action-arrow)"/>
-<rect class="am-action-card" x="16" y="188" width="215" height="135"/>
-<text x="28" y="208" font-size="12" font-weight="650" fill="#0f172a">直接复用已有结果</text>
-<line x1="28" y1="218" x2="219" y2="218" stroke="#f1f5f9"/>
-<text x="28" y="238" font-size="11" fill="#15803d" font-weight="600">★ 跳过底层物理执行</text>
-<text x="28" y="258" font-size="11" fill="#475569">直接提取 Checkpoint 中的</text>
-<text x="28" y="276" font-size="11" fill="#475569">历史回执加入上下文；</text>
-<text x="28" y="296" font-size="11" fill="#475569">零额外物理计算与网络消耗。</text>
+<!-- 5. 终态 (Final State: 双同心圆) -->
+<circle cx="940" cy="85" r="13" fill="none" stroke="#0f172a" stroke-width="1.5"/>
+<circle cx="940" cy="85" r="8" fill="#0f172a"/>
+<text x="940" y="112" text-anchor="middle" font-size="10.5" fill="#64748b">终态</text>
 
-<!-- ==================== 列 2：not_dispatched ==================== -->
-<rect class="am-state-box--notdispatched" x="247" y="98" width="215" height="62"/>
-<rect class="am-badge--blue" x="257" y="108" width="94" height="18"/>
-<text class="am-badge-text--blue" x="304" y="117" text-anchor="middle" dominant-baseline="central">not_dispatched</text>
-<text x="360" y="117" font-size="12" font-weight="650" fill="#1d4ed8" dominant-baseline="central">尚未派发</text>
-<text x="257" y="142" font-size="11" fill="#4b5563">确认底层动作从未执行 · 零污染</text>
+<!-- 6. 异常状态：unknown (极高危临界断点) -->
+<g transform="translate(380, 200)">
+  <rect class="am-state-shape" width="205" height="78" stroke="#e11d48" stroke-width="1.8" fill="#fff1f2"/>
+  <line x1="0" y1="28" x2="205" y2="28" stroke="#ffe4e6" stroke-width="1.2"/>
+  <circle cx="16" cy="14" r="4" fill="#e11d48"/>
+  <text x="26" y="18" class="am-state-title" fill="#be123c">unknown (极高危未知态)</text>
+  <text x="14" y="45" class="am-state-desc" fill="#e11d48" font-weight="600">⚠ 中途中断 · 物理状态未决！</text>
+  <text x="14" y="63" class="am-state-desc">严禁自动重做！等待物证探查</text>
+</g>
 
-<!-- 列 2 连线与动作卡片 -->
-<path class="am-edge" d="M354,160 V186" marker-end="url(#action-arrow)"/>
-<rect class="am-action-card" x="247" y="188" width="215" height="135"/>
-<text x="259" y="208" font-size="12" font-weight="650" fill="#0f172a">动态重新审查 Policy</text>
-<line x1="259" y1="218" x2="450" y2="218" stroke="#f1f5f9"/>
-<text x="259" y="238" font-size="11" fill="#475569">1. 提交最新 Policy 重新鉴权</text>
-<text x="259" y="258" font-size="11" fill="#475569">2. 获准后发起第 2 次 Attempt</text>
-<text x="259" y="276" font-size="11" fill="#475569">3. 调用底层函数执行真实动作</text>
-<text x="259" y="296" font-size="11" fill="#15803d" font-weight="600">➔ 生成新回执，转为 completed</text>
+<!-- 7. 判定节点：Evidence Probe 物证探查 (Choice 菱形) -->
+<g transform="translate(482, 335)">
+  <polygon class="am-choice" points="0,-22 36,0 0,22 -36,0"/>
+  <text x="0" y="4" text-anchor="middle" font-size="11" font-weight="700" fill="#9a3412">探查</text>
+</g>
+<text x="482" y="372" text-anchor="middle" font-size="11" font-weight="600" fill="#ea580c">Evidence Probe 物证核验</text>
 
-<!-- ==================== 列 3：running ==================== -->
-<rect class="am-state-box--running" x="478" y="98" width="205" height="62"/>
-<rect class="am-badge--purple" x="488" y="108" width="62" height="18"/>
-<text class="am-badge-text--purple" x="519" y="117" text-anchor="middle" dominant-baseline="central">running</text>
-<text x="560" y="117" font-size="12" font-weight="650" fill="#7e22ce" dominant-baseline="central">异步执行中</text>
-<text x="488" y="142" font-size="11" fill="#4b5563">后台长任务/子进程仍在运行</text>
+<!-- 8. 挂起状态：paused_for_human (终态之一) -->
+<g transform="translate(365, 435)">
+  <rect class="am-state-shape" width="235" height="68" stroke="#d97706" fill="#fffbeb"/>
+  <line x1="0" y1="28" x2="235" y2="28" stroke="#fef3c7" stroke-width="1.2"/>
+  <circle cx="16" cy="14" r="4" fill="#d97706"/>
+  <text x="26" y="18" class="am-state-title" fill="#b45309">paused_for_human</text>
+  <text x="16" y="44" class="am-state-desc">人工介入挂起 · 状态机熔断锁定</text>
+  <text x="16" y="58" class="am-state-desc">等待人工排查物理环境并确认</text>
+</g>
 
-<!-- 列 3 连线与动作卡片 -->
-<path class="am-edge" d="M580,160 V186" marker-end="url(#action-arrow)"/>
-<rect class="am-action-card" x="478" y="188" width="205" height="135"/>
-<text x="490" y="208" font-size="12" font-weight="650" fill="#0f172a">重连异步任务句柄</text>
-<line x1="490" y1="218" x2="671" y2="218" stroke="#f1f5f9"/>
-<text x="490" y="238" font-size="11" fill="#475569">1. 与外部后台任务句柄重挂</text>
-<text x="490" y="258" font-size="11" fill="#475569">2. 轮询状态（Poll / Wait）</text>
-<text x="490" y="276" font-size="11" fill="#475569">3. 等待外部异步动作返回</text>
-<text x="490" y="296" font-size="11" fill="#15803d" font-weight="600">➔ 获取最终回执，转 completed</text>
+<!-- ==================== 状态转移连线与转换事件 ==================== -->
 
-<!-- ==================== 列 4：unknown 极高危核心 ==================== -->
-<rect class="am-state-box--unknown" x="699" y="98" width="265" height="62"/>
-<rect class="am-badge--red" x="709" y="108" width="68" height="18"/>
-<text class="am-badge-text--red" x="743" y="117" text-anchor="middle" dominant-baseline="central">unknown</text>
-<text x="785" y="117" font-size="12" font-weight="650" fill="#be123c" dominant-baseline="central">结果未知（极高危）</text>
-<text x="709" y="142" font-size="11" fill="#e11d48">执行中猝死 · 现场状态完全未决</text>
+<!-- 转移 1: 初态 -> not_dispatched -->
+<path class="am-edge" d="M56,85 H98" marker-end="url(#arrow)"/>
+<g class="am-edge-tag" transform="translate(58, 62)"><rect width="36" height="16"/><text x="18" y="11" text-anchor="middle">创建</text></g>
 
-<!-- 列 4 连线进入 Evidence Probe 物证探查器 -->
-<path class="am-edge" stroke="#ea580c" d="M831,160 V186" marker-end="url(#action-arrow)"/>
-<rect class="am-probe-cluster" x="699" y="188" width="265" height="68"/>
-<rect class="am-badge--orange" x="709" y="196" width="92" height="18"/>
-<text class="am-badge-text--orange" x="755" y="205" text-anchor="middle" dominant-baseline="central">Evidence Probe</text>
-<text x="810" y="205" font-size="11.5" font-weight="650" fill="#9a3412" dominant-baseline="central">触发外部物证探查器</text>
-<text x="709" y="228" font-size="11" fill="#9a3412" font-weight="600">★ 坚决禁止自动重做！先探查物理凭据：</text>
-<text x="709" y="244" font-size="11" fill="#7c2d12">核验物理磁盘文件哈希 / 外部 API 交易状态</text>
+<!-- 转移 2: not_dispatched -> running (正常派发) -->
+<path class="am-edge" d="M285,75 H388" marker-end="url(#arrow)"/>
+<g class="am-edge-tag" transform="translate(295, 55)"><rect width="84" height="18"/><text x="42" y="12" text-anchor="middle">[Policy获准]/派发</text></g>
 
-<!-- 列 4 向下分流为三张垂直卡片（在自身列内垂直排列，彻底避免横穿连线） -->
-<path class="am-edge" stroke="#ea580c" d="M831,256 V272" marker-end="url(#action-arrow)"/>
+<!-- 转移 3: running -> completed (正常成功) -->
+<path class="am-edge" d="M575,75 H683" marker-end="url(#arrow)"/>
+<g class="am-edge-tag" transform="translate(588, 55)"><rect width="84" height="18"/><text x="42" y="12" text-anchor="middle">执行成功/回执落盘</text></g>
 
-<!-- 子卡片 A：物证匹配 -->
-<rect class="am-subcard-green" x="699" y="274" width="265" height="46"/>
-<text x="709" y="291" font-size="11" font-weight="650" fill="#15803d">A. 物证匹配（文件已写入且哈希一致）</text>
-<text x="709" y="308" font-size="11" fill="#166534">➔ 确信动作已生效，补齐回执按 completed 复用</text>
+<!-- 转移 4: completed -> 终态 -->
+<path class="am-edge" d="M870,85 H925" marker-end="url(#arrow)"/>
+<g class="am-edge-tag" transform="translate(876, 62)"><rect width="42" height="16"/><text x="21" y="11" text-anchor="middle">推下轮</text></g>
 
-<!-- 子卡片 B：物证确认未发生 -->
-<rect class="am-subcard-blue" x="699" y="326" width="265" height="46"/>
-<text x="709" y="343" font-size="11" font-weight="650" fill="#1d4ed8">B. 物证确认未发生（文件不存在/无订单）</text>
-<text x="709" y="360" font-size="11" fill="#1e40af">➔ 确信物理零污染，按 not_dispatched 重审执行</text>
+<!-- 转移 5: running -> unknown (猝死中断跃迁) -->
+<path class="am-edge--crash" d="M482,120 V198" marker-end="url(#arrow-crash)"/>
+<g class="am-edge-tag--crash" transform="translate(488, 142)">
+  <rect width="138" height="22"/>
+  <text x="69" y="14" text-anchor="middle">系统猝死 (OOM / SIGKILL)</text>
+</g>
 
-<!-- 子卡片 C：物证冲突/无法确定 -->
-<rect class="am-subcard-red" x="699" y="378" width="265" height="46"/>
-<text x="709" y="395" font-size="11" font-weight="650" fill="#991b1b">C. 物证冲突 / 状态仍无法确定</text>
-<text x="709" y="412" font-size="11" fill="#b91c1c">➔ 坚决阻断自动执行，置为 paused_for_human</text>
+<!-- 转移 6: unknown -> Evidence Probe 判定节点 -->
+<path class="am-edge--probe" d="M482,278 V311" marker-end="url(#arrow-probe)"/>
+<g class="am-edge-tag" transform="translate(488, 282)"><rect width="70" height="18"/><text x="35" y="12" text-anchor="middle">冷启动恢复</text></g>
 
-<!-- ==================== 底部汇聚连线与终态栏 ==================== -->
-<!-- 列 1、2、3 垂直向下连接到正常推进栏 -->
-<path class="am-edge" d="M123,323 V442" marker-end="url(#action-arrow)"/>
-<path class="am-edge" d="M354,323 V442" marker-end="url(#action-arrow)"/>
-<path class="am-edge" d="M580,323 V442" marker-end="url(#action-arrow)"/>
+<!-- 转移 7 (分支 A): Evidence Probe -> completed (物证匹配，合成回执复用) -->
+<!-- 从 (518, 335) 向右上方折线连接到 completed (777, 120) -->
+<path class="am-edge--success" d="M518,335 H777 V122" marker-end="url(#arrow-success)"/>
+<g class="am-edge-tag--success" transform="translate(545, 318)">
+  <rect width="210" height="22"/>
+  <text x="105" y="14" text-anchor="middle">[A. 物证匹配：文件存在且哈希一致] / 合成回执</text>
+</g>
 
-<!-- 列 4 中 A 和 B 经通道直达正常推进栏（在列间空白走线，绝不穿透任何卡片） -->
-<path class="am-edge" stroke="#16a34a" d="M699,297 H691 V442" marker-end="url(#action-arrow)"/>
-<path class="am-edge" stroke="#2563eb" d="M699,349 H691"/>
+<!-- 转移 8 (分支 B): Evidence Probe -> not_dispatched (物证确认未发生，重审派发) -->
+<!-- 从 (446, 335) 向左上方折线连接到 not_dispatched (192, 120) -->
+<path class="am-edge--reset" d="M446,335 H192 V122" marker-end="url(#arrow-reset)"/>
+<g class="am-edge-tag--reset" transform="translate(208, 318)">
+  <rect width="215" height="22"/>
+  <text x="107" y="14" text-anchor="middle">[B. 确认未发生：物理零污染] / 重置为待派发</text>
+</g>
 
-<!-- 列 4 中 C 垂直向下直连人工介入栏（纯垂直下行，零交叉） -->
-<path class="am-edge" stroke="#dc2626" d="M831,424 V442" marker-end="url(#action-arrow)"/>
+<!-- 转移 9 (分支 C): Evidence Probe -> paused_for_human (物证冲突/无法确定，熔断挂起) -->
+<path class="am-edge--danger" d="M482,357 V433" marker-end="url(#arrow-danger)"/>
+<g class="am-edge-tag--danger" transform="translate(488, 390)">
+  <rect width="180" height="22"/>
+  <text x="90" y="14" text-anchor="middle">[C. 物证冲突或无法确定] / 熔断挂起</text>
+</g>
 
-<!-- 终态栏 1：正常闭环 -->
-<rect class="am-terminal-bar" x="16" y="444" width="667" height="52"/>
-<text x="349" y="464" font-size="12.5" font-weight="650" fill="#15803d" text-anchor="middle" dominant-baseline="central">动作已闭合 (completed) ➔ 更新 Checkpoint 记录 ➔ 推进下一轮模型推理</text>
-<text x="349" y="482" font-size="11" fill="#166534" text-anchor="middle" dominant-baseline="central">已完成步骤零重复调用，未派发步骤获准后安全补齐，平滑推进 Agent 主循环</text>
+<!-- 转移 10: running 在重启后的恢复自愈 (重连异步任务句柄) -->
+<path class="am-edge" stroke-dasharray="4 3" d="M575,95 C630,115 630,135 575,108"/>
+<text x="618" y="112" font-size="10" fill="#7e22ce">[恢复续接] 重挂句柄</text>
 
-<!-- 终态栏 2：人工介入 -->
-<rect class="am-terminal-bar--hitl" x="699" y="444" width="265" height="52"/>
-<text x="831" y="464" font-size="12.5" font-weight="650" fill="#991b1b" text-anchor="middle" dominant-baseline="central">挂起等待人工干预 (HITL)</text>
-<text x="831" y="482" font-size="11" fill="#b91c1c" text-anchor="middle" dominant-baseline="central">置为 paused_for_human，告警交人工排查</text>
+<!-- 转移 11: not_dispatched 动态重审自愈线 (二次鉴权) -->
+<path class="am-edge" stroke-dasharray="4 3" d="M285,100 C340,118 340,135 285,110"/>
+<text x="328" y="122" font-size="10" fill="#1d4ed8">[动态重审] 最新Policy</text>
 
-<!-- 底部底线小字说明 -->
-<text x="490" y="520" text-anchor="middle" font-size="11.5" fill="#64748b">动作四态流转契约：通过物证探查（Evidence Probe）将未知状态安全分流化解，确保带副作用操作具备严格幂等性</text>
 </svg>
