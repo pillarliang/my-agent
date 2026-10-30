@@ -24,7 +24,7 @@
 <li><strong>Hooks / Middleware → Runner</strong>：生命周期回调注册到 <a href="loop.html#module-loop">Runner</a> 的指定步骤；若回调改写了工具参数，必须重新经过参数校验与 <a href="policy.html#module-policy">Policy</a> 授权。</li>
 <li><strong>MCP 外部工具 → Tools</strong>：由 <a href="tools.html#module-tools">Tools</a> 适配为内部统一的 <code>ToolSpec</code>，执行前同样必须通过 Policy 权限检查。</li>
 <li><strong>失败隔离策略</strong>：普通观测类回调失败可按约定降级告警；但用于拦截危险动作的控制类回调一旦失败，必须拒绝执行动作（Fail-closed）。</li>
-</ul><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-extensions-collaboration.svg" width="1000" height="622" alt="未来扩展协作示例：方法、回调和工具接入不同模块；当前尚无动态加载器。" loading="lazy"><figcaption>未来扩展协作示例：方法、回调和工具接入不同模块；当前尚无动态加载器。</figcaption></figure></div></div></section>
+</ul><figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/module-extensions-collaboration.svg" width="920" height="540" alt="扩展加载器内部的三类扩展（Skills、Hooks/Middleware、MCP 外部工具）分别指向 Context Manager、Runner 与 Tools，并在运行期汇入 Policy 权限检查。" loading="lazy"><figcaption>扩展加载器内部包含的三类扩展分别指向对应的核心模块：Skills ➔ Context Manager、Hooks/Middleware ➔ Runner、MCP 外部工具 ➔ Tools，且工具执行与参数改写统一汇聚至 Policy。</figcaption></figure></div></div></section>
 
 <section class="lesson-section" id="module-extensions-p1-panel-C"><h3>3. Skills 的 3 种加载方案对比</h3><div class="lesson-body"><div class="am-md"><h4>A. 全量正文常驻</h4>
 <ul>

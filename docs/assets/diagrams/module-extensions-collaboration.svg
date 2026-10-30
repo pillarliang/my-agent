@@ -1,35 +1,126 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 622" role="img" aria-label="未来扩展协作示例：方法、回调和工具接入不同模块；当前尚无动态加载器。">
-<title>未来扩展协作示例：方法、回调和工具接入不同模块；当前尚无动态加载器。</title>
-<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:14px}.life{stroke:#c9d2df;stroke-dasharray:5 5}.arrow{fill:none;stroke:#40516b;stroke-width:1.5}.return{stroke-dasharray:6 4}</style>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
-<rect x="45" y="16" width="190" height="44" rx="8" fill="#f4f7fb" stroke="#9dacc2"/>
-<text x="140" y="43" text-anchor="middle">应用装配</text>
-<path class="life" d="M140 60 V577"/>
-<rect x="285" y="16" width="190" height="44" rx="8" fill="#f4f7fb" stroke="#9dacc2"/>
-<text x="380" y="43" text-anchor="middle">扩展加载器</text>
-<path class="life" d="M380 60 V577"/>
-<rect x="525" y="16" width="190" height="44" rx="8" fill="#f4f7fb" stroke="#9dacc2"/>
-<text x="620" y="43" text-anchor="middle">Context / Runner</text>
-<path class="life" d="M620 60 V577"/>
-<rect x="765" y="16" width="190" height="44" rx="8" fill="#f4f7fb" stroke="#9dacc2"/>
-<text x="860" y="43" text-anchor="middle">Tools / Policy</text>
-<path class="life" d="M860 60 V577"/>
-<text x="260.0" y="106" text-anchor="middle">选择包、版本与启用范围</text>
-<path class="arrow" d="M140 118 H380" marker-end="url(#arrow)"/>
-<text x="260.0" y="170" text-anchor="middle">核对结果或加载失败</text>
-<path class="arrow return" d="M380 182 H140" marker-end="url(#arrow)"/>
-<text x="500.0" y="234" text-anchor="middle">提供方法索引或注册回调</text>
-<path class="arrow" d="M380 246 H620" marker-end="url(#arrow)"/>
-<text x="620.0" y="298" text-anchor="middle">注册外部工具定义与适配器</text>
-<path class="arrow" d="M380 310 H860" marker-end="url(#arrow)"/>
-<text x="500.0" y="362" text-anchor="middle">按需请求方法正文</text>
-<path class="arrow" d="M620 374 H380" marker-end="url(#arrow)"/>
-<text x="500.0" y="408" text-anchor="middle">限制长度的正文与版本</text>
-<text x="500.0" y="426" text-anchor="middle">或读取失败</text>
-<path class="arrow return" d="M380 438 H620" marker-end="url(#arrow)"/>
-<text x="740.0" y="490" text-anchor="middle">运行时提交模型工具调用</text>
-<path class="arrow" d="M620 502 H860" marker-end="url(#arrow)"/>
-<text x="740.0" y="536" text-anchor="middle">授权后执行的真实回执</text>
-<text x="740.0" y="554" text-anchor="middle">或拒绝／失败</text>
-<path class="arrow return" d="M860 566 H620" marker-end="url(#arrow)"/>
-<text x="500.0" y="610" text-anchor="middle">实线：发起调用或提交；虚线：返回结果或失败。角色表示职责，不限定具体类。</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 920 540" role="img" aria-label="扩展加载器内部的三类扩展（Skills、Hooks/Middleware、MCP 外部工具）分别指向 Context Manager、Runner 与 Tools，并在运行期汇入 Policy 权限检查。"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+/* Embedded previews can lose html[data-theme]; the fallbacks keep diagrams readable, and defined theme variables still win. */
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); }
+.am-node-shape ~ .am-node-shape { filter: none; }
+.am-node--rect .am-node-shape, .am-node--er .am-node-shape { rx: var(--node-radius, 3px); }
+.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
+.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); font-size: 12.5px; }
+.am-node--hi text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-diagram .am-node--hi .am-node-text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.4); }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
+.am-edge-label rect { fill: var(--paper, #ffffff); stroke: var(--line-2, #d6dae1); stroke-width: 0.8; }
+.am-diagram .am-edge-label text { fill: var(--edge-label, var(--accent, #1d5fbf)); font-size: 11.5px; font-weight: 600; }
+.am-cluster { fill: var(--cluster-fill, var(--fill, #f3f5f8)); stroke: var(--cluster-stroke, var(--line-2, #d6dae1)); stroke-width: 1.5; rx: 5px; }
+.am-cluster-header { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); stroke-width: 1.5; rx: 5px; }
+.am-divider { stroke: var(--line-2, #d6dae1); stroke-width: 1; }
+
+svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+</style>
+<defs><marker id="ext-collab-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+
+<!-- ==================== 顶部大容器：扩展加载器（Plugin 插件包） ==================== -->
+<rect class="am-cluster" x="20" y="16" width="880" height="188" rx="5"/>
+<rect class="am-cluster-header" x="20" y="16" width="880" height="36" rx="5"/>
+<text x="460" y="34" text-anchor="middle" dominant-baseline="central" font-size="13.5" font-weight="600" fill="var(--hi-text, var(--accent, #1d5fbf))">扩展加载器（解析 Plugin 插件包：核对版本、内容哈希与启用范围，内部包含三类扩展）</text>
+
+<!-- 扩展加载器内部项 1：Skills -->
+<g class="am-node am-node--rect">
+  <rect class="am-node-shape" x="38" y="64" width="264" height="126" rx="3"/>
+  <text x="170" y="85" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">1. Skills（技能方法）</text>
+  <line class="am-divider" x1="52" y1="98" x2="288" y2="98"/>
+  <text x="52" y="119" class="am-node-text" font-size="11.5">• 内容：特定任务的步骤指南与参考资料</text>
+  <text x="52" y="141" class="am-node-text" font-size="11.5">• 启动期：仅提取名称与简介（Metadata）</text>
+  <text x="52" y="163" class="am-node-text" font-size="11.5">• 运行期：匹配任务时按需读取限长正文</text>
+</g>
+
+<!-- 扩展加载器内部项 2：Hooks / Middleware -->
+<g class="am-node am-node--rect">
+  <rect class="am-node-shape" x="328" y="64" width="264" height="126" rx="3"/>
+  <text x="460" y="85" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">2. Hooks / Middleware（回调与中间件）</text>
+  <line class="am-divider" x1="342" y1="98" x2="578" y2="98"/>
+  <text x="342" y="119" class="am-node-text" font-size="11.5">• 内容：生命周期回调与请求包裹逻辑</text>
+  <text x="342" y="141" class="am-node-text" font-size="11.5">• 启动期：声明挂载点（model / tool 前后）</text>
+  <text x="342" y="163" class="am-node-text" font-size="11.5">• 运行期：触发观测日志、转换或动作拦截</text>
+</g>
+
+<!-- 扩展加载器内部项 3：MCP 外部工具 -->
+<g class="am-node am-node--rect">
+  <rect class="am-node-shape" x="618" y="64" width="264" height="126" rx="3"/>
+  <text x="750" y="85" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">3. MCP 外部工具（协议工具声明）</text>
+  <line class="am-divider" x1="632" y1="98" x2="868" y2="98"/>
+  <text x="632" y="119" class="am-node-text" font-size="11.5">• 内容：本地 stdio 或远程 HTTP 工具服务</text>
+  <text x="632" y="141" class="am-node-text" font-size="11.5">• 启动期：由适配器转换为统一 ToolSpec</text>
+  <text x="632" y="163" class="am-node-text" font-size="11.5">• 运行期：同一次 Run 内锁定工具版本</text>
+</g>
+
+<!-- ==================== 指向连线：扩展加载器内部三项 -> 对应的核心模块 ==================== -->
+<path class="am-edge" d="M170,190 V266" marker-end="url(#ext-collab-arrow)"/>
+<g class="am-edge-label"><rect x="88" y="218" width="164" height="22" rx="3"/><text x="170" y="229" text-anchor="middle" dominant-baseline="central">Skills ➔ Context Manager</text></g>
+
+<path class="am-edge" d="M460,190 V266" marker-end="url(#ext-collab-arrow)"/>
+<g class="am-edge-label"><rect x="372" y="218" width="176" height="22" rx="3"/><text x="460" y="229" text-anchor="middle" dominant-baseline="central">Hooks / Middleware ➔ Runner</text></g>
+
+<path class="am-edge" d="M750,190 V266" marker-end="url(#ext-collab-arrow)"/>
+<g class="am-edge-label"><rect x="674" y="218" width="152" height="22" rx="3"/><text x="750" y="229" text-anchor="middle" dominant-baseline="central">MCP 外部工具 ➔ Tools</text></g>
+
+<!-- ==================== 下方：分别接入的 Agent 核心模块 ==================== -->
+<!-- 核心模块 1：Context Manager -->
+<g class="am-node am-node--rect am-node--hi">
+  <rect class="am-node-shape" x="38" y="268" width="264" height="114" rx="3"/>
+  <text x="170" y="290" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">核心模块：Context Manager</text>
+  <line class="am-divider" x1="52" y1="304" x2="288" y2="304"/>
+  <text x="52" y="325" class="am-node-text" font-size="11.5">• 按预算将激活的 Skill 选入本轮输入</text>
+  <text x="52" y="347" class="am-node-text" font-size="11.5">• 未激活的 Skill 正文零 Token 占用</text>
+  <text x="52" y="369" class="am-node-text" font-size="11.5">• 边界：纯文本注入，不直接执行文内脚本</text>
+</g>
+
+<!-- 核心模块 2：Runner -->
+<g class="am-node am-node--rect am-node--hi">
+  <rect class="am-node-shape" x="328" y="268" width="264" height="114" rx="3"/>
+  <text x="460" y="290" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">核心模块：Runner (Loop)</text>
+  <line class="am-divider" x1="342" y1="304" x2="578" y2="304"/>
+  <text x="342" y="325" class="am-node-text" font-size="11.5">• 在循环指定步骤触发已注册的回调</text>
+  <text x="342" y="347" class="am-node-text" font-size="11.5">• 观测类失败：按约定降级告警，不卡循环</text>
+  <text x="342" y="369" class="am-node-text" font-size="11.5">• 控制类失败：必须拒绝执行（Fail-closed）</text>
+</g>
+
+<!-- 核心模块 3：Tools -->
+<g class="am-node am-node--rect am-node--hi">
+  <rect class="am-node-shape" x="618" y="268" width="264" height="114" rx="3"/>
+  <text x="750" y="290" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">核心模块：Tools (ToolRegistry)</text>
+  <line class="am-divider" x1="632" y1="304" x2="868" y2="304"/>
+  <text x="632" y="325" class="am-node-text" font-size="11.5">• 统一维护本地内置工具与 MCP 外部工具</text>
+  <text x="632" y="347" class="am-node-text" font-size="11.5">• 断连、超时或超长输出转为结构化错误回执</text>
+  <text x="632" y="369" class="am-node-text" font-size="11.5">• 边界：外部自称“只读”不替代宿主鉴权</text>
+</g>
+
+<!-- ==================== 底层连线：运行期去向与 Policy 权限检查 ==================== -->
+<path class="am-edge" d="M170,382 V434" marker-end="url(#ext-collab-arrow)"/>
+<g class="am-edge-label"><rect x="112" y="398" width="116" height="18" rx="3"/><text x="170" y="407" text-anchor="middle" dominant-baseline="central">组装本轮请求视图</text></g>
+
+<path class="am-edge" d="M460,382 V434" marker-end="url(#ext-collab-arrow)"/>
+<g class="am-edge-label"><rect x="392" y="398" width="136" height="18" rx="3"/><text x="460" y="407" text-anchor="middle" dominant-baseline="central">若回调改写了工具参数</text></g>
+
+<path class="am-edge" d="M750,382 V434" marker-end="url(#ext-collab-arrow)"/>
+<g class="am-edge-label"><rect x="682" y="398" width="136" height="18" rx="3"/><text x="750" y="407" text-anchor="middle" dominant-baseline="central">每次执行外部工具前</text></g>
+
+<!-- 左下：Model -->
+<g class="am-node am-node--rect">
+  <rect class="am-node-shape" x="38" y="436" width="264" height="84" rx="3"/>
+  <text x="170" y="459" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13">核心模块：Model（模型请求）</text>
+  <text x="170" y="481" text-anchor="middle" class="am-node-text" font-size="11.5">接收含激活 Skill 文本的 ModelRequest</text>
+  <text x="170" y="501" text-anchor="middle" class="am-node-text" font-size="11.5">仅作参考指令，不绕过工具管线执行脚本</text>
+</g>
+
+<!-- 右下：Policy -->
+<g class="am-node am-node--rect am-node--hi">
+  <rect class="am-node-shape" x="328" y="436" width="554" height="84" rx="3"/>
+  <text x="605" y="459" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">核心模块：Policy（统一权限检查与参数 Schema 校验）</text>
+  <text x="605" y="481" text-anchor="middle" class="am-node-text" font-size="11.5">核心安全铁律：发现或加载扩展 ≠ 自动授予执行权限；改写后的参数与外部工具调用均须在此过检</text>
+  <text x="605" y="501" text-anchor="middle" class="am-node-text" font-size="11.5">校验与授权通过 ➔ 执行真实动作并返回 ToolResult ｜ 权限拒绝或控制类回调失败 ➔ 立即拦截（Fail-closed）</text>
+</g>
+</svg>
