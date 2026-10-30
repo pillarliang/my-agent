@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 700 280"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+/* Embedded previews can lose html[data-theme]; the fallbacks keep diagrams readable, and defined theme variables still win. */
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+/* Diagram tokens (docs/reference.md, "Diagram tokens"): each painted part reads an optional token and falls back to the look it always had,
+   so a theme that sets none of them draws the same diagram. Font family, size and weight are not tokens: diagram text is measured for the sans font. */
+.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); }
+.am-node-shape ~ .am-node-shape { filter: none; }
+.am-node--rect .am-node-shape, .am-node--er .am-node-shape { rx: var(--node-radius, 3px); }
+.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
+.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); }
+.am-node--hi text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-diagram .am-node--hi .am-node-text { fill: var(--hi-text, var(--accent, #1d5fbf)); }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
+.am-edge-label rect { fill: var(--paper, #ffffff); }
+.am-diagram .am-edge-label text { fill: var(--edge-label, var(--accent, #1d5fbf)); font-size: 11.5px; }
+.am-cluster { fill: var(--cluster-fill, var(--fill, #f3f5f8)); stroke: var(--cluster-stroke, var(--line-2, #d6dae1)); stroke-width: 1; stroke-dasharray: 4 3; }
+.am-diagram .am-cluster-label { fill: var(--ink-2, #4b5260); font: 11px var(--font-mono, monospace); }
+.am-lifeline { stroke: var(--lifeline-color, var(--ink-3, #8b929e)); stroke-width: 1; stroke-dasharray: 4 4; }
+.am-actor { fill: var(--actor-fill, var(--node-fill, var(--paper, #ffffff))); stroke: var(--actor-stroke, var(--node-stroke, var(--line, #1d2026))); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); rx: var(--node-radius, 2px); }
+.am-diagram .am-actor-text { fill: var(--actor-text, var(--node-text, var(--ink, #16181d))); }
+.am-note { fill: var(--note-fill, var(--warn-bg, #fdf3e2)); stroke: var(--note-stroke, var(--warn, #a8620a)); stroke-width: var(--note-width, 1); rx: var(--note-radius, 2px); }
+.am-diagram .am-step { fill: var(--ink-3, #8b929e); font: 10px var(--font-mono, monospace); }
+
+svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+</style>
+<defs><marker id="policy-interface-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<line class="am-lifeline" x1="160" y1="66" x2="160" y2="265"/>
+<line class="am-lifeline" x1="540" y1="66" x2="540" y2="265"/>
+<g><rect class="am-actor" x="40" y="20" width="240" height="46" rx="3"/><text class="am-actor-text" x="160" y="43" text-anchor="middle" dominant-baseline="central">工具系统（Tools / 执行入口）</text></g>
+<g><rect class="am-actor" x="420" y="20" width="240" height="46" rx="3"/><text class="am-actor-text" x="540" y="43" text-anchor="middle" dominant-baseline="central">权限策略（Policy）</text></g>
+<g><text x="350" y="105" text-anchor="middle">提交动作请求（ActionRequest）</text><path class="am-edge" d="M160,118 H538" marker-end="url(#policy-interface-arrow)"/></g>
+<g><text x="350" y="162" text-anchor="middle">返回许可决定（PolicyDecision）</text><path class="am-edge am-edge--dashed" d="M540,175 H162" marker-end="url(#policy-interface-arrow)"/></g>
+<rect class="am-actor" x="80" y="210" width="540" height="55" rx="3" fill="none" style="fill:none"/>
+<text x="95" y="228" font-size="11.5" font-weight="600">未明确允许即为拒绝（Fail-Closed）</text>
+<text x="350" y="248" text-anchor="middle" font-size="12">获准才调用底层物理函数；被拒则直接阻断并由 Tools 生成 policy_denied 回执</text>
+</svg>
+

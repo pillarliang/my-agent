@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 940 550"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); rx: var(--node-radius, 4px); }
+.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
+.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); font-size: 12.5px; }
+.am-node--hi text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-diagram .am-node--hi .am-node-text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
+.am-edge-label rect { fill: var(--paper, #ffffff); stroke: var(--line-2, #d6dae1); stroke-width: 0.8; rx: 3px; }
+.am-diagram .am-edge-label text { fill: var(--edge-label, var(--accent, #1d5fbf)); font-size: 11.5px; font-weight: 500; }
+.am-cluster { fill: var(--cluster-fill, var(--fill, #f8fafc)); stroke: var(--cluster-stroke, var(--line-2, #cbd5e1)); stroke-width: 1.2; stroke-dasharray: 5 4; rx: 6px; }
+.am-cluster-header { fill: var(--accent-bg, #f1f5f9); stroke: var(--line-2, #cbd5e1); stroke-width: 1; rx: 4px; }
+.am-diagram .am-cluster-title { fill: var(--ink, #0f172a); font-size: 13.5px; font-weight: 600; }
+.am-diagram .am-cluster-sub { fill: var(--ink-2, #64748b); font-size: 11px; }
+.am-item-card { fill: var(--paper, #ffffff); stroke: var(--line-2, #e2e8f0); stroke-width: 1.2; rx: 4px; }
+.am-item-card--alert { fill: #fffaf0; stroke: #fbd38d; stroke-width: 1.2; rx: 4px; }
+.am-diagram .am-item-title { font-size: 12px; font-weight: 650; fill: var(--ink, #1e293b); }
+.am-diagram .am-item-body { font-size: 11.5px; fill: var(--ink-2, #475569); }
+.am-diagram .am-item-title--warn { font-size: 12px; font-weight: 650; fill: #b45309; }
+.am-diagram .am-item-body--warn { font-size: 11.5px; fill: #92400e; }
+.am-badge { fill: #e0f2fe; stroke: #0284c7; stroke-width: 0.8; rx: 2px; }
+.am-badge-text { fill: #0369a1; font-size: 10.5px; font-weight: 600; }
+.am-badge--warn { fill: #fef3c7; stroke: #d97706; stroke-width: 0.8; rx: 2px; }
+.am-badge-text--warn { fill: #b45309; font-size: 10.5px; font-weight: 600; }
+svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+</style>
+<defs><marker id="recovery-flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+
+<!-- 顶部触发与网关决策 -->
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="330" y="16" width="280" height="38"/><text x="470" y="35" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-weight="600">任务执行遇到异常或意外中断</text></g>
+<path class="am-edge" d="M470,54 V84" marker-end="url(#recovery-flow-arrow)"/>
+
+<g class="am-node am-node--hi"><rect class="am-node-shape" x="350" y="84" width="240" height="42"/><text x="470" y="105" text-anchor="middle" dominant-baseline="central" class="am-node-text">核心辨析：进程是否存活？</text></g>
+
+<!-- 决策连线 -->
+<!-- 左分支：进程存活 -->
+<path class="am-edge" d="M350,105 H240 V156" marker-end="url(#recovery-flow-arrow)"/>
+<g class="am-edge-label"><rect x="185" y="96" width="110" height="20"/><text x="240" y="106" text-anchor="middle" dominant-baseline="central">进程完好存活 (捕获异常)</text></g>
+
+<!-- 右分支：进程猝死 -->
+<path class="am-edge" d="M590,105 H700 V156" marker-end="url(#recovery-flow-arrow)"/>
+<g class="am-edge-label"><rect x="645" y="96" width="110" height="20"/><text x="700" y="106" text-anchor="middle" dominant-baseline="central">进程猝死 (断电/OOM/Kill)</text></g>
+
+<!-- 左侧集群：热循环在线自愈 -->
+<rect class="am-cluster" x="30" y="160" width="420" height="345"/>
+<rect class="am-cluster-header" x="30" y="160" width="420" height="32"/>
+<text class="am-cluster-title" x="240" y="176" text-anchor="middle" dominant-baseline="central">【主线一】热循环在线自愈（对应第 3 节）</text>
+<text class="am-cluster-sub" x="240" y="202" text-anchor="middle">内存未丢 · Harness 在当前循环中按责任分级处置</text>
+
+<!-- 左侧卡片 1 -->
+<rect class="am-item-card" x="45" y="215" width="390" height="58"/>
+<rect class="am-badge" x="55" y="223" width="56" height="18"/>
+<text class="am-badge-text" x="83" y="232" text-anchor="middle" dominant-baseline="central">模型自愈</text>
+<text class="am-item-title" x="120" y="232" dominant-baseline="central">参数与受控业务报错（Schema 错误、文件不存在）</text>
+<text class="am-item-body" x="55" y="255">➔ 包装为 ToolResult(is_error=True) 喂回，模型下一轮自主修正</text>
+
+<!-- 左侧卡片 2 -->
+<rect class="am-item-card" x="45" y="283" width="390" height="58"/>
+<rect class="am-badge--warn" x="55" y="291" width="56" height="18"/>
+<text class="am-badge-text--warn" x="83" y="300" text-anchor="middle" dominant-baseline="central">安全阻断</text>
+<text class="am-item-title" x="120" y="300" dominant-baseline="central">Policy 权限拦截（越权访问、覆盖保护）</text>
+<text class="am-item-body" x="55" y="323">➔ 明确生成安全拒绝回执，说明原因，严禁模型反复暴力重试</text>
+
+<!-- 左侧卡片 3 -->
+<rect class="am-item-card" x="45" y="351" width="390" height="58"/>
+<rect class="am-badge" x="55" y="359" width="56" height="18"/>
+<text class="am-badge-text" x="83" y="368" text-anchor="middle" dominant-baseline="central">框架重试</text>
+<text class="am-item-title" x="120" y="368" dominant-baseline="central">基础设施临时抖动（网络丢包、API 429 限流）</text>
+<text class="am-item-body" x="55" y="391">➔ 框架透明指数退避重试，不惊动模型，不占上下文 Token</text>
+
+<!-- 左侧卡片 4 -->
+<rect class="am-item-card--alert" x="45" y="419" width="390" height="66"/>
+<rect class="am-badge--warn" x="55" y="427" width="56" height="18"/>
+<text class="am-badge-text--warn" x="83" y="436" text-anchor="middle" dominant-baseline="central">熔断介入</text>
+<text class="am-item-title--warn" x="120" y="436" dominant-baseline="central">连续死循环与无进展（多次重复同错、打转）</text>
+<text class="am-item-body--warn" x="55" y="458">➔ 触发 Circuit Breaker 熔断，强制任务 paused_for_human 等待人工</text>
+<text class="am-item-body--warn" x="55" y="473">   避免无限死循环消耗上下文预算与 API 费用</text>
+
+
+<!-- 右侧集群：冷启动离线恢复 -->
+<rect class="am-cluster" x="490" y="160" width="420" height="345"/>
+<rect class="am-cluster-header" x="490" y="160" width="420" height="32"/>
+<text class="am-cluster-title" x="700" y="176" text-anchor="middle" dominant-baseline="central">【主线二】冷启动离线恢复（对应第 4 节）</text>
+<text class="am-cluster-sub" x="700" y="202" text-anchor="middle">内存全丢 · 依赖外部独立检查点（Checkpoint）与物理物证恢复</text>
+
+<!-- 右侧步骤 1 -->
+<rect class="am-item-card" x="505" y="215" width="390" height="58"/>
+<rect class="am-badge" x="515" y="223" width="56" height="18"/>
+<text class="am-badge-text" x="543" y="232" text-anchor="middle" dominant-baseline="central">断点定位</text>
+<text class="am-item-title" x="580" y="232" dominant-baseline="central">识别 4 大生命周期崩溃临界断点</text>
+<text class="am-item-body" x="515" y="255">➔ 派发前 / 执行中(最危险) / 未落盘 / 下一轮模型前，确认现场状态</text>
+
+<!-- 步骤连线 1->2 -->
+<path class="am-edge" d="M700,273 V281" marker-end="url(#recovery-flow-arrow)"/>
+
+<!-- 右侧步骤 2 -->
+<rect class="am-item-card" x="505" y="283" width="390" height="58"/>
+<rect class="am-badge" x="515" y="291" width="56" height="18"/>
+<text class="am-badge-text" x="543" y="300" text-anchor="middle" dominant-baseline="central">专用入口</text>
+<text class="am-item-title" x="580" y="300" dominant-baseline="central">调用独立恢复入口 resume_task(run_id)</text>
+<text class="am-item-body" x="515" y="323">➔ 绝不与普通提问混用，严禁将历史日志作为脚本从头无脑重放</text>
+
+<!-- 步骤连线 2->3 -->
+<path class="am-edge" d="M700,341 V349" marker-end="url(#recovery-flow-arrow)"/>
+
+<!-- 右侧步骤 3 -->
+<rect class="am-item-card--alert" x="505" y="351" width="390" height="58"/>
+<rect class="am-badge--warn" x="515" y="359" width="56" height="18"/>
+<text class="am-badge-text--warn" x="543" y="368" text-anchor="middle" dominant-baseline="central">物证核验</text>
+<text class="am-item-title--warn" x="580" y="368" dominant-baseline="central">动作四态核验与 Evidence Probe 探查</text>
+<text class="am-item-body--warn" x="515" y="391">➔ completed 复用；unknown 核实磁盘哈希/接口订单，绝不盲目重试</text>
+
+<!-- 步骤连线 3->4 -->
+<path class="am-edge" d="M700,409 V417" marker-end="url(#recovery-flow-arrow)"/>
+
+<!-- 右侧步骤 4 -->
+<rect class="am-item-card" x="505" y="419" width="390" height="66"/>
+<rect class="am-badge" x="515" y="427" width="56" height="18"/>
+<text class="am-badge-text" x="543" y="436" text-anchor="middle" dominant-baseline="central">安全接续</text>
+<text class="am-item-title" x="580" y="436" dominant-baseline="central">动态 Policy 权限重审 ➔ 幂等绑定安全续跑</text>
+<text class="am-item-body" x="515" y="458">➔ 遵循当前最新生效的安全策略；绑定 Invocation &amp; Attempt</text>
+<text class="am-item-body" x="515" y="473">   补齐回执或安全重做后，无缝推进下一轮模型循环</text>
+
+<!-- 底部底线总结 -->
+<text x="470" y="532" text-anchor="middle" font-size="12" fill="#64748b">左侧在内存闭环中自愈，避免长任务无谓中断；右侧在外部物证中求真，避免副作用重复执行破坏真实世界</text>
+</svg>

@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 860 480"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+/* Embedded previews can lose html[data-theme]; the fallbacks keep diagrams readable, and defined theme variables still win. */
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+/* Diagram tokens (docs/reference.md, "Diagram tokens"): each painted part reads an optional token and falls back to the look it always had,
+   so a theme that sets none of them draws the same diagram. Font family, size and weight are not tokens: diagram text is measured for the sans font. */
+.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); }
+.am-node-shape ~ .am-node-shape { filter: none; }
+.am-node--rect .am-node-shape, .am-node--er .am-node-shape { rx: var(--node-radius, 3px); }
+.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
+.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); font-size: 12.5px; }
+.am-node--hi text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-diagram .am-node--hi .am-node-text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
+.am-edge-label rect { fill: var(--paper, #ffffff); }
+.am-diagram .am-edge-label text { fill: var(--edge-label, var(--accent, #1d5fbf)); font-size: 11.5px; }
+.am-cluster { fill: var(--cluster-fill, var(--fill, #f3f5f8)); stroke: var(--cluster-stroke, var(--line-2, #d6dae1)); stroke-width: 1; stroke-dasharray: 4 3; rx: 4px; }
+.am-diagram .am-cluster-label { fill: var(--ink-2, #4b5260); font: 11px var(--font-mono, monospace); }
+.am-lifeline { stroke: var(--lifeline-color, var(--ink-3, #8b929e)); stroke-width: 1; stroke-dasharray: 4 4; }
+.am-actor { fill: var(--actor-fill, var(--node-fill, var(--paper, #ffffff))); stroke: var(--actor-stroke, var(--node-stroke, var(--line, #1d2026))); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); rx: var(--node-radius, 2px); }
+.am-diagram .am-actor-text { fill: var(--actor-text, var(--node-text, var(--ink, #16181d))); }
+.am-note { fill: var(--note-fill, var(--warn-bg, #fdf3e2)); stroke: var(--note-stroke, var(--warn, #a8620a)); stroke-width: 1; rx: var(--node-radius, 2px); }
+.am-diagram .am-step { fill: var(--ink-3, #8b929e); font: 10px var(--font-mono, monospace); }
+
+svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+</style>
+<defs><marker id="policy-flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+
+<!-- 连线层 -->
+<g>
+  <!-- 触发 -> 环节 1 -->
+  <path class="am-edge" d="M430,58 V93" marker-end="url(#policy-flow-arrow)"/>
+  <!-- 环节 1 -> 判定网关 -->
+  <path class="am-edge" d="M430,143 V173" marker-end="url(#policy-flow-arrow)"/>
+  <!-- 判定网关 -> 左分支（超时） -->
+  <path class="am-edge" d="M350,195 H200 V248" marker-end="url(#policy-flow-arrow)"/>
+  <g class="am-edge-label"><rect x="235" y="186" width="76" height="18" rx="3"/><text x="273" y="195" text-anchor="middle" dominant-baseline="central">超时未响应</text></g>
+  <!-- 判定网关 -> 右分支（批准） -->
+  <path class="am-edge" d="M510,195 H620 V248" marker-end="url(#policy-flow-arrow)"/>
+  <g class="am-edge-label"><rect x="535" y="186" width="76" height="18" rx="3"/><text x="573" y="195" text-anchor="middle" dominant-baseline="central">TTL 内批准</text></g>
+  <!-- 环节 2 -> 超时终态 -->
+  <path class="am-edge" d="M200,302 V348" marker-end="url(#policy-flow-arrow)"/>
+  <!-- 环节 3 -> 指纹一致判定 -->
+  <path class="am-edge" d="M620,302 V331" marker-end="url(#policy-flow-arrow)"/>
+  <!-- 指纹判定 -> 不一致 -->
+  <path class="am-edge" d="M550,352 H480 V408" marker-end="url(#policy-flow-arrow)"/>
+  <g class="am-edge-label"><rect x="486" y="343" width="58" height="18" rx="3"/><text x="515" y="352" text-anchor="middle" dominant-baseline="central">指纹已变</text></g>
+  <!-- 指纹判定 -> 一致 -->
+  <path class="am-edge" d="M690,352 H740 V408" marker-end="url(#policy-flow-arrow)"/>
+  <g class="am-edge-label"><rect x="696" y="343" width="58" height="18" rx="3"/><text x="725" y="352" text-anchor="middle" dominant-baseline="central">指纹一致</text></g>
+</g>
+
+<!-- 节点层 -->
+<g>
+  <!-- 节点 0：触发 -->
+  <g class="am-node am-node--rect"><rect class="am-node-shape" x="290" y="20" width="280" height="38" rx="3"/><text x="430" y="39" text-anchor="middle" dominant-baseline="central" class="am-node-text">触发高危动作 ➔ REQUIRE_APPROVAL</text></g>
+
+  <!-- 节点 1：环节 1 持久化休眠 -->
+  <g class="am-node am-node--rect am-node--hi"><rect class="am-node-shape" x="235" y="95" width="390" height="48" rx="3"/><text x="430" y="111" text-anchor="middle" dominant-baseline="central" class="am-node-text">【环节 1：持久化休眠】保存 State 检查点快照</text><text x="430" y="129" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="11.5">标记为 SUSPENDED，释放 Worker 进程（零资源占用）</text></g>
+
+  <!-- 判定 1：等待人工审批响应 -->
+  <g class="am-node am-node--diamond"><polygon class="am-node-shape" points="430,174 510,195 430,216 350,195"/><text x="430" y="195" text-anchor="middle" dominant-baseline="central" class="am-node-text">等待人工响应</text></g>
+
+  <!-- 节点 2：环节 2 超时兜底 -->
+  <g class="am-node am-node--rect"><rect class="am-node-shape" x="60" y="250" width="280" height="52" rx="3"/><text x="200" y="268" text-anchor="middle" dominant-baseline="central" class="am-node-text">【环节 2：超时安全兜底】Fail-Closed</text><text x="200" y="287" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="11.5">Cron 巡检发现 TTL 超期，标记 APPROVAL_TIMEOUT</text></g>
+
+  <!-- 节点 3：终态（超时拒绝） -->
+  <g class="am-node am-node--rect"><rect class="am-node-shape" x="70" y="350" width="260" height="48" rx="3"/><text x="200" y="366" text-anchor="middle" dominant-baseline="central" class="am-node-text">安全终止动作 ➔ 返回拒绝回执</text><text x="200" y="384" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="11.5">通知模型与用户，杜绝任务僵尸悬挂</text></g>
+
+  <!-- 节点 4：环节 3 环境复验 -->
+  <g class="am-node am-node--rect am-node--hi"><rect class="am-node-shape" x="450" y="250" width="340" height="52" rx="3"/><text x="620" y="268" text-anchor="middle" dominant-baseline="central" class="am-node-text">【环节 3：环境前提复验】防环境漂移</text><text x="620" y="287" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="11.5">唤醒恢复上下文，比对目标资源物理指纹 (mtime/哈希)</text></g>
+
+  <!-- 判定 2：指纹一致判定 -->
+  <g class="am-node am-node--diamond"><polygon class="am-node-shape" points="620,333 690,352 620,371 550,352"/><text x="620" y="352" text-anchor="middle" dominant-baseline="central" class="am-node-text">物理指纹一致?</text></g>
+
+  <!-- 节点 5：终态（指纹不一致，作废） -->
+  <g class="am-node am-node--rect"><rect class="am-node-shape" x="375" y="410" width="210" height="50" rx="3"/><text x="480" y="427" text-anchor="middle" dominant-baseline="central" class="am-node-text">作废审批 ➔ 报 environment_drifted</text><text x="480" y="445" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="11.5">阻止陈旧覆盖，防止环境漂移脏写</text></g>
+
+  <!-- 节点 6：终态（指纹一致，放行） -->
+  <g class="am-node am-node--rect am-node--hi"><rect class="am-node-shape" x="645" y="410" width="190" height="50" rx="3"/><text x="740" y="427" text-anchor="middle" dominant-baseline="central" class="am-node-text">安全放行 ➔ 底层物理写入</text><text x="740" y="445" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="11.5">落盘成功，记录审计日志</text></g>
+</g>
+</svg>

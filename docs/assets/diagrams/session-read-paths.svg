@@ -1,39 +1,91 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 610" role="img" aria-labelledby="title desc"><title id="title">查询分别服务于找会话、看过程和构造模型历史</title><desc id="desc">查询分别服务于找会话、看过程和构造模型历史</desc>
-<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:17px}.head{font-size:20px;font-weight:650}.small{font-size:15px;fill:#526176}.arrow{fill:none;stroke:#40516b;stroke-width:1.6}.future{stroke-dasharray:6 5}</style><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
-<text x="24" y="30" class="head" text-anchor="start">同一份材料可以产生不同查询结果</text>
-<rect x="24" y="60" width="792" height="86" rx="8" fill="#eff6ff" stroke="#7ca4d8" stroke-width="1.5"/>
-<text x="40" y="90" class="head" text-anchor="start">持久材料：会话记录文件 + 按需要建立的索引</text>
-<text x="40" y="119" class="small" text-anchor="start">文件按格式与顺序解释；数据库可帮助筛选和分页。</text>
-<path d="M148 146 V220" class="arrow" marker-end="url(#arrow)"/>
-<path d="M420 146 V220" class="arrow" marker-end="url(#arrow)"/>
-<path d="M692 146 V220" class="arrow" marker-end="url(#arrow)"/>
-<rect x="24" y="224" width="248" height="155" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="40" y="254" class="head" text-anchor="start">列表查询</text>
-<text x="40" y="283" class="small" text-anchor="start">读取 ID、目录、标题、时间</text>
-<text x="40" y="308" class="small" text-anchor="start">定位要查看的会话</text>
-<text x="40" y="333" class="small" text-anchor="start">不必读取全部正文</text>
-<rect x="296" y="224" width="248" height="155" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="312" y="254" class="head" text-anchor="start">详情查询</text>
-<text x="312" y="283" class="small" text-anchor="start">读取记录或指定历史页</text>
-<text x="312" y="308" class="small" text-anchor="start">解释顺序、分支与任务状态</text>
-<text x="312" y="333" class="small" text-anchor="start">展示错误和未完成片段</text>
-<rect x="568" y="224" width="248" height="155" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="584" y="254" class="head" text-anchor="start">模型历史读取</text>
-<text x="584" y="283" class="small" text-anchor="start">选择可用消息与上下文</text>
-<text x="584" y="308" class="small" text-anchor="start">解释压缩和任务边界</text>
-<text x="584" y="333" class="small" text-anchor="start">保留工具调用与回执配对</text>
-<path d="M148 379 V425" class="arrow" marker-end="url(#arrow)"/>
-<path d="M420 379 V425" class="arrow" marker-end="url(#arrow)"/>
-<path d="M692 379 V425" class="arrow" marker-end="url(#arrow)"/>
-<rect x="24" y="429" width="248" height="84" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="40" y="459" class="head" text-anchor="start">会话选择界面</text>
-<text x="40" y="488" class="small" text-anchor="start">用户选择已有会话</text>
-<rect x="296" y="429" width="248" height="84" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="312" y="459" class="head" text-anchor="start">历史查看界面</text>
-<text x="312" y="488" class="small" text-anchor="start">不请求模型、不执行工具</text>
-<rect x="568" y="429" width="248" height="84" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="584" y="459" class="head" text-anchor="start">本次模型请求</text>
-<text x="584" y="488" class="small" text-anchor="start">加当前指令和新问题后编码</text>
-<text x="24" y="562" class="head" text-anchor="start">看历史 ≠ 发送整个日志；还原工具回执 ≠ 再次执行工具。</text>
-<text x="24" y="590" class="small" text-anchor="start">这些是职责与数据方向，不要求为三条路径分别创建服务或数据库。</text>
+<svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 840 500"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+/* Embedded previews can lose html[data-theme]; the fallbacks keep diagrams readable, and defined theme variables still win. */
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+/* Diagram tokens (docs/reference.md, "Diagram tokens"): each painted part reads an optional token and falls back to the look it always had,
+   so a theme that sets none of them draws the same diagram. Font family, size and weight are not tokens: diagram text is measured for the sans font. */
+.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); }
+.am-node-shape ~ .am-node-shape { filter: none; }
+.am-node--rect .am-node-shape, .am-node--er .am-node-shape { rx: var(--node-radius, 3px); }
+.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
+.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); font-size: 12.5px; }
+.am-node--hi text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-diagram .am-node--hi .am-node-text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
+.am-edge-label rect { fill: var(--paper, #ffffff); }
+.am-diagram .am-edge-label text { fill: var(--edge-label, var(--accent, #1d5fbf)); font-size: 11.5px; }
+.am-cluster { fill: var(--cluster-fill, var(--fill, #f3f5f8)); stroke: var(--cluster-stroke, var(--line-2, #d6dae1)); stroke-width: 1; stroke-dasharray: 4 3; rx: 4px; }
+.am-diagram .am-cluster-label { fill: var(--ink-2, #4b5260); font: 11px var(--font-mono, monospace); }
+.am-actor { fill: var(--actor-fill, var(--node-fill, var(--paper, #ffffff))); stroke: var(--actor-stroke, var(--node-stroke, var(--line, #1d2026))); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); rx: var(--node-radius, 2px); }
+.am-diagram .am-actor-text { fill: var(--actor-text, var(--node-text, var(--ink, #16181d))); }
+.am-note { fill: var(--note-fill, var(--warn-bg, #fdf3e2)); stroke: var(--note-stroke, var(--warn, #a8620a)); stroke-width: 1; rx: var(--node-radius, 2px); }
+.am-diagram .am-step { fill: var(--ink-3, #8b929e); font: 10px var(--font-mono, monospace); }
+
+svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+</style>
+<defs><marker id="session-read-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+
+<!-- 顶部：持久存储来源 -->
+<g class="am-node am-node--rect am-node--hi"><rect class="am-node-shape" x="40" y="20" width="760" height="58" rx="3"/><text x="420" y="39" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="14">持久存储材料：会话记录文件（JSONL） + 索引元数据（SQLite / 内存）</text><text x="420" y="60" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="12">按严格发生顺序追加落盘；同一份底层材料向不同业务场景提供三种独立投影</text></g>
+
+<!-- 连线：顶部 -> 三条读取路径 -->
+<path class="am-edge" d="M150,78 V126" marker-end="url(#session-read-arrow)"/>
+<path class="am-edge" d="M420,78 V126" marker-end="url(#session-read-arrow)"/>
+<path class="am-edge" d="M690,78 V126" marker-end="url(#session-read-arrow)"/>
+
+<!-- 路径 1：列表查询 -->
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="35" y="128" width="230" height="150" rx="3"/>
+<text x="150" y="152" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">路径 1：会话列表查询</text>
+<text x="50" y="180" class="am-node-text" font-size="11.5">• 仅读取文件头或索引表元数据</text>
+<text x="50" y="202" class="am-node-text" font-size="11.5">• 提取 ID、工作目录、更新时间</text>
+<text x="50" y="224" class="am-node-text" font-size="11.5">• 轻量快速，无需加载全部正文</text>
+<text x="50" y="246" class="am-node-text" font-size="11.5">• 服务于会话快速定位与多维筛选</text>
+</g>
+
+<!-- 路径 2：详情查询 -->
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="305" y="128" width="230" height="150" rx="3"/>
+<text x="420" y="152" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">路径 2：会话详情回溯</text>
+<text x="320" y="180" class="am-node-text" font-size="11.5">• 顺序还原完整交互记录全集</text>
+<text x="320" y="202" class="am-node-text" font-size="11.5">• 包含失败报错与未完成片段</text>
+<text x="320" y="224" class="am-node-text" font-size="11.5">• 真实保留工具调用与回执原文</text>
+<text x="320" y="246" class="am-node-text" font-size="11.5">• 供人工审计与故障回溯排查</text>
+</g>
+
+<!-- 路径 3：模型历史读取 -->
+<g class="am-node am-node--rect am-node--hi"><rect class="am-node-shape" x="575" y="128" width="230" height="150" rx="3"/>
+<text x="690" y="152" text-anchor="middle" font-weight="600" class="am-node-text" font-size="13.5">路径 3：模型历史重组</text>
+<text x="590" y="180" class="am-node-text" font-size="11.5">• 仅提取已闭合任务（completed）</text>
+<text x="590" y="202" class="am-node-text" font-size="11.5">• 自动过滤失败与中断残留脏数据</text>
+<text x="590" y="224" class="am-node-text" font-size="11.5">• 确保 ToolCall 与 ToolResult 成对</text>
+<text x="590" y="246" class="am-node-text" font-size="11.5">• 还原为纯净的 SDK 消息列表</text>
+</g>
+
+<!-- 连线：三路径 -> 业务目标 -->
+<path class="am-edge" d="M150,278 V336" marker-end="url(#session-read-arrow)"/>
+<path class="am-edge" d="M420,278 V336" marker-end="url(#session-read-arrow)"/>
+<path class="am-edge" d="M690,278 V336" marker-end="url(#session-read-arrow)"/>
+
+<!-- 目标 1 -->
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="35" y="338" width="230" height="66" rx="3"/>
+<text x="150" y="360" text-anchor="middle" font-weight="600" class="am-node-text">会话选择界面（CLI / Web）</text>
+<text x="150" y="382" text-anchor="middle" class="am-node-text" font-size="11.5">供用户查看与切换已有会话</text>
+</g>
+
+<!-- 目标 2 -->
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="305" y="338" width="230" height="66" rx="3"/>
+<text x="420" y="360" text-anchor="middle" font-weight="600" class="am-node-text">历史查看与审计日志</text>
+<text x="420" y="382" text-anchor="middle" class="am-node-text" font-size="11.5">只读回溯，不请求模型、不重放工具</text>
+</g>
+
+<!-- 目标 3 -->
+<g class="am-node am-node--rect am-node--hi"><rect class="am-node-shape" x="575" y="338" width="230" height="66" rx="3"/>
+<text x="690" y="360" text-anchor="middle" font-weight="600" class="am-node-text">本轮模型请求（ModelRequest）</text>
+<text x="690" y="382" text-anchor="middle" class="am-node-text" font-size="11.5">交由 Context 按预算组装后发送给模型</text>
+</g>
+
+<!-- 底部说明框 -->
+<rect class="am-actor" x="40" y="440" width="760" height="38" rx="3" fill="none" style="fill:none"/>
+<text x="420" y="459" text-anchor="middle" font-size="12" fill="var(--ink-2, #4b5260)">核心原则：看历史 ≠ 发送整个日志；还原工具回执 ≠ 再次执行工具（查询零物理副作用）</text>
 </svg>

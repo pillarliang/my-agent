@@ -21,11 +21,21 @@
 <li><strong>按场景提供读取视图</strong>：既支持用户离线查看完整历史，也能为下一轮模型请求还原可用上下文。</li>
 </ol>
 <p>该模块只负责状态与记录的存取，不负责调用模型、执行工具或判断权限；单纯保存对话历史也不等于自动具备中断恢复能力。</p>
+<h4 id="module-state-loop-interface">Session / State 与 Runner 的黑盒交互</h4>
+<p>在一次用户任务推进过程中，Runner 无需关心底层存储的具体介质，只通过三组标准操作与 Session / State 系统交互：</p>
+</div>
+<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-state-loop-interface.svg" width="700" height="425" alt="Runner 与 Session / State 系统的黑盒交互：任务启动前读取已完成历史，运行中逐步追加记录，任务结束闭合状态" loading="lazy"><figcaption>黑盒交互时序：任务开始前读取已闭合历史，循环单步实时追加落盘，结束时确立任务终态边界。</figcaption></figure>
+<div class="am-md">
+<ul>
+<li><strong>启动前读取可用历史（<code>read_history</code>）</strong>：Runner 在发起首轮模型请求前，向状态层获取本会话已正常完成（<code>completed</code>）的历史消息列表，自动过滤未闭合的任务残片。</li>
+<li><strong>运行中逐步追加（<code>append_record</code>）</strong>：每产生一条用户输入、模型完整响应或真实工具回执，Runner 实时调用追加接口落盘，并通过 <code>call_id</code> 关联调用与回执。</li>
+<li><strong>结束时确立任务边界（<code>finish_turn</code>）</strong>：当模型给出最终回答或任务因错误停止时，Runner 写入任务终态，确立本次任务的执行边界。</li>
+</ul>
 </div></div></section>
 <section class="lesson-section" id="session-granularity"><h3>2. 数据分层：从整段对话到单条消息</h3><div class="lesson-body"><div class="am-md">
 <p>观察一段包含多轮追问与工具调用的交互，可以自然划分出三个数据层级：</p>
 <ol><li><strong>整段会话（Session）</strong>：关联多次用户提问、工作目录配置与完整历史，生命周期跨越多次进程启动。</li><li><strong>单次用户任务（Turn）</strong>：从接收一次用户提问开始，中间可能经历多轮模型请求与工具调用，直到得出最终回答、报错失败或意外中断。</li><li><strong>具体交互条目（Message / Record）</strong>：用户输入、模型响应、工具调用与工具回执。单次模型请求只是循环内部的一步执行动作，无需为此单独建一张持久化表。</li></ol>
-<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/session-data-map.svg" width="840" height="640" alt="从对话、用户任务到内容条目；一次用户任务可以包含多次模型请求。" loading="lazy"><figcaption>从整段会话、单次用户任务到具体记录条目；一次用户任务可包含多次模型请求。</figcaption></figure>
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/session-data-map.svg" width="840" height="560" alt="从对话、用户任务到内容条目；一次用户任务可以包含多次模型请求。" loading="lazy"><figcaption>从整段会话、单次用户任务到具体记录条目；一次用户任务可包含多次模型请求。</figcaption></figure>
 <h4>pi 与 Codex 如何命名这些层级</h4>
 <div class="am-table-wrap"><table><thead><tr><th>层级</th><th>pi 的实现</th><th>Codex 的实现</th></tr></thead><tbody><tr><td>整段持续对话</td><td><code>SessionManager</code> 管理 <code>SessionHeader</code> 与条目树。</td><td>对外使用 <code>Thread</code>；内部还存在运行时 <code>Session</code> 与 <code>session_id</code>。</td></tr><tr><td>一次用户提问引发的执行</td><td>Agent 的一次 <code>prompt / loop run</code> 产生 <code>agent_start</code> 到 <code>agent_end</code>，无需单独建 Run 表。</td><td>对外用 <code>Turn</code> 表示一次完整工作过程，含 <code>id</code>、<code>items</code>、<code>status</code> 与可选错误。</td></tr><tr><td>单轮模型响应与工具结果</td><td>pi 的 <code>turn</code> 指一次助手响应及其工具调用与结果；一次提问可包含多个 <code>turn</code>。</td><td>一次 <code>Turn</code> 内可多次请求模型与执行工具；Codex 的 <code>Turn</code> 不等于单次模型请求。</td></tr><tr><td>具体记录条目</td><td><code>AgentMessage</code> 是消息内容；<code>SessionEntry</code> 是持久化记录的外层包装。</td><td><code>ThreadItem</code> 用于对外展示；<code>ResponseItem</code> 表示模型交互项；<code>RolloutItem</code> 用于持久化落盘。</td></tr></tbody></table></div>
 <p>源码依据：<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/types.ts">pi AgentEvent 的 turn 定义</a>、<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">pi runLoop</a>、<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/app-server-protocol/src/protocol/v2/thread_data.rs">Codex Thread / Turn</a> 与 <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/app-server-protocol/src/protocol/v2/item.rs">ThreadItem</a>。</p></div></div></section>
@@ -66,7 +76,7 @@
 </ul>
 </div></div></section>
 <section class="lesson-section" id="session-reading"><h3>7. 三条读取路径：会话列表、历史详情与上下文重建</h3><div class="lesson-body"><div class="am-md">
-<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/session-read-paths.svg" width="840" height="610" alt="列表查询、详情查询与模型历史重建，各自选择不同材料；读取记录不会重新执行工具。" loading="lazy"><figcaption>三条读取路径各自提取不同范围的数据；只读查询绝不触发模型或工具执行。</figcaption></figure>
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/session-read-paths.svg" width="840" height="500" alt="列表查询、详情查询与模型历史重建，各自选择不同材料；读取记录不会重新执行工具。" loading="lazy"><figcaption>三条读取路径各自提取不同范围的数据；只读查询绝不触发模型或工具执行。</figcaption></figure>
 <ol><li><strong>查询会话列表</strong>：只读取文件头或索引元数据（ID、工作目录、更新时间），不加载全部对话正文（见 Codex <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/list_threads.rs">list_threads.rs</a>）。</li><li><strong>查看单会话详情</strong>：按顺序还原整份会话记录（含失败报错和未完成片段），供开发者或用户回溯排查，全程不调用模型、不重放工具（见 Codex <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/read_thread.rs">read_thread.rs</a>）。</li><li><strong>重建模型上下文</strong>：筛选出已完成且消息链闭合的历史记录，处理分支或压缩标记后还原为模型消息列表（见 pi <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/session-manager.ts">buildSessionContext</a> 与 Codex <a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/thread-store/src/local/model_context.rs">load_latest_model_context</a>、<a href="https://github.com/openai/codex/blob/9a8a85bc539325f2819dd0717f88b6ba6286495e/codex-rs/core/src/session/rollout_reconstruction.rs">rollout_reconstruction.rs</a>）。</li></ol>
 </div></div></section>
 <span id="module-state-interaction"></span><span id="module-state-event-purpose"></span><span id="module-state-events"></span><section class="lesson-section" id="session-loop"><h3>8. 与 Agent Loop 的协作边界：State、Event 与中断安全恢复</h3><div class="lesson-body"><div class="am-md">

@@ -25,7 +25,9 @@
 </div></div></section>
 <section class="lesson-section" id="module-policy-interface"><h3>2. Black-Box Interaction: Action Request In, Authorization Decision Out</h3><div class="lesson-body"><div class="am-md">
 <p>Using file-overwrite interception as an example, the black-box interface between the tool system and Policy exchanges just two data structures:</p>
-<ul><li><strong>Input (<code>ActionRequest</code>)</strong>: The specific operation and target resource to execute, e.g., <code>ActionRequest(operation="overwrite", resource="summary.txt")</code>.</li><li><strong>Output (<code>PolicyDecision</code>)</strong>: Whether execution is allowed and the reason, e.g., <code>PolicyDecision(allowed=False, reason="Overwriting existing files is not allowed")</code>.</li></ul>
+<ul><li><strong>Input (<code>ActionRequest</code>)</strong>: The specific operation and target resource to execute, e.g., <code>ActionRequest(operation="overwrite", resource="summary.txt")</code>.</li><li><strong>Output (<code>PolicyDecision</code>)</strong>: Whether execution is allowed and the reason, e.g., <code>PolicyDecision(allowed=False, reason="Overwriting existing files is not allowed")</code>.</li></ul></div>
+<figure class="am-diagram am-seq"><img class="lesson-svg" src="../../assets/diagrams/diagram-policy-interface.svg" width="700" height="280" alt="Black-box interaction between Tool system and Policy: submits ActionRequest, returns PolicyDecision; executes only when allowed, blocks when denied" loading="lazy"></figure>
+<div class="am-md">
 <p><strong>Crucial Conceptual Clarification: The Model Provides Intent; the Harness Probes Physical Reality</strong></p>
 <p>A common beginner misconception is: <em>"Did the model write operation='overwrite' in its tool call?"</em>—<strong>Absolutely not!</strong> The model only issues <code>write_file(path="summary.txt", content="...")</code>. The model cannot and must not dictate whether an operation is a creation or an overwrite. The true action type is determined by the Harness after probing the physical disk via <code>lstat()</code>:</p>
 <ul>
@@ -40,20 +42,11 @@
 </div></section>
 <section class="lesson-section" id="module-policy-p1-panel-C"><h3>3. Implementation Options: How to Identify Actions &amp; Evaluate Rules?</h3><div class="lesson-body"><div class="am-md">
 <p>When implementing Policy, "how to extract an action from a tool call" and "how to evaluate rules to reach a decision" are two orthogonal design dimensions:</p>
-<h4>Dimension 1: How to Identify the Action from a Tool Call?</h4>
-<ul>
-<li><strong>Declarative permission metadata at registration</strong>: Tools declare their required permission category (such as <code>read</code> / <code>write</code>) and path parameter name when registered, and shared registry code inspects filesystem state to build the <code>ActionRequest</code> automatically. Ideal when multiple tools share the same resource permission model.</li>
-<li><strong>Custom per-tool action extractor functions</strong>: Each tool supplies its own function to parse arguments and describe the action. Fits systems where resource shapes vary wildly across tools, at the cost of higher maintenance overhead.</li>
-</ul>
-<h4>Dimension 2: How to Evaluate Rules?</h4>
-<ul>
-<li><strong>In-memory conditional branches</strong>: Evaluate directly in memory using configuration flags and allowlists. Simple, transparent, and ideal for early stages.</li>
-<li><strong>Declarative rule configuration</strong>: Express allow/deny conditions in config files matched by priority. Fits environments where rules change frequently, requiring conflict resolution and default fallback handling.</li>
-<li><strong>External policy service</strong>: Delegate authorization to a centralized external service. Fits enterprise-wide shared permissions across multiple applications, at the cost of network latency and high-availability requirements.</li>
-</ul>
 
-<h4>Concrete Case: What Is "Declaring Permission Metadata and Path Parameter Name"?</h4>
-<p>Look at the registration definition of <code>WRITE_FILE</code> (<a href="../../../learn_agent/tools/filesystem.py">filesystem.py</a>):</p>
+<h4>Dimension 1: How to Identify the Action from a Tool Call?</h4>
+<p><strong>Option A: Declarative permission metadata at registration (Our Approach)</strong></p>
+<p>Tools declare their required permission category (such as <code>read</code> / <code>write</code>) and path parameter name when registered, and shared registry code inspects filesystem state to build the <code>ActionRequest</code> automatically. Ideal when multiple tools share the same resource permission model.</p>
+<p>For example, see the registration definition of <code>WRITE_FILE</code> (<a href="../../../learn_agent/tools/filesystem.py">filesystem.py</a>):</p>
 <pre class="am-code"><code>WRITE_FILE = ToolDefinition(
     name="write_file",
     description="Write content to a workspace file...",
@@ -69,8 +62,13 @@
 <li>If the file does not exist, it builds <code>ActionRequest(operation="create")</code>; if it already exists, it builds <code>ActionRequest(operation="overwrite")</code>.</li>
 </ul>
 
-<h4>Concrete Case: What Is "Injecting Permission Rules"?</h4>
-<p>When launching the Agent from the CLI entry point (<a href="../../../learn_agent/__main__.py">__main__.py</a>):</p>
+<p><strong>Option B: Custom per-tool action extractor functions</strong></p>
+<p>Each tool supplies its own function to parse arguments and describe the action. Fits systems where resource shapes vary wildly across tools, at the cost of higher maintenance overhead.</p>
+
+<h4>Dimension 2: How to Evaluate Rules?</h4>
+<p><strong>Option A: In-memory conditional branches with rule injection (Our Approach)</strong></p>
+<p>Evaluate directly in memory using configuration flags (such as <code>allow_create</code>, <code>allow_overwrite</code>) and allowlists (such as <code>create_files</code>). Simple, transparent, and ideal for early stages.</p>
+<p>When launching the Agent from the CLI entry point, the policy rules are injected into the tool registry (<a href="../../../learn_agent/__main__.py">__main__.py</a>):</p>
 <pre class="am-code"><code># 1. The developer decides the security policy: allow creations, forbid overwrites!
 policy = Policy(
     allow_read=True,
@@ -92,13 +90,19 @@ tools = ToolRegistry(
 <li><strong>Unified toolset with dynamic environment switching</strong>: With the exact same code and tool definitions, initializing with different Policy instances seamlessly switches between "read-only audit mode," "code generation sandbox mode," and "production refactoring mode."</li>
 </ul>
 
+<p><strong>Option B: Declarative rule configuration</strong></p>
+<p>Express allow/deny conditions in config files matched by priority. Mature industry engines such as <strong>Open Policy Agent (OPA)</strong> (using Rego) and <strong>AWS Cedar</strong> represent this approach at scale (Policy-as-Code). Note that while OPA/Cedar govern physical tool actions, <strong>LLM Safety Guardrails</strong> (such as NVIDIA NeMo Guardrails, Guardrails AI, or cloud moderation services like Alibaba Cloud Bailian GreenNet and Azure AI Content Safety) operate at the semantic layer, filtering prompt injections, topic drift, and sensitive PII.</p>
+
+<p><strong>Option C: External policy service</strong></p>
+<p>Delegate authorization to a centralized external service. Fits enterprise-wide shared permissions across multiple applications. In production, declarative engines (Option B) are often deployed as external sidecars or central microservices (Option C) where the Agent submits <code>ActionRequest</code> JSON and receives centralized decisions and audit logs without restarting the Agent.</p>
+
 <h4>Complete Real-World Scenario: The End-to-End 5-Step Collaborative Loop</h4>
-<p>When an Agent configured with an "overwrite forbidden" policy attempts an overwrite, the system goes through a deterministic 5-step loop:</p>
+<p>Combining action extraction via metadata and rule evaluation via injected policy, when an Agent configured with an "overwrite forbidden" policy attempts an overwrite, the system goes through a deterministic 5-step loop:</p>
 <ul>
 <li><strong>Step 1 (Initialization &amp; Injection)</strong>: The developer creates <code>Policy(allow_create=True, allow_overwrite=False)</code> at startup and injects it into <code>ToolRegistry</code>.</li>
 <li><strong>Step 2 (Model Intent Expression)</strong>: The model issues a tool call <code>write_file(path="summary.txt", content="Report...")</code>. The model does not specify nor contain <code>create</code> or <code>overwrite</code>.</li>
 <li><strong>Step 3 (Harness Physical Inspection)</strong>: <code>ToolRegistry</code> extracts the path using <code>path_parameter="path"</code> and probes the disk via <code>lstat()</code>. Finding that <code>summary.txt</code> already exists, the system objectively categorizes this as an overwrite and constructs <code>ActionRequest(operation="overwrite", resource="summary.txt")</code>.</li>
-<li><strong>Step 4 (Policy Evaluation)</strong>: <code>ToolRegistry</code> asks the injected Policy. Matching <code>allow_overwrite=False</code>, Policy returns <code>PolicyDecision(allowed=False, reason="禁止覆盖已有文件")</code>.</li>
+<li><strong>Step 4 (Policy Evaluation)</strong>: <code>ToolRegistry</code> asks the injected Policy. Matching <code>allow_overwrite=False</code>, Policy returns <code>PolicyDecision(allowed=False, reason="Overwrite forbidden")</code>.</li>
 <li><strong>Step 5 (Interception &amp; Receipt)</strong>: <code>ToolRegistry</code> skips calling the underlying physical write function. The original file remains untouched, and a <code>ToolResult(status="policy_denied")</code> with the denial reason is returned to the model.</li>
 </ul>
 </div></div></section>
@@ -115,10 +119,69 @@ tools = ToolRegistry(
 </ul>
 </div></div></section>
 <details class="reference-extra"><summary>On-demand reference: Human approval, capability tokens &amp; execution isolation (not yet implemented)</summary>
-<section class="lesson-section" id="module-policy-p1-panel-D"><h3>6. Human-in-the-Loop Approval</h3><div class="lesson-body"><div class="am-md"><p>When a human decision is required, execution can pause and present the exact action, target resource, and arguments. Right before executing an approved action, the system must still verify that the action has not changed and the approval has not expired. This fits high-stakes operations at the cost of managing wait states, identity verification, and resume flows.</p></div></div></section>
+<section class="lesson-section" id="module-policy-p1-panel-D"><h3>6. Human-in-the-Loop Approval: Evolutionary Path &amp; Lifecycle Pipeline</h3><div class="lesson-body"><div class="am-md">
+<p>When a human decision is required (<code>REQUIRE_APPROVAL</code>), execution must safely pause. However, <strong>an operating system process must never hang synchronously</strong> (causing thread pool exhaustion, memory starvation, and data loss upon restart).</p>
+
+<h4>Evolutionary Path Driven by Production Incidents</h4>
+<p>Human approval is not a simple boolean prompt. It evolved through four distinct architectural stages, where each stage resolved a fatal bottleneck exposed by the previous one:</p>
+
+<pre class="am-code"><code>Stage 0: Binary Evaluation (Allow/Deny) ──(Too strict or too risky)──> Stage 1: CLI Interactive Prompt
+                                                                           │
+                                                            (Process hung in unattended/multi-tenant)
+                                                                           ↓
+                                                               Stage 2: State Checkpoint &amp; Sleep
+                                                                           │
+                                                            (Approver never responds / Zombie tasks)
+                                                                           ↓
+                                                               Stage 3: TTL Timeout (Fail-Closed)
+                                                                           │
+                                                            (Approved days later / Target file changed)
+                                                                           ↓
+                                                               Stage 4: Anti-Drift Fingerprint Check</code></pre>
+
+<ul>
+<li><strong>Stage 0 (Pure Binary Evaluation)</strong>: Only allow or deny. Dangerous actions are either completely blocked (crippling autonomy) or freely permitted (causing catastrophic failures).</li>
+<li><strong>Stage 1 (CLI Interactive Prompt, e.g. Claude Code)</strong>: Suspends execution and prompts <code>[y/n]</code> in the terminal. <em>Limitation</em>: Only works for single-user local CLI tools; background servers or unattended sessions hang indefinitely.</li>
+<li><strong>Stage 2 (Asynchronous State Checkpoint &amp; Sleep, e.g. LangGraph <code>interrupt</code>)</strong>: Suspends by serializing state into a database (PostgreSQL/Redis) and releases the execution process completely. <em>Limitation</em>: If the human approver forgets to respond, tasks hang permanently as zombie records in the database.</li>
+<li><strong>Stage 3 (Deterministic TTL Timeout &amp; Fail-Closed Fallback)</strong>: Attaches a TTL to every approval request. If expired, scheduled jobs automatically trigger Fail-Closed denial. <em>Limitation</em>: If approved at the very last moment (e.g. days later), the target environment may have changed ("environment drift").</li>
+<li><strong>Stage 4 (Anti-Drift Pre-condition Re-validation)</strong>: Computes physical resource fingerprints (hash/mtime) at request time and re-validates before execution, revoking stale approvals if files changed.</li>
+</ul>
+
+<h4>The Integrated 3-Stage Pipeline (Collaborative, Not Mutually Exclusive)</h4>
+<p>These three mechanisms are not alternative either-or choices; in production systems, they form an <strong>end-to-end coordinated pipeline</strong> throughout an approval event's lifecycle:</p>
+
+<ul>
+<li><strong>Phase 1 (At Approval Trigger: Checkpoint &amp; Sleep)</strong>: The Runner serializes session state, execution history, and pending actions to persistent storage, marks the run <code>SUSPENDED</code>, and releases the execution worker thread completely until awakened.</li>
+<li><strong>Phase 2 (During Waiting: Timeout Fallback)</strong>: Each approval ticket has a bounded TTL (e.g. 60 seconds in CLI, 24 hours in enterprise workflows). If expired, background schedulers mark it <code>APPROVAL_TIMEOUT</code>, denying the action safely (Fail-Closed) and returning an explanatory receipt to the model.</li>
+<li><strong>Phase 3 (Upon Wakeup: Pre-condition Re-validation)</strong>: Before physically executing an approved action, Harness checks the target resource's physical fingerprint (hash or <code>mtime</code>). If modified during the wait period, the approval is revoked and an <code>environment_drifted</code> error is returned to prevent overwriting newer changes.</li>
+</ul>
+
+<figure class="am-diagram am-flow"><img class="lesson-svg" src="../../assets/diagrams/diagram-policy-approval-lifecycle.svg" width="860" height="480" alt="Dynamic Human-in-the-Loop approval lifecycle pipeline: checkpoint and sleep, TTL timeout fail-closed, and pre-condition re-validation" loading="lazy"><figcaption>End-to-end approval lifecycle: sleep prevents process hangs, TTL timeout prevents zombie tasks, and fingerprint re-validation prevents dirty overwrites.</figcaption></figure>
+</div></div></section>
 <figure class="am-diagram am-flow"><figcaption>Extension reference: The current codebase does not include a waiting-for-approval state.</figcaption><img class="lesson-svg" src="../../assets/diagrams/diagram-module-policy-1-panel-A-1.svg" width="500" height="426" alt="Optional extension: after normalizing the action, deny, wait for approval, or dispatch to a restricted execution backend; not yet implemented" loading="lazy"></figure>
 <section class="lesson-section" id="module-policy-p1-panel-E"><h3>7. Execution Isolation</h3><div class="lesson-body"><div class="am-md"><p>Policy decides whether an action is approved; a sandbox restricts what executing code can actually access at the OS/container level. They serve distinct responsibilities. Spawning a subprocess alone does not guarantee filesystem or network isolation, and OS restrictions, containers, or microVMs must be configured to match the authorized scope rather than replacing domain-level Policy checks.</p></div></div></section>
-<section class="lesson-section" id="module-policy-p1-panel-F"><h3>8. Scoped Capability Tokens</h3><div class="lesson-body"><div class="am-md"><p>A trusted component can also mint short-lived tokens bound to a specific principal, action, target resource, and expiration time. This fits short-term delegation to workers or sub-agents, at the cost of managing revocation, expiry, concurrent use, and retries—it cannot be achieved merely by adding an <code>approved=True</code> parameter to a tool.</p></div></div></section>
+<section class="lesson-section" id="module-policy-p1-panel-F"><h3>8. Scoped Capability Tokens</h3><div class="lesson-body"><div class="am-md">
+<p>In distributed multi-agent or microservice architectures, having every sub-agent query a central policy service over the network for every tool invocation creates severe latency and a single point of failure. Instead, systems use <strong>Scoped Capability Tokens</strong>:</p>
+
+<p><strong>Intuitive Analogy: A Digital Movie Ticket with Seat &amp; Expiration (like AWS STS Temporary Credentials or Signed JWTs)</strong></p>
+<ul>
+<li><em>Without tokens</em>: Every time a moviegoer enters a hall or visits the restroom, the usher must make a phone call to the central box office asking "Can this person enter?" (High latency, box office phone line jammed).</li>
+<li><em>With tokens</em>: The box office mints a cryptographically signed ticket upfront stating: user ID, cinema hall #3 only, valid for 2 hours. Each hall's usher simply validates the signature <strong>locally offline</strong>—no remote network call needed.</li>
+</ul>
+
+<p><strong>The 3-Step Collaborative Loop in Multi-Agent Systems:</strong></p>
+<ul>
+<li><strong>Step 1 (Central Minting)</strong>: When delegating tasks, the controller agent (e.g. Planner) requests scoped permissions from the central policy authority. The authority verifies rules and issues an asymmetric signed token containing: <code>{"subject": "worker-1", "action": "write", "resource": "output/report.md", "exp": 1730000000}</code>.</li>
+<li><strong>Step 2 (Delegated Call)</strong>: The worker agent calls the storage node or sandbox runner, passing this token along with the tool arguments.</li>
+<li><strong>Step 3 (Local Offline Verification)</strong>: The execution node validates the signature, expiration timestamp, and resource scope locally using a public key. If valid, physical execution proceeds immediately without contacting the central policy service.</li>
+</ul>
+
+<p><strong>Core Architectural Benefits:</strong></p>
+<ul>
+<li><strong>Eliminates Network Latency &amp; Bottlenecks</strong>: Enables hundreds of concurrent sub-agents to invoke tools with millisecond-level local validation.</li>
+<li><strong>Least Privilege &amp; Anti-Lateral Movement</strong>: Even if a worker agent is manipulated by prompt injection from external content, its token only permits writing to the designated file within a small time window, mathematically preventing lateral privilege escalation across the host system.</li>
+</ul>
+</div></div></section>
 <section class="lesson-section" id="module-policy-p1-panel-G"><h3>9. Untrusted Reference Material &amp; Further Reading</h3><div class="lesson-body"><div class="am-md"><p>External documents may contain prompt injections attempting to trick the model into proposing unauthorized actions. Instructing the model to ignore malicious instructions helps, but permissions must always be enforced programmatically—documents can never modify Policy rules. For source samples and design references, see <a href="../reference/research.html#reference-research">Design Basis</a>; for state management around waiting and resuming, see <a href="state.html#module-state">Session / State</a>.</p></div></div></section>
 </details>
 <nav class="chapter-nav" aria-label="Chapter navigation"><a href="tools.html#module-tools">← Tools: Execute Model-Requested Tool Calls</a><a href="state.html#module-state">Session / State: Manage Sessions &amp; Execution Records →</a></nav></article><footer class="footer"><p>Maintain this HTML page directly; general principles and stage practices are linked together.</p></footer></div></main></div>

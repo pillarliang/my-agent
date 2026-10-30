@@ -1,39 +1,94 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 640" role="img" aria-labelledby="title desc"><title id="title">从整段对话到用户任务，再到消息、工具调用与回执</title><desc id="desc">从整段对话到用户任务，再到消息、工具调用与回执</desc>
-<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;fill:#172133;font-size:17px}.head{font-size:20px;font-weight:650}.small{font-size:15px;fill:#526176}.arrow{fill:none;stroke:#40516b;stroke-width:1.6}.future{stroke-dasharray:6 5}</style><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#40516b"/></marker></defs>
-<text x="24" y="30" class="head" text-anchor="start">先分清交互尺度，再决定是否创建对象或数据库表</text>
-<rect x="24" y="55" width="792" height="88" rx="8" fill="#eff6ff" stroke="#7ca4d8" stroke-width="1.5"/>
-<text x="40" y="85" class="head" text-anchor="start">整段对话：先查询目录，再接着追问</text>
-<text x="40" y="114" class="small" text-anchor="start">保存归属与可用历史，生命周期可跨程序启动。</text>
-<path d="M270 143 V185" class="arrow" marker-end="url(#arrow)"/>
-<path d="M680 143 V185" class="arrow" marker-end="url(#arrow)"/>
-<rect x="24" y="188" width="490" height="112" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="40" y="218" class="head" text-anchor="start">用户任务 1：查询目录并回答</text>
-<text x="40" y="247" class="small" text-anchor="start">模型请求 1 → 工具列目录 → 模型请求 2</text>
-<text x="40" y="272" class="small" text-anchor="start">一次用户任务中发生两次模型请求。</text>
-<rect x="546" y="188" width="270" height="112" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="562" y="218" class="head" text-anchor="start">用户任务 2：追问目录列表</text>
-<text x="562" y="247" class="small" text-anchor="start">读取既有消息，再请求模型</text>
-<text x="562" y="272" class="small" text-anchor="start">不需要自动重做旧工具。</text>
-<path d="M270 300 V323" class="arrow" marker-end="url(#arrow)"/>
-<text x="24" y="347" class="head" text-anchor="start">任务 1 中的具体内容：按产生顺序保留</text>
-<rect x="24" y="370" width="186" height="90" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="40" y="400" class="head" text-anchor="start">用户问题</text>
-<text x="40" y="429" class="small" text-anchor="start">列出当前目录</text>
-<path d="M210 415 H223" class="arrow" marker-end="url(#arrow)"/>
-<rect x="226" y="370" width="186" height="90" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="242" y="400" class="head" text-anchor="start">模型响应</text>
-<text x="242" y="429" class="small" text-anchor="start">含目录列表调用 c1</text>
-<path d="M412 415 H425" class="arrow" marker-end="url(#arrow)"/>
-<rect x="428" y="370" width="186" height="90" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="444" y="400" class="head" text-anchor="start">工具回执</text>
-<text x="444" y="429" class="small" text-anchor="start">对应调用 c1</text>
-<path d="M614 415 H627" class="arrow" marker-end="url(#arrow)"/>
-<rect x="630" y="370" width="186" height="90" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="646" y="400" class="head" text-anchor="start">模型响应</text>
-<text x="646" y="429" class="small" text-anchor="start">给出最终回答</text>
-<rect x="24" y="505" width="792" height="96" rx="8" fill="#f4f7fb" stroke="#c2cddd" stroke-width="1.5"/>
-<text x="40" y="535" class="head" text-anchor="start">术语要按语义对照</text>
-<text x="40" y="564" class="small" text-anchor="start">pi：一次 prompt 可有多个 turn；turn 是一次助手响应及工具结果。</text>
-<text x="40" y="589" class="small" text-anchor="start">Codex：一次 Turn 是一段用户任务；ThreadItem / ResponseItem / RolloutItem 各有用途。</text>
-<text x="24" y="628" class="small" text-anchor="start">概念层次不要求对应 Session、Run、Step 三张表。</text>
+<svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 840 560"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+/* Embedded previews can lose html[data-theme]; the fallbacks keep diagrams readable, and defined theme variables still win. */
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+/* Diagram tokens (docs/reference.md, "Diagram tokens"): each painted part reads an optional token and falls back to the look it always had,
+   so a theme that sets none of them draws the same diagram. Font family, size and weight are not tokens: diagram text is measured for the sans font. */
+.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); }
+.am-node-shape ~ .am-node-shape { filter: none; }
+.am-node--rect .am-node-shape, .am-node--er .am-node-shape { rx: var(--node-radius, 3px); }
+.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
+.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); font-size: 12.5px; }
+.am-node--hi text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-diagram .am-node--hi .am-node-text { fill: var(--hi-text, var(--accent, #1d5fbf)); font-weight: 600; }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
+.am-edge-label rect { fill: var(--paper, #ffffff); }
+.am-diagram .am-edge-label text { fill: var(--edge-label, var(--accent, #1d5fbf)); font-size: 11.5px; }
+.am-cluster { fill: var(--cluster-fill, var(--fill, #f3f5f8)); stroke: var(--cluster-stroke, var(--line-2, #d6dae1)); stroke-width: 1; stroke-dasharray: 4 3; rx: 4px; }
+.am-diagram .am-cluster-label { fill: var(--ink-2, #4b5260); font: 11px var(--font-mono, monospace); }
+.am-actor { fill: var(--actor-fill, var(--node-fill, var(--paper, #ffffff))); stroke: var(--actor-stroke, var(--node-stroke, var(--line, #1d2026))); stroke-width: var(--node-width, var(--bw, 1.5px)); filter: var(--node-shadow, none); rx: var(--node-radius, 2px); }
+.am-diagram .am-actor-text { fill: var(--actor-text, var(--node-text, var(--ink, #16181d))); }
+.am-note { fill: var(--note-fill, var(--warn-bg, #fdf3e2)); stroke: var(--note-stroke, var(--warn, #a8620a)); stroke-width: 1; rx: var(--node-radius, 2px); }
+.am-diagram .am-step { fill: var(--ink-3, #8b929e); font: 10px var(--font-mono, monospace); }
+
+svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+</style>
+<defs><marker id="session-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+
+<!-- 层级 1：整段会话（Session） -->
+<g class="am-node am-node--rect am-node--hi"><rect class="am-node-shape" x="30" y="20" width="780" height="60" rx="3"/><text x="420" y="40" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="14">层级 1：整段会话（Session）—— 绑定工作目录与完整历史</text><text x="420" y="61" text-anchor="middle" dominant-baseline="central" class="am-node-text" font-size="11.5">包含多次用户提问，生命周期跨越多次进程启动；隔离不同对话避免历史串味</text></g>
+
+<!-- 连线：层级 1 -> 层级 2 -->
+<path class="am-edge" d="M260,80 V126" marker-end="url(#session-map-arrow)"/>
+<path class="am-edge" d="M660,80 V126" marker-end="url(#session-map-arrow)"/>
+
+<!-- 层级 2：用户任务 1 与 用户任务 2 -->
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="30" y="128" width="460" height="84" rx="3"/>
+<text x="50" y="152" class="am-node-text" font-weight="600" font-size="13">用户任务 1（Turn 1）：单次完整执行过程</text>
+<text x="50" y="176" class="am-node-text" font-size="12">提问 ➔ 模型调用工具 (list_files) ➔ 获得回执 ➔ 模型最终回答</text>
+<text x="50" y="196" class="am-node-text" font-size="11.5" fill="var(--ink-2, #4b5260)">状态标记：completed（单次任务内包含 2 次模型请求，无需为单步建表）</text>
+</g>
+
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="510" y="128" width="300" height="84" rx="3"/>
+<text x="530" y="152" class="am-node-text" font-weight="600" font-size="13">用户任务 2（Turn 2）：多轮追问</text>
+<text x="530" y="176" class="am-node-text" font-size="12">追问：“再帮我看看 notes.txt”</text>
+<text x="530" y="196" class="am-node-text" font-size="11.5" fill="var(--ink-2, #4b5260)">直接复用已完成历史，不重放旧工具</text>
+</g>
+
+<!-- 连线：层级 2 -> 层级 3 -->
+<path class="am-edge" d="M260,212 V258" marker-end="url(#session-map-arrow)"/>
+
+<!-- 层级 3：任务 1 内的具体记录条目流 -->
+<rect class="am-cluster" x="30" y="260" width="780" height="150"/>
+<text x="50" y="282" class="am-cluster-label">层级 3：有序交互条目（Ordered Messages / Records）—— 严格按产生时序落盘</text>
+
+<!-- 4 个横向交互节点 -->
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="45" y="300" width="165" height="86" rx="3"/>
+<text x="127" y="322" text-anchor="middle" font-weight="600" class="am-node-text">1. 用户输入</text>
+<text x="127" y="344" text-anchor="middle" class="am-node-text" font-size="11.5">UserMessage</text>
+<text x="127" y="364" text-anchor="middle" class="am-node-text" font-size="11" fill="var(--ink-2, #4b5260)">“列出当前目录”</text>
+</g>
+
+<path class="am-edge" d="M210,343 H238" marker-end="url(#session-map-arrow)"/>
+
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="240" y="300" width="165" height="86" rx="3"/>
+<text x="322" y="322" text-anchor="middle" font-weight="600" class="am-node-text">2. 模型响应</text>
+<text x="322" y="344" text-anchor="middle" class="am-node-text" font-size="11.5">AssistantMessage</text>
+<text x="322" y="364" text-anchor="middle" class="am-node-text" font-size="11" fill="var(--ink-2, #4b5260)">发出 ToolCall (c1)</text>
+</g>
+
+<path class="am-edge" d="M405,343 H433" marker-end="url(#session-map-arrow)"/>
+
+<g class="am-node am-node--rect"><rect class="am-node-shape" x="435" y="300" width="165" height="86" rx="3"/>
+<text x="517" y="322" text-anchor="middle" font-weight="600" class="am-node-text">3. 真实工具回执</text>
+<text x="517" y="344" text-anchor="middle" class="am-node-text" font-size="11.5">ToolResultMessage</text>
+<text x="517" y="364" text-anchor="middle" class="am-node-text" font-size="11" fill="var(--ink-2, #4b5260)">携带原 call_id=c1</text>
+</g>
+
+<path class="am-edge" d="M600,343 H628" marker-end="url(#session-map-arrow)"/>
+
+<g class="am-node am-node--rect am-node--hi"><rect class="am-node-shape" x="630" y="300" width="165" height="86" rx="3"/>
+<text x="712" y="322" text-anchor="middle" font-weight="600" class="am-node-text">4. 最终模型响应</text>
+<text x="712" y="344" text-anchor="middle" class="am-node-text" font-size="11.5">AssistantMessage</text>
+<text x="712" y="364" text-anchor="middle" class="am-node-text" font-size="11" fill="var(--ink-2, #4b5260)">根据回执完成任务</text>
+</g>
+
+<!-- 底部对照说明 -->
+<rect class="am-actor" x="30" y="430" width="780" height="66" rx="3" fill="none" style="fill:none"/>
+<text x="50" y="454" class="am-node-text" font-weight="600">源码术语对齐（按实际语义对照，不生搬硬套）：</text>
+<text x="50" y="476" class="am-node-text" font-size="12" fill="var(--ink-2, #4b5260)">• pi：SessionManager 管理 SessionHeader；一次提问产生 agent_start 到 agent_end；条目包装为 SessionEntry。</text>
+<text x="50" y="488" class="am-node-text" font-size="12" fill="var(--ink-2, #4b5260)">• Codex：外部暴露 Thread / Turn；交互项为 ResponseItem；落盘封装为 RolloutLine (JSONL) 与 SQLite 索引。</text>
+<text x="420" y="525" text-anchor="middle" font-size="12" fill="var(--ink, #16181d)">核心认知：概念三层（会话 ➔ 任务 ➔ 消息条目）不要求在数据库里机械建三张物理表</text>
 </svg>

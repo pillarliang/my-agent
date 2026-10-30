@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="am-diagram" viewBox="0 0 960 460"><style>.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+.am-node-shape { fill: var(--node-fill, var(--paper, #ffffff)); stroke: var(--node-stroke, var(--line, #1d2026)); stroke-width: var(--node-width, var(--bw, 1.5px)); rx: var(--node-radius, 4px); }
+.am-node--hi .am-node-shape { fill: var(--hi-fill, var(--accent-bg, #e4ecf8)); stroke: var(--hi-stroke, var(--accent, #1d5fbf)); }
+.am-diagram .am-node-text { fill: var(--node-text, var(--ink, #16181d)); font-size: 12.5px; }
+.am-edge { fill: none; stroke: var(--edge-color, var(--ink-2, #4b5260)); stroke-width: var(--edge-width, 1.3); }
+.am-edge--dashed { stroke-dasharray: 4 3; }
+.am-arrow { fill: var(--edge-color, var(--ink-2, #4b5260)); }
+.am-step-node { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.2; rx: 4px; }
+.am-step-title { font-size: 12px; font-weight: 650; fill: #1e293b; }
+.am-cutpoint-card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.2; rx: 5px; }
+.am-cutpoint-card--danger { fill: #fffaf0; stroke: #f6ad55; stroke-width: 1.5; rx: 5px; }
+.am-cutpoint-tag { fill: #e2e8f0; stroke: #64748b; stroke-width: 0.8; rx: 3px; }
+.am-cutpoint-tag--danger { fill: #fed7d7; stroke: #e53e3e; stroke-width: 0.8; rx: 3px; }
+.am-tag-text { font-size: 10.5px; font-weight: 600; fill: #475569; }
+.am-tag-text--danger { font-size: 10.5px; font-weight: 600; fill: #9b2c2c; }
+.am-state-text { font-size: 11px; fill: #64748b; }
+.am-state-val { font-family: var(--font-mono, monospace); font-weight: 600; font-size: 11px; fill: #0f172a; }
+.am-action-text { font-size: 11px; fill: #1e293b; font-weight: 500; }
+svg{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#16181d}
+</style>
+<defs><marker id="cutpoint-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+
+<!-- 顶部正常执行流水线 -->
+<g class="am-timeline">
+  <!-- 步骤 1 -->
+  <rect class="am-step-node" x="16" y="24" width="185" height="42"/>
+  <text class="am-step-title" x="108" y="45" text-anchor="middle" dominant-baseline="central">1. 模型返回 ToolCall</text>
+
+  <!-- 连线 1->2 -->
+  <path class="am-edge" d="M201,45 H248" marker-end="url(#cutpoint-arrow)"/>
+
+  <!-- 步骤 2 -->
+  <rect class="am-step-node" x="250" y="24" width="195" height="42"/>
+  <text class="am-step-title" x="347" y="45" text-anchor="middle" dominant-baseline="central">2. 派发并执行底层工具</text>
+
+  <!-- 连线 2->3 -->
+  <path class="am-edge" d="M445,45 H482" marker-end="url(#cutpoint-arrow)"/>
+
+  <!-- 步骤 3 -->
+  <rect class="am-step-node" x="484" y="24" width="195" height="42"/>
+  <text class="am-step-title" x="581" y="45" text-anchor="middle" dominant-baseline="central">3. 内存收到 ToolResult</text>
+
+  <!-- 连线 3->4 -->
+  <path class="am-edge" d="M679,45 H716" marker-end="url(#cutpoint-arrow)"/>
+
+  <!-- 步骤 4 -->
+  <rect class="am-step-node" x="718" y="24" width="224" height="42"/>
+  <text class="am-step-title" x="830" y="45" text-anchor="middle" dominant-baseline="central">4. 追加落盘至会话与 Checkpoint</text>
+</g>
+
+<!-- 四大崩溃切分断点指示箭头（虚线指向下方断点卡片） -->
+<!-- 断点 1 指示 -->
+<path class="am-edge am-edge--dashed" stroke="#e11d48" d="M225,45 V104"/>
+<circle cx="225" cy="45" r="4" fill="#e11d48"/>
+
+<!-- 断点 2 指示 -->
+<path class="am-edge am-edge--dashed" stroke="#e11d48" d="M464,45 V104"/>
+<circle cx="464" cy="45" r="4" fill="#e11d48"/>
+
+<!-- 断点 3 指示 -->
+<path class="am-edge am-edge--dashed" stroke="#e11d48" d="M698,45 V104"/>
+<circle cx="698" cy="45" r="4" fill="#e11d48"/>
+
+<!-- 断点 4 指示 -->
+<path class="am-edge am-edge--dashed" stroke="#e11d48" d="M942,45 H950 V88 H830 V104"/>
+<circle cx="942" cy="45" r="4" fill="#e11d48"/>
+
+<!-- 四张断点现场与恢复策略卡片 -->
+
+<!-- 卡片 1：派发前中断 -->
+<g transform="translate(16, 110)">
+  <rect class="am-cutpoint-card" x="0" y="0" width="222" height="300"/>
+  <rect class="am-cutpoint-tag" x="12" y="14" width="95" height="20"/>
+  <text class="am-tag-text" x="59" y="24" text-anchor="middle" dominant-baseline="central">⚡ 断点 1：派发前</text>
+
+  <text x="12" y="55" font-size="12" font-weight="650" fill="#0f172a">动作尚未派发</text>
+  <line x1="12" y1="68" x2="210" y2="68" stroke="#f1f5f9"/>
+
+  <text class="am-state-text" x="12" y="88">判定状态：<tspan class="am-state-val">not_dispatched</tspan></text>
+  <text class="am-state-text" x="12" y="110">物理世界现场：</text>
+  <text x="12" y="128" font-size="11" fill="#475569">底层工具尚未被调用，物理</text>
+  <text x="12" y="146" font-size="11" fill="#475569">磁盘与外部 API 零变更、无</text>
+  <text x="12" y="164" font-size="11" fill="#475569">副作用与数据污染。</text>
+
+  <line x1="12" y1="182" x2="210" y2="182" stroke="#f1f5f9"/>
+  <text class="am-state-text" x="12" y="202">恢复执行动作：</text>
+  <text class="am-action-text" x="12" y="222">1. 提交当前最新生效的</text>
+  <text class="am-action-text" x="12" y="240">   Policy 重新检查权限</text>
+  <text class="am-action-text" x="12" y="262">2. 获准后安全重新派发</text>
+  <text class="am-action-text" x="12" y="280">   发起第 2 次 Attempt</text>
+</g>
+
+<!-- 卡片 2：执行中/返回前中断（极高风险） -->
+<g transform="translate(250, 110)">
+  <rect class="am-cutpoint-card--danger" x="0" y="0" width="222" height="300"/>
+  <rect class="am-cutpoint-tag--danger" x="12" y="14" width="125" height="20"/>
+  <text class="am-tag-text--danger" x="74" y="24" text-anchor="middle" dominant-baseline="central">⚡ 断点 2：执行中 (极高危)</text>
+
+  <text x="12" y="55" font-size="12" font-weight="650" fill="#991b1b">底层动作执行中猝死</text>
+  <line x1="12" y1="68" x2="210" y2="68" stroke="#fed7aa"/>
+
+  <text class="am-state-text" x="12" y="88">判定状态：<tspan class="am-state-val" fill="#dc2626">unknown (结果未知)</tspan></text>
+  <text class="am-state-text" x="12" y="110">物理世界现场：</text>
+  <text x="12" y="128" font-size="11" fill="#9a3412">底层写文件或网络请求中途</text>
+  <text x="12" y="146" font-size="11" fill="#9a3412">突然断电，文件可能已写半</text>
+  <text x="12" y="164" font-size="11" fill="#9a3412">截，外部状态完全未知！</text>
+
+  <line x1="12" y1="182" x2="210" y2="182" stroke="#fed7aa"/>
+  <text class="am-state-text" x="12" y="202">恢复执行动作：</text>
+  <text class="am-action-text" x="12" y="222" fill="#991b1b">★ 坚决禁止自动重试！</text>
+  <text class="am-action-text" x="12" y="242">1. 触发 Evidence Probe 核对</text>
+  <text class="am-action-text" x="12" y="260">   物理文件哈希或 API 凭据</text>
+  <text class="am-action-text" x="12" y="280">2. 若无法核实，挂起转人工</text>
+</g>
+
+<!-- 卡片 3：未落盘前中断 -->
+<g transform="translate(484, 110)">
+  <rect class="am-cutpoint-card" x="0" y="0" width="222" height="300"/>
+  <rect class="am-cutpoint-tag" x="12" y="14" width="105" height="20"/>
+  <text class="am-tag-text" x="64" y="24" text-anchor="middle" dominant-baseline="central">⚡ 断点 3：未落盘前</text>
+
+  <text x="12" y="55" font-size="12" font-weight="650" fill="#0f172a">执行成功但回执未存</text>
+  <line x1="12" y1="68" x2="210" y2="68" stroke="#f1f5f9"/>
+
+  <text class="am-state-text" x="12" y="88">判定状态：<tspan class="am-state-val">completed (日志缺失)</tspan></text>
+  <text class="am-state-text" x="12" y="110">物理世界现场：</text>
+  <text x="12" y="128" font-size="11" fill="#475569">物理操作已生效（文件已全</text>
+  <text x="12" y="146" font-size="11" fill="#475569">部写入），但程序在写进</text>
+  <text x="12" y="164" font-size="11" fill="#475569">会话日志前被系统强杀。</text>
+
+  <line x1="12" y1="182" x2="210" y2="182" stroke="#f1f5f9"/>
+  <text class="am-state-text" x="12" y="202">恢复执行动作：</text>
+  <text class="am-action-text" x="12" y="222">1. 依物证确信物理动作已成</text>
+  <text class="am-action-text" x="12" y="242">2. 补齐 ToolResult 写入记录</text>
+  <text class="am-action-text" x="12" y="262">3. 直接跳过工具二次执行</text>
+  <text class="am-action-text" x="12" y="280">   避免非幂等副作用破坏</text>
+</g>
+
+<!-- 卡片 4：结果落盘后中断 -->
+<g transform="translate(718, 110)">
+  <rect class="am-cutpoint-card" x="0" y="0" width="222" height="300"/>
+  <rect class="am-cutpoint-tag" x="12" y="14" width="115" height="20"/>
+  <text class="am-tag-text" x="69" y="24" text-anchor="middle" dominant-baseline="central">⚡ 断点 4：下一轮调用前</text>
+
+  <text x="12" y="55" font-size="12" font-weight="650" fill="#0f172a">回执落盘、模型未请求</text>
+  <line x1="12" y1="68" x2="210" y2="68" stroke="#f1f5f9"/>
+
+  <text class="am-state-text" x="12" y="88">判定状态：<tspan class="am-state-val">completed (已落盘)</tspan></text>
+  <text class="am-state-text" x="12" y="110">物理世界现场：</text>
+  <text x="12" y="128" font-size="11" fill="#475569">工具回执已安全持久化写入</text>
+  <text x="12" y="146" font-size="11" fill="#475569">磁盘日志，仅新一轮模型</text>
+  <text x="12" y="164" font-size="11" fill="#475569">推理请求尚未发起。</text>
+
+  <line x1="12" y1="182" x2="210" y2="182" stroke="#f1f5f9"/>
+  <text class="am-state-text" x="12" y="202">恢复执行动作：</text>
+  <text class="am-action-text" x="12" y="222">1. 直接加载已有完整上下文</text>
+  <text class="am-action-text" x="12" y="242">2. 不重复执行任何工具</text>
+  <text class="am-action-text" x="12" y="262">3. 安全推进下一轮模型推理</text>
+  <text class="am-action-text" x="12" y="280">   零额外算力浪费</text>
+</g>
+
+<!-- 底部说明 -->
+<text x="480" y="435" text-anchor="middle" font-size="12" fill="#64748b">生命周期四大崩溃断点：明确“现场处于什么物理状态”，是避免带副作用动作被二次重做破坏的关键前提</text>
+</svg>
