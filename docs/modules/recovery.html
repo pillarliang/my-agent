@@ -350,7 +350,68 @@
   </tr>
   </tbody>
   </table></div>
-  <figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-recovery-action-states.svg" width="980" height="540" alt="动作四态与物证核查状态流转机制：completed 直接复用、not_dispatched 动态重审、running 挂接句柄、unknown 探查物证分流化解" loading="lazy"><figcaption>动作四态流转与物证核查状态机：通过物证探查（Evidence Probe）将最危险的未知状态（unknown）分流化解，保障恢复的幂等性与安全性。</figcaption></figure>
+  <figure class="am-diagram am-seq"><svg class="lesson-svg" viewBox="0 0 920 640" width="920" height="640" role="img" aria-label="恢复时序数据流：正常派发前写入 Checkpoint，执行中遭遇系统猝死后内存清空；冷启动恢复通过专用入口加载检查点，针对 unknown 状态触发物证探查核验哈希，查实后合成回执补入 Session，闭合状态推进下一轮循环">
+<defs><marker id="recovery-flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+<g fill="none" stroke="currentColor" stroke-width="1.3">
+  <rect x="16" y="16" width="148" height="44" rx="8"/>
+  <rect x="195" y="16" width="140" height="44" rx="8"/>
+  <rect x="375" y="16" width="140" height="44" rx="8"/>
+  <rect x="555" y="16" width="140" height="44" rx="8"/>
+  <rect x="740" y="16" width="150" height="44" rx="8"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="14.5" font-weight="600">
+  <text x="90" y="44">恢复入口 / Runner</text>
+  <text x="265" y="44">Policy / 安全审查</text>
+  <text x="445" y="44">Checkpoint / 控制面</text>
+  <text x="625" y="44">Session / 记录层</text>
+  <text x="815" y="44">Tools / 物理世界与物证</text>
+</g>
+<g stroke="currentColor" opacity=".2" stroke-dasharray="5 5">
+  <path d="M90 60 V590 M265 60 V590 M445 60 V590 M625 60 V590 M815 60 V590"/>
+</g>
+<!-- 阶段一：崩溃前正常推进与中断 -->
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#recovery-flow-arrow)">
+  <path d="M90 100 H445"/>
+  <path d="M90 145 H265"/>
+  <path d="M90 230 H815"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#recovery-flow-arrow)">
+  <path d="M265 185 H90"/>
+</g>
+<!-- 中断警示虚线带 -->
+<g stroke="currentColor" opacity=".45" stroke-dasharray="4 2">
+  <path d="M40 270 H880"/>
+</g>
+<!-- 阶段二：冷启动恢复执行 -->
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#recovery-flow-arrow)">
+  <path d="M90 320 H445"/>
+  <path d="M90 410 H815"/>
+  <path d="M90 505 H625"/>
+  <path d="M90 550 H445"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#recovery-flow-arrow)">
+  <path d="M445 360 H90"/>
+  <path d="M815 455 H90"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-size="13">
+  <!-- 阶段一文字 -->
+  <text x="267" y="93">① 记录调用意图与幂等键 (status="unknown")</text>
+  <text x="177" y="138">② 提交动作与参数申请权限</text>
+  <text x="177" y="178">③ 返回 Policy 授权通过 (Allowed)</text>
+  <text x="452" y="222">④ 派发底层物理执行 (write_file)</text>
+  <text x="460" y="266" font-size="12" font-weight="600">⚡ 进程遭遇 OOM 突然猝死！内存 State 全丢，回执未落盘，Session 悬空 ⚡</text>
+  <!-- 阶段二文字 -->
+  <text x="267" y="312">⑤ 专用恢复入口 resume_task 加载 Checkpoint 锚点</text>
+  <text x="267" y="352">⑥ 返回未闭合动作停在未知断点 (status="unknown")</text>
+  <text x="452" y="402">⑦ 锁死自动重试！触发 Evidence Probe 探查物理物证</text>
+  <text x="452" y="447">⑧ 物证核验成功：目标文件存在且 SHA-256 哈希匹配</text>
+  <text x="357" y="497">⑨ 合成物理回执补写入会话记录，闭合悬空 ToolCall</text>
+  <text x="267" y="542">⑩ Checkpoint 动作修正为 completed，更新执行锚点</text>
+  <text x="455" y="582" font-size="12.5" font-weight="600">⑪ 动作全部闭合，携完整上下文安全推进下一轮模型推理 ➔</text>
+  <!-- 底部说明 -->
+  <text x="460" y="622" font-size="12" opacity=".85">实线：主动派发或落盘；虚线：返回数据或物证核查。恢复时专用入口读取 Checkpoint，未知状态经物证核实后补齐 Session，杜绝重复调用。</text>
+</g>
+</svg><figcaption>动作四态与物证核查数据流：崩溃前在 Checkpoint 固化切点，重启后通过 Evidence Probe 探查物理物证，闭合未决动作并安全接续主循环。</figcaption></figure>
 </li>
 <li><strong>重新校验 Policy 权限（动态安全审查）</strong>：
   <p>即使在中断前该动作已被 Policy 批准，在恢复重试时<strong>必须按当前最新的 Policy 重新做一次权限检查</strong>。因为在系统崩溃到恢复的这段时间里，用户可能修改了权限配置（如撤销了写权限），绝不能以历史批准记录绕过当下的安全防线。</p>
