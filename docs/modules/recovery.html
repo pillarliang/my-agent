@@ -365,18 +365,22 @@
 <p>如果系统只保存普通的聊天记录（<code>[{"role": "user", ...}, {"role": "assistant", ...}]</code>），一旦崩溃就无法知道工具执行到底处在哪个临界点。因此，可靠 Harness 必须在对话文件外，独立维护一份<strong>任务运行检查点记录（Run Checkpoint）</strong>。</p>
 
 <h4>5.1 贯穿场景：Session、State 与 Checkpoint 的职责与数据结构样式对比</h4>
-<p>为了直观区分三者的职责边界与存储形态，考虑以下贯穿场景：</p>
+<p>为了直观区分三者的职责边界与存储形态，考虑以下贯穿业务场景：</p>
 <ul>
   <li><strong>用户</strong>：“请帮我生成一份审计报告 <code>reports/audit.log</code>，并调用扣费接口支付 10 元服务费。”</li>
   <li><strong>模型</strong>：第 1 步先决定调用 <code>write_file(path="reports/audit.log", content="AUDIT OK")</code>。</li>
   <li><em>（系统动作：底层文件刚写入磁盘，但在程序将执行回执写入日志之前，进程因 OOM 突然被系统强杀）</em></li>
 </ul>
 
-<p>此时，三类核心数据对象的表现形态与样式截然不同：</p>
+<p>此时，三类核心数据对象的表现形态、字段定义与设计意图截然不同：</p>
 
 <h5>1. Session 数据结构（会话层 · 磁盘持久化 JSONL）</h5>
 <p><strong>核心职责</strong>：记录人类与模型的完整对话历史（Transcript），为后续多轮追问提供上下文，供人工审计回溯。崩溃发生时，末尾缺少对应的工具回执，处于悬空未闭合状态。</p>
-<pre><code>{
+</div>
+
+<div class="am-code">
+  <div class="am-code-head">会话记录存储样本（Session Transcript · JSONL 格式）</div>
+  <pre><code>{
   "session_id": "sess_20261030_001",
   "created_at": "2026-10-30T10:00:00Z",
   "working_dir": "/workspace/project_a",
@@ -398,10 +402,43 @@
     // 崩溃发生瞬间：尚未追加写入 ToolResultMessage！会话记录在此截断悬空
   ]
 }</code></pre>
+</div>
+
+<div class="am-md">
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>核心设计意图与在恢复中的作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>session_id</code></td>
+<td>String</td>
+<td>全局唯一会话标识，用于多轮对话历史的物理隔离与归组，防止不同对话串味。</td>
+</tr>
+<tr>
+<td><code>working_dir</code></td>
+<td>String</td>
+<td>绑定该会话的基础工作目录，恢复与追问时用于环境与路径越界合规校验。</td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td>Array</td>
+<td>有序对话条目（含用户 Prompt、模型 ToolCall 与工具回执）。<strong>恢复局限性</strong>：此处记录的是“模型说过什么”，在崩溃发生瞬间由于缺少回执，单靠它是无法判断底层物理文件到底写完没有的。</td>
+</tr>
+</tbody>
+</table></div>
 
 <h5>2. State 数据结构（运行时状态 · 进程内存快照）</h5>
 <p><strong>核心职责</strong>：Agent Loop 在内存中的变量全集，指导当前这一秒往哪一步流转（下一步调模型、派发工具还是退出）。<strong>生命周期随进程生灭，进程一旦崩溃，内存数据全丢</strong>。</p>
-<pre><code>{
+</div>
+
+<div class="am-code">
+  <div class="am-code-head">运行时内存状态快照（State · 内存对象视图）</div>
+  <pre><code>{
   "active_session_id": "sess_20261030_001",
   "current_run_id": "run_001",
   "loop_phase": "dispatching_tool",
@@ -416,10 +453,43 @@
     "model_client_connection": "&lt;HTTPConnection pool=0x7f88&gt;"
   }
 }</code></pre>
+</div>
+
+<div class="am-md">
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>核心设计意图与在恢复中的作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>loop_phase</code></td>
+<td>Enum</td>
+<td>当前单步在循环内部的实时阶段（如 <code>model_invoking</code> / <code>dispatching_tool</code>）。随内存释放，不能用于跨进程恢复。</td>
+</tr>
+<tr>
+<td><code>step_index</code> / <code>budget</code></td>
+<td>Object</td>
+<td>控制单次任务的步数上限与 Token 额度，用于在线执行中的防死循环熔断控制。</td>
+</tr>
+<tr>
+<td><code>runtime_handles</code></td>
+<td>Object</td>
+<td>底层活跃的非序列化句柄（如活跃子进程 PID、TCP 连接池）。进程死亡后操作系统自动回收，恢复时必须重建。</td>
+</tr>
+</tbody>
+</table></div>
 
 <h5>3. Checkpoint 数据结构（检查点 · 独立磁盘持久化控制面）</h5>
 <p><strong>核心职责</strong>：专为“崩溃恢复”独立固化的控制元数据。记录任务推进到了哪一步、各个工具调用的确认状态（严禁只有成功/失败二元值）、全局幂等键与物证探查策略，是冷启动重启时的法定裁判依据。</p>
-<pre><code>{
+</div>
+
+<div class="am-code">
+  <div class="am-code-head">执行检查点记录（Run Checkpoint · 独立磁盘持久化文件）</div>
+  <pre><code>{
   "run_id": "run_001",
   "session_id": "sess_20261030_001",
   "status": "interrupted",
@@ -455,8 +525,114 @@
     }
   ]
 }</code></pre>
+</div>
 
-<h4>5.2 场景演练对比：两类故障的差异化恢复路径</h4>
+<div class="am-md">
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>核心设计意图与在恢复中的作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code> / <code>interrupted_at</code></td>
+<td>String</td>
+<td>任务终态标记为 <code>interrupted</code>（中断），记录发生中断的时间戳，防止恢复引擎误将其视为正常结束的任务。</td>
+</tr>
+<tr>
+<td><code>lifecycle_point</code></td>
+<td>Enum</td>
+<td>精准定位任务夭折在生命周期的哪一切点（如 <code>tool_execution_interrupted</code> 工具执行中猝死），为恢复提供锚点。</td>
+</tr>
+<tr>
+<td><code>has_side_effect</code></td>
+<td>Boolean</td>
+<td><strong>带副作用安全防御开关</strong>：只读动作（如 <code>read_file</code>）允许在重审 Policy 后重新派发；带副作用动作（写文件、扣款）严禁自动重做！</td>
+</tr>
+<tr>
+<td><code>idempotency_key</code></td>
+<td>String</td>
+<td>全局唯一幂等键，在跨网络请求、外部订单创建或恢复重试时确保“无论尝试多少次，底层动作只生效一次”。</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Enum</td>
+<td><strong>动作未闭合四态</strong>（<code>completed</code> / <code>not_dispatched</code> / <code>running</code> / <code>unknown</code>），直接决定恢复引擎的分流分支。</td>
+</tr>
+<tr>
+<td><code>attempts</code></td>
+<td>Array</td>
+<td>物理执行尝试轨迹数组。记录每次派发时间、结束时间与报错信息，保留完整的物理审计链，不污染对话历史。</td>
+</tr>
+<tr>
+<td><code>evidence_probe</code></td>
+<td>Object</td>
+<td><strong>物证探查策略配置</strong>：明确指派如何通过物理手段核查结果（如策略类型、目标文件路径、预期内容哈希与探查结论）。</td>
+</tr>
+</tbody>
+</table></div>
+
+<h4>5.2 恢复引擎实操：根据不同“动作状态”进行错误中断处理与分流恢复</h4>
+<p>当系统崩溃重启并调用专用恢复入口 <code>resume_task(run_id)</code> 时，恢复引擎读取 Checkpoint，对 <code>invocations</code> 列表中的未闭合动作按其 <code>status</code> 严格执行差异化处理逻辑：</p>
+</div>
+
+<div class="am-code">
+  <div class="am-code-head">恢复引擎针对动作状态的处理核心伪代码</div>
+  <pre><code>def resume_task(run_id: str):
+    checkpoint = load_checkpoint(run_id)
+    session = load_session(checkpoint.session_id)
+    
+    for inv in checkpoint.invocations:
+        match inv.status:
+            case "completed":
+                # 状态 1：已确认完成 ➔ 直接复用已有物理回执，跳过工具执行
+                session.append_observation_if_missing(inv.call_id, inv.result)
+                
+            case "not_dispatched":
+                # 状态 2：尚未派发 ➔ 动态重新审查当前最新 Policy
+                policy_verdict = policy.evaluate(inv.tool_name, inv.arguments)
+                if policy_verdict.is_allowed:
+                    result = execute_tool(inv.tool_name, inv.arguments)
+                    inv.status = "completed"
+                    session.append_observation(inv.call_id, result)
+                else:
+                    inv.status = "policy_denied"
+                    session.append_observation(inv.call_id, ToolResult(error="Policy Denied"))
+                    
+            case "running":
+                # 状态 3：后台异步执行中 ➔ 重新挂接已有任务句柄，等待完成
+                job_handle = reattach_external_job(inv.job_id)
+                result = job_handle.wait_or_poll(timeout=30)
+                inv.status = "completed"
+                session.append_observation(inv.call_id, result)
+                
+            case "unknown":
+                # 状态 4：极高危未知态 ➔ 坚决禁止自动重跑！启动物证探查器
+                probe_result = run_evidence_probe(inv.evidence_probe)
+                
+                if probe_result == "target_exists_and_hash_matched":
+                    # 分支 A：物证匹配 ➔ 补齐回执，就地修正为 completed
+                    inv.status = "completed"
+                    session.append_observation(inv.call_id, ToolResult(content="OK (Reconstructed)"))
+                elif probe_result == "target_not_found":
+                    # 分支 B：确认未发生 ➔ 重置为 not_dispatched，重新安全派发
+                    inv.status = "not_dispatched"
+                    retry_dispatch_with_policy_check(inv)
+                else:
+                    # 分支 C：物证冲突或状态无法查明 ➔ 立即熔断挂起，等待人工介入
+                    checkpoint.status = "paused_for_human"
+                    save_checkpoint(checkpoint)
+                    raise HumanInterventionRequired(f"Tool {inv.tool_name} status uncertain")
+
+    # 动作全部闭合后，拉起模型继续推进后续循环
+    return agent_loop.continue_run(checkpoint, session)</code></pre>
+</div>
+
+<div class="am-md">
+<h4>5.3 场景演练对比：两类故障的差异化恢复路径</h4>
 
 <div class="am-table-wrap"><table>
 <thead>
