@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 620" role="img" aria-labelledby="obs-title obs-desc">
+  <title id="obs-title">运行时观测：以 Langfuse 为代表的调用链路追踪与成本透视</title>
+  <desc id="obs-desc">展示 Agent 运行时各层将 Trace、Generation、Span 异步上报至 Langfuse 观测平台的架构与全链路透视过程。</desc>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; fill: #172133; font-size: 14px; }
+    .title { font-size: 20px; font-weight: 700; fill: #0f172a; }
+    .section-title { font-size: 16px; font-weight: 650; fill: #1e293b; }
+    .box-title { font-size: 15px; font-weight: 650; fill: #1e3a8a; }
+    .desc { font-size: 12.5px; fill: #475569; }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; fill: #0f766e; }
+    .badge { font-size: 11.5px; font-weight: 600; fill: #2563eb; }
+    .arrow { fill: none; stroke: #3b82f6; stroke-width: 1.6; }
+    .arrow-async { fill: none; stroke: #8b5cf6; stroke-width: 1.6; stroke-dasharray: 5 4; }
+    .footer-text { font-size: 12px; fill: #64748b; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#8b5cf6"/>
+    </marker>
+  </defs>
+
+  <!-- 顶部标题 -->
+  <text x="30" y="36" class="title">运行时观测（Observability）：以 Langfuse 为代表的链路追踪与透视</text>
+
+  <!-- 左侧：Agent 运行时 (Runtime) -->
+  <rect x="30" y="65" width="410" height="505" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="50" y="96" class="section-title">被测 Agent 运行时 (Application Runtime)</text>
+  <text x="50" y="118" class="desc">执行任务、调度工具与模型交互，不阻塞主线程地产生观测数据</text>
+
+  <!-- 节点 1：Runner / Task 入口 -->
+  <rect x="50" y="140" width="370" height="85" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.2"/>
+  <text x="66" y="166" class="box-title">1. Runner 启动任务 → 初始化根 Trace</text>
+  <text x="66" y="190" class="desc">记录任务全局 ID、Session ID、用户提问与初始环境元数据</text>
+  <text x="66" y="210" class="code">trace = langfuse.trace(name="AgentRun", session_id="...")</text>
+
+  <!-- 节点 2：Model 调用 -->
+  <rect x="50" y="245" width="370" height="90" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.2"/>
+  <text x="66" y="271" class="box-title">2. LLMService 调用 → 创建 Generation</text>
+  <text x="66" y="295" class="desc">记录输入 Prompt、完整补全回复、Token 用量与模型推理时延</text>
+  <text x="66" y="316" class="code">trace.generation(model="...", usage={prompt, completion})</text>
+
+  <!-- 节点 3：Tools 执行与 Policy 检查 -->
+  <rect x="50" y="355" width="370" height="90" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.2"/>
+  <text x="66" y="381" class="box-title">3. Tools &amp; Policy 执行 → 挂载嵌套 Span</text>
+  <text x="66" y="405" class="desc">记录权限校验状态、工具名称、传入参数、真实执行回执与异常</text>
+  <text x="66" y="426" class="code">span = trace.span(name="tool:read_file", input={path})</text>
+
+  <!-- 节点 4：打分与用户反馈 -->
+  <rect x="50" y="465" width="370" height="85" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.2"/>
+  <text x="66" y="491" class="box-title">4. 任务结束 / 用户反馈 → 记录 Score</text>
+  <text x="66" y="515" class="desc">将运行时错误状态、用户点赞/踩、或规则检查标记回填至 Trace</text>
+  <text x="66" y="535" class="code">trace.score(name="user_feedback", value=1, comment="ok")</text>
+
+  <!-- 异步上报通道 (跨越中间) -->
+  <path d="M420 182 H475 V182" class="arrow-async" marker-end="url(#arrow-purple)"/>
+  <path d="M420 290 H475 V290" class="arrow-async" marker-end="url(#arrow-purple)"/>
+  <path d="M420 400 H475 V400" class="arrow-async" marker-end="url(#arrow-purple)"/>
+  <path d="M420 507 H475 V507" class="arrow-async" marker-end="url(#arrow-purple)"/>
+
+  <!-- 右侧：Langfuse 观测平台 -->
+  <rect x="480" y="65" width="410" height="505" rx="10" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.5"/>
+  <text x="500" y="96" class="section-title">Langfuse 平台（Observability Platform）</text>
+  <text x="500" y="118" class="desc">集中存储、链路树可视化、耗时分解与成本聚合分析</text>
+
+  <!-- 平台模块 1：Trace 调用树展示 -->
+  <rect x="500" y="140" width="370" height="155" rx="8" fill="#ffffff" stroke="#c084fc" stroke-width="1.2"/>
+  <text x="516" y="166" class="box-title">完整调用链树状拓扑 (Trace Tree)</text>
+  <text x="516" y="190" class="code">▼ Trace: AgentRun [200 OK | 3.8s | 1,420 tokens]</text>
+  <text x="532" y="212" class="code">├── Generation: LLM Turn 1 [prompt: 820t | 1.4s]</text>
+  <text x="532" y="234" class="code">├── Span: tool_list_files [allowed | 0.05s]</text>
+  <text x="532" y="256" class="code">├── Generation: LLM Turn 2 [completion: 240t | 1.8s]</text>
+  <text x="532" y="278" class="code">└── Score: quality_check [value: 1.0]</text>
+
+  <!-- 平台模块 2：成本与性能分析 -->
+  <rect x="500" y="310" width="370" height="115" rx="8" fill="#ffffff" stroke="#c084fc" stroke-width="1.2"/>
+  <text x="516" y="336" class="box-title">成本、延迟与 Token 监控 (Metrics)</text>
+  <text x="516" y="360" class="desc">• 聚合统计：Prompt / Completion Token 实时消耗趋势</text>
+  <text x="516" y="382" class="desc">• 延迟拆解：模型推理时长（TTFT）vs 工具本地执行时延</text>
+  <text x="516" y="404" class="desc">• 告警触发：单次任务消耗异常超标或连续抛出 Policy 拦截</text>
+
+  <!-- 平台模块 3：Session 回放与 Badcase 追踪 -->
+  <rect x="500" y="440" width="370" height="110" rx="8" fill="#ffffff" stroke="#c084fc" stroke-width="1.2"/>
+  <text x="516" y="466" class="box-title">会话回溯与 Badcase 筛选 (Debugging)</text>
+  <text x="516" y="490" class="desc">• 跨轮会话：按 Session ID 串联用户多次追问与任务上下文</text>
+  <text x="516" y="512" class="desc">• 故障下钻：一键筛选执行报错、超时或低评分的异常 Trace</text>
+  <text x="516" y="534" class="desc">• Prompt 回看：查看产生错误时具体的系统提示词与版本</text>
+
+  <!-- 底部注记 -->
+  <text x="30" y="595" class="footer-text">注：紫色虚线表示异步非阻塞上报（不增加 Agent 关键路径延迟）。观测确保“过程透明”，但不能替代对最终结果是否合规的离线评测。</text>
+</svg>
+

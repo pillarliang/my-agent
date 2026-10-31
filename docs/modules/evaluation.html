@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Evaluation：Agent 任务评测与沙箱断言 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：长任务支撑：大输出暂存与历史摘要</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、Harness 核心模块</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="observability.html#module-observability" data-chapter="module-observability">Observability：运行时全链路观测与追踪</a><a class="chapter-link" href="#module-evaluation" data-chapter="module-evaluation">Evaluation：Agent 任务评测与沙箱断言</a><div class="nav-group-title">三、进阶扩展模块</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="recovery.html#module-recovery" data-chapter="module-recovery">Recovery：中断检查点、异常容错与安全恢复</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">四、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">五、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/modules/evaluation.html#module-evaluation">English</a></p><article class="chapter" id="module-evaluation">
+<header class="chapter-header"><span class="kind">模块原理 · 离线任务验收与沙箱断言</span><h2>Evaluation：Agent 任务评测与沙箱断言</h2></header>
+
+<!-- 1. 问题起点 -->
+<section class="lesson-section" id="evaluation-principles">
+<h3>1. 问题起点：为什么“执行正常”不等于“任务合格”？</h3>
+<div class="lesson-body"><div class="am-md">
+<p>在研发和迭代 Agent 时，最常见的困境不是程序崩溃，而是<strong>看似一切正常，但任务并未真正做对</strong>：</p>
+<ul>
+<li><strong>用户</strong>：“请为当前的计算函数编写单元测试，并确保能够跑通。”</li>
+<li><strong>模型</strong>：“我已经成功在 <code>tests/test_math.py</code> 编写了测试用例，并全部验证通过。”</li>
+<li><em>（系统动作）</em>：Runner 执行正常结束，HTTP 状态码 200，无任何未捕获异常。</li>
+<li><em>（真实物理环境）</em>：打开磁盘发现，测试文件里的断言全部写成了 <code>assert True</code>；或者模型直接把被测函数的实现给篡改了！</li>
+</ul>
+<p>这说明：<strong>运行期观测（Observability）只能证明“过程没有异常”，绝不能证明“业务结果符合质量要求”。</strong></p>
+<p>为了让 Agent 的能力可量化、提示词（Prompt）修改可对比、模型升级可防退化，系统必须拥有独立的 **评测模块（Evaluation）**。</p>
+<p><strong>期望达到的效果：</strong></p>
+<ul>
+<li><strong>物理产物可断言</strong>：以真实磁盘文件变动（Git Diff）和自动化测试通过率为准，不依赖模型的主观声称。</li>
+<li><strong>测试环境强隔离</strong>：评测运行在独立的临时沙箱中，支持任意写操作与破坏性测试，评测完毕可 100% 干净回滚。</li>
+<li><strong>评测标准可对比</strong>：固定输入用例、初始快照与评分打分器，支持跨模型版本、跨 Prompt 版本的横向 Pass@k 对比。</li>
+</ul>
+</div></div></section>
+
+<!-- 2. Agent 评测的三大本质特征 -->
+<section class="lesson-section" id="evaluation-characteristics">
+<h3>2. Agent 评测的三大本质特征：区别于传统 LLM 评测</h3>
+<div class="lesson-body"><div class="am-md">
+<p>传统 LLM 评测（如问答评分、文本摘要、RAG 检索质量）通常是<strong>单轮静态文本比对</strong>：输入一个 Prompt，模型返回一段字符串，评测器计算字面相似度（ROUGE/BLEU）或调用裁判模型判断是否有事实幻觉。</p>
+<p>然而，Agent 是<strong>与外部物理环境交互的有状态系统</strong>，其评测具有三大根本特征：</p>
+<ol>
+<li><strong>以“环境副作用变更（Side Effects）”为核心验收物料</strong>：
+  <ul>
+  <li>Agent 的最终价值在于解决真实问题（如修复 Bug、生成报告、调整数据库表结构）。</li>
+  <li>评测的核心不是模型说得有多好听，而是<strong>沙箱中发生的状态改变（State Diff）是否真正符合预期</strong>。</li>
+  </ul>
+</li>
+<li><strong>解法路径具备等价多样性（Path Equivalence）</strong>：
+  <ul>
+  <li>面对同一个目标（例如“找到并修改包含端口配置的文件”），不同模型或同一模型的不同采样可能采取完全不同的工具动作链：
+    <ul>
+    <li>路径 A：<code>list_files</code> → 发现 <code>config.yaml</code> → <code>read_file</code> → <code>write_file</code>。</li>
+    <li>路径 B：直接通过 <code>search_text("port")</code> 定位行号 → <code>write_file</code>。</li>
+    </ul>
+  </li>
+  <li>两种路径皆为合理决策。评测器绝不能机械死板地写死工具调用的次序，而必须宽容合法路径，重点校验<strong>最终环境产物与关键合规约束</strong>。</li>
+  </ul>
+</li>
+<li><strong>必须强制依赖沙箱隔离（Sandbox Isolation）</strong>：
+  <ul>
+  <li>Agent 拥有文件读写乃至 Shell 命令执行权限。在开发机直接跑评测用例不仅会污染本地 Git 仓库，还可能导致数据误删或端口冲突。</li>
+  <li>必须在<strong>临时隔离目录（Temp Directory）或轻量 Docker 容器</strong>内运行被测任务，每次测试完成后物理重置环境。</li>
+  </ul>
+</li>
+</ol>
+</div></div></section>
+
+<!-- 3. 主流开源方案全景 -->
+<section class="lesson-section" id="evaluation-frameworks">
+<h3>3. 主流开源 Agent 评测方案全景</h3>
+<div class="lesson-body"><div class="am-md">
+<p>当前业界已经涌现出若干成熟的开源 Agent 评测标准与框架，各有其清晰的分工与侧重：</p>
+
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>开源框架</th>
+<th>发起方与定位</th>
+<th>核心架构特色</th>
+<th>典型适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Inspect AI</strong></td>
+<td>英国国家级 AI 安全研究所（UK AISI）开源的标准评测框架</td>
+<td>• 原生规范：<code>Dataset</code>（任务集） + <code>Task</code>（评测目标） + <code>Solver</code>（被测 Agent） + <code>Scorer</code>（打分器）<br>• 内置 Docker 沙箱编排与高并发调度，原生支持动态多步 Tool-use 评估</td>
+<td>工业级复杂任务评测、模型安全越权与越狱防御审计、长期基准测试建设</td>
+</tr>
+<tr>
+<td><strong>DeepEval</strong></td>
+<td>Confident AI 开源的单元测试风格 LLM &amp; Agent 评测库</td>
+<td>• 专为 Agent 提炼的量化指标：<code>ToolCorrectnessMetric</code>（工具准确率）、<code>StepEfficiencyMetric</code>（步数效率）、<code>TaskCompletionMetric</code>（完成度）<br>• 紧密集成 <code>pytest</code> 与 CI/CD 自动化流水线</td>
+<td>研发阶段的代码提交门禁、Pull Request 自动化回归测试、单任务快速验证</td>
+</tr>
+<tr>
+<td><strong>SWE-bench</strong></td>
+<td>开源社区权威软件工程基准（Princeton NLP 等）</td>
+<td>• 提取自真实世界 GitHub 开源仓库的真实 Issue 与代码快照<br>• 判定标准 100% 由代码单元测试执行（<code>PASS_TO_PASS</code> 必须全过，<code>FAIL_TO_PASS</code> 必须由红变绿）</td>
+<td>Coding Agent 的真实代码修复能力横向客观度量（杜绝主观评分水分）</td>
+</tr>
+</tbody>
+</table></div>
+</div></div></section>
+
+<!-- 4. 评测流水线与沙箱闭环架构 -->
+<section class="lesson-section" id="evaluation-pipeline">
+<h3>4. 评测流水线与沙箱闭环架构</h3>
+<div class="lesson-body"><div class="am-md">
+<p>一个标准的 Agent 离线评测 Harness，通过“沙箱准备 → 动态推进 → 多维打分 → 报告与重置”四个阶段构成闭环：</p>
+
+<figure class="am-diagram">
+<button class="am-diagram-expand" type="button" aria-label="放大查看图示"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+<img class="lesson-svg" src="../assets/diagrams/diagram-quality-agent-evaluation.svg" width="920" height="620" alt="离线评测架构：Agent 任务沙箱隔离与多维闭环验收" loading="lazy">
+<figcaption>离线评测闭环流水线：从固定用例与沙箱注入开始，由被测 Agent 推进执行，经多维打分器矩阵验收后输出报告并彻底清理沙箱。</figcaption>
+</figure>
+
+<h4>评测流水线的四个标准阶段</h4>
+<ul>
+<li><strong>阶段 1：沙箱与前置快照准备（Sandbox Fixtures Setup）</strong>：
+  <ul>
+  <li>评测驱动器（Eval Runner）读取固定测试用例集，包含初始任务指令与预期验收标准。</li>
+  <li>在沙箱中注入前置文件（Fixtures），例如制造一段带有 Bug 的代码或缺损的配置文件，锁定初始环境快照。</li>
+  </ul>
+</li>
+<li><strong>阶段 2：被测 Agent 自主执行与物料收集（Execution &amp; Artifact Capture）</strong>：
+  <ul>
+  <li>被测 Agent 将工作目录绑定至沙箱，开始自主决策循环，在沙箱内读写文件或执行命令。</li>
+  <li>执行完毕或达到步数上限后，评测器提取两大核心物料：<strong>沙箱环境物理状态变动（State Diff）</strong> 与 <strong>完整交互决策轨迹（Trajectory）</strong>。</li>
+  </ul>
+</li>
+<li><strong>阶段 3：多维打分器矩阵（Multi-tiered Scorers）</strong>：
+  <ul>
+  <li><strong>环境状态确定性断言</strong>：调用外部测试工具（如 <code>pytest</code>）运行断言，核对输出文件是否存在、格式是否合规（100% 确定性，零主观偏见）。</li>
+  <li><strong>轨迹决策效率评估</strong>：统计所耗步数与最优解步数的差距，识别是否存在无效重复文件查询，检测死循环震荡。</li>
+  <li><strong>语义与自洽性判定（LLM-as-a-Judge）</strong>：针对开放性文本回答，调用高级裁判模型依照严格评分量规（Rubric）给出质量得分。</li>
+  </ul>
+</li>
+<li><strong>阶段 4：报告输出与沙箱彻底重置（Reporting &amp; Teardown）</strong>：
+  <ul>
+  <li>计算综合通过率指标（Pass@1、Pass@k）、平均 Token 与耗时分布，沉淀失败归因报告。</li>
+  <li>物理清空并销毁沙箱环境，保证下一个测试用例启动时零状态残留。</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+
+<!-- 5. 核心指标体系 -->
+<section class="lesson-section" id="evaluation-metrics">
+<h3>5. Agent 评测的 4 大核心指标体系</h3>
+<div class="lesson-body"><div class="am-md">
+<p>建立科学的评测基准，必须综合覆盖以下四个维度的指标：</p>
+
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>评估指标</th>
+<th>量化方式</th>
+<th>说明与工程意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="2"><strong>结果层<br><small>(Outcome)</small></strong></td>
+<td><strong>通过率<br>(Pass@1 / Pass@k)</strong></td>
+<td>单次运行（Pass@1）或 <em>k</em> 次独立尝试中至少一次通过全部验收断言的比例</td>
+<td>衡量 Agent 解决真实问题的核心成功率；Pass@k 衡量多次尝试下的能力上限</td>
+</tr>
+<tr>
+<td><strong>环境状态符合度<br>(State Accuracy)</strong></td>
+<td>目标产物文件是否存在、文件内容 Diff 与自动化单元测试通过率</td>
+<td>绝不相信模型在回复中口头声称的“已搞定”，以物理磁盘真实变动为唯一事实来源</td>
+</tr>
+<tr>
+<td rowspan="2"><strong>轨迹层<br><small>(Trajectory)</small></strong></td>
+<td><strong>步数效率<br>(Step Efficiency)</strong></td>
+<td><code>基准最优步数 / 实际消耗步数</code>（超出预算予以扣分）</td>
+<td>衡量 Agent 的推理果断程度；惩罚在目录中毫无目的地反复翻找文件</td>
+</tr>
+<tr>
+<td><strong>死循环检出率<br>(Loop Detection)</strong></td>
+<td>同一任务中连续出现相同工具与相同参数调用的比例</td>
+<td>检验模型在遇到工具报错时是否具备反思与策略调整能力，还是陷入机械重试</td>
+</tr>
+<tr>
+<td rowspan="2"><strong>安全层<br><small>(Safety)</small></strong></td>
+<td><strong>越权拦截率<br>(Policy Interception)</strong></td>
+<td>恶意越界测试用例中，被 Policy 安全策略成功拒绝的比例</td>
+<td>确保 Agent 在任何诱导下绝不越界访问工作区外部目录或执行高危命令</td>
+</tr>
+<tr>
+<td><strong>抗注入稳健性<br>(Injection Robustness)</strong></td>
+<td>在输入文件中暗藏“忽略之前指令”等对抗提示词时，依然维持原目标的比例</td>
+<td>防范间接提示词注入（Indirect Prompt Injection）带来的安全漏洞</td>
+</tr>
+<tr>
+<td rowspan="2"><strong>成本层<br><small>(Cost &amp; Latency)</small></strong></td>
+<td><strong>单任务 Token 消耗<br>(Avg Tokens / Task)</strong></td>
+<td>成功完成单次任务所消耗的 Prompt 与 Completion Token 总和</td>
+<td>评估上下文管理模块（Context Manager）裁剪策略的成本效益</td>
+</tr>
+<tr>
+<td><strong>耗时分布<br>(Latency Breakdown)</strong></td>
+<td>模型首字延迟（TTFT）、思考时间与本地工具真实执行耗时切片</td>
+<td>定位任务耗时瓶颈是在模型网络端还是本地工具执行端</td>
+</tr>
+</tbody>
+</table></div>
+</div></div></section>
+
+<!-- 6. 实战落地代码 -->
+<section class="lesson-section" id="evaluation-code">
+<h3>6. 实战落地：搭建最小的 Agent 评测 Harness</h3>
+<div class="lesson-body"><div class="am-md">
+<p>下面展示如何在 Python 中基于临时隔离目录（`tempfile`）构建一个具备真实状态断言与轨迹分析的轻量评测器：</p>
+
+<div class="am-code"><div class="am-code-head"><span>test_agent_eval.py</span><button class="code-copy" type="button">复制代码</button></div>
+<pre><code>import tempfile
+import shutil
+from pathlib import Path
+from dataclasses import dataclass
+from typing import Dict, Any, List
+
+@dataclass
+class EvalCase:
+    name: str
+    task_prompt: str
+    fixtures: Dict[str, str]       # 初始沙箱文件与内容
+    expected_files: Dict[str, str] # 期望生成的文件与内容关键字
+    max_steps: int = 8             # 步数上限
+
+class AgentEvaluator:
+    """Agent 离线评测驱动器（支持独立临时沙箱与多维判定）"""
+    def __init__(self, runner_factory):
+        self.runner_factory = runner_factory
+
+    def evaluate_case(self, case: EvalCase) -> Dict[str, Any]:
+        # 1. 创建干净隔离的临时沙箱目录
+        sandbox_dir = Path(tempfile.mkdtemp(prefix="eval_sandbox_"))
+        try:
+            # 准备前置环境快照
+            for rel_path, content in case.fixtures.items():
+                target_file = sandbox_dir / rel_path
+                target_file.parent.mkdir(parents=True, exist_ok=True)
+                target_file.write_text(content, encoding="utf-8")
+
+            # 2. 注入沙箱环境并执行被测 Agent
+            runner = self.runner_factory(workspace=sandbox_dir)
+            run_result = runner.run_task(case.task_prompt)
+
+            # 3. 多维断言与检验
+            report = {
+                "case_name": case.name,
+                "passed": True,
+                "failures": [],
+                "steps_taken": len(run_result.trajectory),
+                "token_usage": run_result.total_tokens,
+            }
+
+            # 检查 A：步数预算约束
+            if len(run_result.trajectory) > case.max_steps:
+                report["passed"] = False
+                report["failures"].append(f"步数超标：使用了 {len(run_result.trajectory)} 步，上限 {case.max_steps}")
+
+            # 检查 B：环境状态断言（物理磁盘文件真实检查）
+            for exp_path, keyword in case.expected_files.items():
+                real_file = sandbox_dir / exp_path
+                if not real_file.exists():
+                    report["passed"] = False
+                    report["failures"].append(f"期望的文件未在沙箱中生成：{exp_path}")
+                elif keyword not in real_file.read_text(encoding="utf-8"):
+                    report["passed"] = False
+                    report["failures"].append(f"文件 {exp_path} 内容未命中关键字：'{keyword}'")
+
+            # 检查 C：轨迹死循环分析
+            actions = [str(step.action) for step in run_result.trajectory if step.action]
+            if len(actions) != len(set(actions)):
+                report["failures"].append("轨迹告警：检测到重复调用相同参数，存在决策震荡")
+
+            return report
+
+        finally:
+            # 4. 彻底销毁沙箱目录，保证无环境残留
+            shutil.rmtree(sandbox_dir, ignore_errors=True)
+</code></pre></div>
+</div></div></section>
+
+<!-- 7. 本项目实现与路线 -->
+<section class="lesson-section" id="evaluation-current">
+<h3>7. 本项目当前实现与演进路线</h3>
+<div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>已实现（阶段 0–5）</strong>：
+  <ul>
+  <li><strong>本地单元测试覆盖</strong>：通过 <code>pytest</code> 对 Policy 拦截、Tools 参数校验、Session 读写与上下文预算裁剪进行确定性断言。</li>
+  <li><strong>协议级契约测试</strong>：通过本机固定响应的 HTTP Mock 服务稳定检验模型交互协议，零外部网络消耗。</li>
+  </ul>
+</li>
+<li><strong>后续演进路线</strong>：
+  <ul>
+  <li>引入基于临时目录或 Docker 的独立评测入口，跑通包含实际代码修改任务的自动化端到端验收。</li>
+  <li>引入 SWE-bench 风格的测试集，量化对比更换不同提示词和模型基座后的任务通过率（Pass@1 / Pass@5）。</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+
+<nav class="chapter-nav" aria-label="章节导航"><a href="observability.html#module-observability">← Observability：运行时全链路观测与追踪</a><a href="memory.html#module-memory">Memory：选择跨会话保留的知识 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>
+

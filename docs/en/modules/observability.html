@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Observability: Runtime Telemetry &amp; Tracing · Learn Agent</title>
+<link rel="stylesheet" href="../../assets/tutorial.css">
+<script src="../../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Reuse Project Knowledge Across Sessions with Memory</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Long Tasks: Offloading &amp; Compaction</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">Stage 8: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Harness Core Modules</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="#module-observability" data-chapter="module-observability">Observability: Runtime Telemetry &amp; Tracing</a><a class="chapter-link" href="evaluation.html#module-evaluation" data-chapter="module-evaluation">Evaluation: Agent Benchmarks &amp; Sandboxes</a><div class="nav-group-title">3. Advanced Extensions</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">4. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">5. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/observability.html#module-observability">中文版</a></p><article class="chapter" id="module-observability">
+<header class="chapter-header"><span class="kind">Module Principles · Runtime Transparency &amp; Distributed Tracing</span><h2>Observability: Runtime Telemetry &amp; Tracing</h2></header>
+
+<!-- 1. Starting Problem -->
+<section class="lesson-section" id="observability-principles">
+<h3>1. Starting Problem: Why Traditional APM Fails for Agents</h3>
+<div class="lesson-body"><div class="am-md">
+<p>Traditional backend service architectures follow deterministic request-response paths: a gateway receives a request → routes to a handler → queries a database → returns a serialized response. In an autonomous Agent system, execution differs fundamentally:</p>
+<ul>
+<li><strong>Dynamic Iterative Loops</strong>: Tasks evolve through multi-step cycles: <code>Model Reasoning → Tool Execution → Receipt Observation → Next Decision</code> (ReAct loops).</li>
+<li><strong>Dynamic Contexts and Token Costs</strong>: Every turn introduces modified message arrays, and token usage compounds dynamically. Standard HTTP status codes tell you nothing about tokenomics or prompt drift.</li>
+<li><strong>Expected Policy Interceptions</strong>: When Policy blocks a dangerous command, it is intentional protection, not a crash or 500 error.</li>
+</ul>
+<p>Standard logging falls short: you observe high latency but cannot pinpoint where the model hesitated; you see high token bills but cannot identify which historical message inflated the prompt.</p>
+
+<p><strong>Expected Outcomes:</strong></p>
+<ul>
+<li><strong>Complete Call Tree Visualization</strong>: Every task run produces an inspectable Trace tree depicting model generations, tool invocations, and receipts in their natural hierarchy.</li>
+<li><strong>Granular Token &amp; Cost Auditing</strong>: Track prompt and completion tokens for every LLM invocation with automated cost and latency breakdown.</li>
+<li><strong>Reproducible Debugging via Session Replays</strong>: Reconstruct the exact prompts and tool outputs that led to badcases.</li>
+<li><strong>Zero Critical Path Overhead</strong>: Telemetry operates via non-blocking asynchronous workers, ensuring monitoring issues never stall the Agent loop.</li>
+</ul>
+</div></div></section>
+
+<!-- 2. Core Abstractions -->
+<section class="lesson-section" id="observability-model">
+<h3>2. Core Abstractions: Trace, Generation, Span &amp; Score</h3>
+<div class="lesson-body"><div class="am-md">
+<p>Modern Agent observability standards (such as Langfuse and the OpenTelemetry GenAI Semantic Conventions) establish four unified primitives:</p>
+<ol>
+<li><strong>Trace (Root Container)</strong>:
+  <ul>
+  <li>Represents a single user turn or complete Agent Run.</li>
+  <li>Holds global metadata: <code>trace_id</code>, <code>session_id</code>, <code>user_id</code>, initial prompt, final deliverable, and wall-clock latency.</li>
+  </ul>
+</li>
+<li><strong>Generation (Model Interaction Node)</strong>:
+  <ul>
+  <li>Specifically tracks LLM API interactions.</li>
+  <li>Stores the prompt message array, model completion, model name/version, token consumption breakdown, and time-to-first-token (TTFT).</li>
+  </ul>
+</li>
+<li><strong>Span (Execution Segment)</strong>:
+  <ul>
+  <li>Tracks discrete runtime operations, including <code>tool_call</code> executions, <code>policy_check</code> decisions, and <code>context_compaction</code> steps. Captures inputs, outputs, timestamps, and error states.</li>
+  </ul>
+</li>
+<li><strong>Score (Quality &amp; Feedback Metric)</strong>:
+  <ul>
+  <li>Attaches discrete or continuous evaluations to Traces or Generations (e.g., user thumbs-up/down, automated safety checks, or rule ratings).</li>
+  </ul>
+</li>
+</ol>
+</div></div></section>
+
+<!-- 3. Architecture & Langfuse Practice -->
+<section class="lesson-section" id="observability-langfuse">
+<h3>3. Architecture &amp; Practice: Observability with Langfuse</h3>
+<div class="lesson-body"><div class="am-md">
+<p><strong>Langfuse</strong> is a widely adopted open-source observability platform designed specifically for LLM applications and Agents. It supports instant self-hosting via Docker, is compatible with OpenTelemetry, and provides tailored call-tree visualizers.</p>
+
+<figure class="am-diagram">
+<button class="am-diagram-expand" type="button" aria-label="Expand diagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+<img class="lesson-svg" src="../../assets/diagrams/diagram-quality-observability-langfuse.svg" width="920" height="620" alt="Runtime Observability Architecture: Call Chain Tracing and Cost Breakdown with Langfuse" loading="lazy">
+<figcaption>Runtime Observability Architecture: The Agent runtime asynchronously exports Traces, Generations, and Spans to Langfuse, producing an inspectable tree topology and aggregated cost metrics.</figcaption>
+</figure>
+
+<h4>Telemetry Architecture Trade-offs</h4>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Mechanism</th>
+<th>Key Benefits</th>
+<th>Main Limitations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Structured Local Events<br>(JSONL / SQLite)</strong></td>
+<td>Append-only event streaming directly to disk files</td>
+<td>Zero external services, minimal resource overhead, offline-friendly, easily greppable</td>
+<td>Single-machine only; lacks multi-session analytics, search drill-downs, and visual dashboards</td>
+</tr>
+<tr>
+<td><strong>OpenTelemetry<br>(GenAI Conventions)</strong></td>
+<td>Inject context and export Spans to Jaeger/Tempo via OTLP</td>
+<td>Vendor-neutral enterprise standard; unifies with microservice Prometheus/Grafana stacks</td>
+<td>High setup overhead; standard APM dashboards are not optimized for multi-turn prompt trees</td>
+</tr>
+<tr>
+<td><strong>Dedicated Platform<br>(Langfuse)</strong></td>
+<td>Lightweight Python SDK or OTel exporter forwarding to Langfuse server</td>
+<td>Turnkey Agent call-tree UI, prompt version tracking, real-time token cost computation, dataset curations</td>
+<td>Requires maintaining dedicated server and PostgreSQL storage; requires data egress compliance checks</td>
+</tr>
+</tbody>
+</table></div>
+</div></div></section>
+
+<!-- 4. Implementation Rules -->
+<section class="lesson-section" id="observability-rules">
+<h3>4. Three Golden Rules for Agent Observability</h3>
+<div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>1. Asynchronous &amp; Non-blocking Telemetry</strong>:
+  <ul>
+  <li>Agent reasoning and tool operations take seconds. Telemetry dispatches must execute in background worker threads or non-blocking queues.</li>
+  <li>Network timeouts or server downtime in the observability stack must never raise exceptions into the main Agent execution loop.</li>
+  </ul>
+</li>
+<li><strong>2. Client-side Data Sanitization</strong>:
+  <ul>
+  <li>Tools that read environment variables, configuration files, or source code may ingest database passwords, private keys, or API secrets.</li>
+  <li>Regex-based scrubbers must sanitize credentials before payloads leave the application process.</li>
+  </ul>
+</li>
+<li><strong>3. Multi-turn Session Unification</strong>:
+  <ul>
+  <li>In multi-turn conversations, every user question triggers an independent Agent Run (with a distinct <code>trace_id</code>).</li>
+  <li>All runs within the same conversation must share a consistent <code>session_id</code> to track cumulative token costs and context window growth over time.</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+
+<!-- 5. Code Example -->
+<section class="lesson-section" id="observability-code">
+<h3>5. Practical Integration: Hooking Telemetry into the Agent Runner</h3>
+<div class="lesson-body"><div class="am-md">
+<p>Within an Agent Harness, telemetry hooks can wrap execution cleanly without polluting business logic:</p>
+
+<div class="am-code"><div class="am-code-head"><span>telemetry_runner.py</span><button class="code-copy" type="button">Copy code</button></div>
+<pre><code>from langfuse import Langfuse
+
+class ObservabilityRunner:
+    def __init__(self, inner_runner):
+        self.inner = inner_runner
+        self.langfuse = Langfuse()
+
+    def run_task(self, session_id: str, prompt: str):
+        # 1. Open root Trace container
+        trace = self.langfuse.trace(
+            name="AgentRun",
+            session_id=session_id,
+            input={"prompt": prompt}
+        )
+
+        try:
+            # 2. Attach model and tool callbacks
+            result = self.inner.run_task(
+                session_id=session_id,
+                prompt=prompt,
+                on_model_call=lambda req, resp: trace.generation(
+                    name="ModelCall",
+                    model=req.model,
+                    input=req.messages,
+                    output=resp.content,
+                    usage={"prompt_tokens": resp.prompt_tokens, "completion_tokens": resp.completion_tokens}
+                ),
+                on_tool_execute=lambda call_id, name, args, output: trace.span(
+                    name=f"tool:{name}",
+                    input=args,
+                    output=output
+                )
+            )
+
+            # 3. Record task completion status
+            trace.update(output={"status": result.status, "answer": result.final_answer})
+            return result
+
+        except Exception as exc:
+            trace.update(output={"error": str(exc)}, level="ERROR")
+            raise
+        finally:
+            # 4. Asynchronously flush events
+            self.langfuse.flush()
+</code></pre></div>
+</div></div></section>
+
+<!-- 6. Roadmap -->
+<section class="lesson-section" id="observability-current">
+<h3>6. Current Implementation &amp; Evolutionary Roadmap</h3>
+<div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>Implemented (Stages 0–5)</strong>:
+  <ul>
+  <li><strong>Console Telemetry &amp; Step Progress</strong>: The Runner prints step progress, tool names, and receipts in the terminal in real time.</li>
+  <li><strong>Token Accounting</strong>: <code>ModelResponse</code> captures exact prompt/completion token usage from provider responses, aggregated in <code>RunResult</code>.</li>
+  <li><strong>Persistent JSONL Logs</strong>: The session layer logs turns, model messages, and tool receipts sequentially (see <a href="state.html#module-state">State Module</a>).</li>
+  </ul>
+</li>
+<li><strong>Future Roadmap</strong>:
+  <ul>
+  <li>Introduce a non-invasive Langfuse Adapter to map Runner executions into structured Trace topologies with latency and cost dashboards.</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+
+<nav class="chapter-nav" aria-label="Chapter navigation"><a href="context.html#module-context">← Context Manager: Assemble What Goes to the Model</a><a href="evaluation.html#module-evaluation">Evaluation: Agent Benchmarks &amp; Sandboxes →</a></nav></article><footer class="footer"><p>Directly maintain this HTML file; principles and stages connect via hyperlinks.</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual Size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>
+

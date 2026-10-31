@@ -1,101 +1,42 @@
 <!doctype html>
 <html lang="en" data-theme="shadcn" data-mode="light">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quality: Observability &amp; Evaluation · Learn Agent</title>
+<title>Quality: Observability &amp; Evaluation (Decoupled Guide) · Learn Agent</title>
 <link rel="stylesheet" href="../../assets/tutorial.css">
 <script src="../../assets/tutorial.js" defer></script>
 </head><body>
-<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Reuse Project Knowledge Across Sessions with Memory</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Long Tasks: Offloading &amp; Compaction</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">Stage 8: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Harness Core Modules</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="quality.html#module-quality" data-chapter="module-quality">Quality: Observability &amp; Evaluation</a><div class="nav-group-title">3. Advanced Extensions</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">4. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">5. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Reuse Project Knowledge Across Sessions with Memory</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Long Tasks: Offloading &amp; Compaction</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">Stage 8: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Harness Core Modules</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="observability.html#module-observability" data-chapter="module-observability">Observability: Runtime Telemetry &amp; Tracing</a><a class="chapter-link" href="evaluation.html#module-evaluation" data-chapter="module-evaluation">Evaluation: Agent Benchmarks &amp; Sandboxes</a><div class="nav-group-title">3. Advanced Extensions</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">4. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">5. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
 <main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/quality.html#module-quality">中文版</a></p><article class="chapter" id="module-quality">
-<header class="chapter-header"><span class="kind">Module Principles · Recording Foundation Exists, Standalone Module Not Yet Implemented</span><h2>Quality: Observability &amp; Evaluation</h2></header><section class="lesson-section" id="module-quality-principles"><h3>1. Starting Problem: Why Does "Loop Finished Normally" Not Equal "Task Completed Successfully"?</h3><div class="lesson-body"><div class="am-md"><p>When the model reads a file and outputs "The report has been generated," the system faces two distinct questions:</p>
-<ul>
-<li><strong>Observability answers "What actually happened during execution?"</strong>: Which tools were called, what arguments were passed, what receipts came back, how many tokens were consumed, and how long each step took.</li>
-<li><strong>Evaluation answers "Did the task deliverable actually meet the bar?"</strong>: Does the generated report truly contain the required fields, do the cited numbers match the source text, and were all constraints respected?</li>
-</ul>
-<p><strong>Expected Outcomes:</strong></p>
-<ul>
-<li><strong>Strictly separate statuses</strong>: Never conflate "tool call succeeded," "loop terminated normally," and "business deliverable passed verification" into a single status.</li>
-<li><strong>Tie observability to concrete evidence</strong>: Every trace or log entry links back to a specific Run ID, step, and actual tool receipt.</li>
-<li><strong>Reproducible, comparable evaluations</strong>: Evaluations pin task inputs, workspace snapshots, and grading criteria, clearly distinguishing "deterministic program unit tests" from "live model quality evaluations."</li>
-</ul></div></div></section>
-<section class="lesson-section" id="module-quality-interaction"><h3>2. Module Collaboration: How Do Observability and Evaluation Plug into the System?</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>Observability consumes execution records read-only</strong>: Step events from Runner, token usage and errors from Model, and actual receipts from Tools are persisted by the <a href="state.html#module-state">State recording layer</a> and then read or exported by the observability module; observability must never re-execute tools just to fill in a dashboard.</li>
-<li><strong>Evaluation is driven by a dedicated harness entry point</strong>: A test or evaluation runner pins the task and initial file snapshot, invokes the application to complete a run, and passes the final answer and actual workspace artifacts to a checker (Checker) to produce a verdict, coverage scope, and supporting evidence.</li>
-<li><strong>Feedback-driven repair requires explicit authorization</strong>: Feeding a check failure back into Runner for automatic retry/repair requires configuring an explicit retry budget and permissions; observability or checkers never automatically possess the authority to restart execution on their own.</li>
-</ul><figure class="am-diagram am-seq"><img class="lesson-svg" src="../../assets/diagrams/module-quality-collaboration.svg" width="1000" height="622" alt="Optional evaluation collaboration diagram; standalone checker and observability pipelines are not yet wired up, and check failures are recorded separately from runtime failures." loading="lazy"><figcaption>Optional evaluation collaboration diagram; standalone checker and observability pipelines are not yet wired up, and check failures are recorded separately from runtime failures.</figcaption></figure></div></div></section>
+<header class="chapter-header"><span class="kind">Module Guide · Architecture Decoupling</span><h2>Quality: Observability &amp; Evaluation</h2></header>
 
+<section class="lesson-section" id="module-quality-principles">
+<h3>1. Architectural Upgrade: Observability and Evaluation are Now Independent Modules</h3>
+<div class="lesson-body"><div class="am-md">
+<p>In Agent system architecture, <strong>Observability</strong> and <strong>Evaluation</strong> serve completely different lifecycles and objectives:</p>
+<ul>
+<li><strong>Observability answers "What actually happened during runtime?"</strong>: Online distributed tracing, token consumption auditing, latency profiling, and error root-cause analysis.</li>
+<li><strong>Evaluation answers "Did the task deliverable truly meet the quality bar?"</strong>: Offline benchmarks, isolated sandboxes, deterministic state diff assertions, and multi-tiered scoring.</li>
+</ul>
 
+<p>To provide deeper, cleaner explanations, the Quality chapter has been decoupled into two dedicated standalone modules:</p>
 
-<details class="reference-extra"><summary>On-demand reference: Future observability &amp; evaluation options</summary>
-<section class="lesson-section" id="module-quality-p1-panel-C"><h3>3. Comparing Observability Approaches</h3><div class="lesson-body"><div class="am-md"><p>Observability approaches address "how runtime execution is correlated, stored, and inspected" (they do not replace business deliverable evaluation):</p><h4>A. Structured Local Events</h4>
-<ul>
-<li><strong>How it works</strong>: Record key steps, stable IDs, and essential metadata sequentially in local JSONL files or SQLite.</li>
-<li><strong>Best for</strong>: Single-machine development debugging and replaying execution history with zero external dependencies.</li>
-<li><strong>Caveats</strong>: Execution records used for recovery must never be dropped by sampling—keep them distinct from sampleable diagnostic logs (see <a href="state.html#module-state">State</a>).</li>
-</ul>
-<h4>B. Distributed Traces, Spans &amp; Metrics (OpenTelemetry)</h4>
-<ul>
-<li><strong>How it works</strong>: Use a Trace to connect an entire request and Spans to record parent-child relationships, start/end timestamps, and statuses across model calls, tool executions, and sub-tasks (see the <a href="https://opentelemetry.io/docs/specs/otel/trace/api/">OpenTelemetry Trace Specification</a>).</li>
-<li><strong>Best for</strong>: Pinpointing latency bottlenecks and error chains across multiple services and Workers.</li>
-<li><strong>Caveats</strong>: Token usage and call counts work well as Metrics, but never put full file contents or secrets into metric labels (which causes both sensitive data leaks and high-cardinality label explosion).</li>
-</ul>
-<h4>C. Dedicated Agent Observability &amp; Evaluation Platforms</h4>
-<ul>
-<li><strong>How it works</strong>: Export call trees, prompt versions, and evaluation results through an adapter to reuse an external platform's visualization UI and dataset management.</li>
-<li><strong>Best for</strong>: Team-wide collaborative debugging and side-by-side multi-version comparisons.</li>
-<li><strong>Caveats</strong>: Evaluate data-egress compliance and vendor coupling costs; also remember that a green call trace (no runtime exceptions) in the platform UI does not mean the business deliverable passed quality checks.</li>
-</ul>
-<div class="am-table-wrap"><table>
-<thead>
-<tr>
-<th>Approach</th>
-<th>Best Scope</th>
-<th>Primary Benefit</th>
-<th>Primary Cost</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Local structured events</td>
-<td>Single-machine learning &amp; inspecting runs</td>
-<td>Transparent, zero external dependencies, easy to verify</td>
-<td>Limited cross-process aggregation and visualization</td>
-</tr>
-<tr>
-<td>OpenTelemetry</td>
-<td>Cross-service &amp; dedicated Workers</td>
-<td>Standardized distributed tracing and metric aggregation</td>
-<td>Context propagation, sampling, and semantic convention upkeep</td>
-</tr>
-<tr>
-<td>Dedicated Agent platform</td>
-<td>Team debugging &amp; eval dataset management</td>
-<td>No need to build custom visualization UIs</td>
-<td>Data hosting compliance and vendor coupling</td>
-</tr>
-</tbody></table></div>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-D"><h3>4. Open-Source &amp; Industry Observability Practices</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>OpenAI Agents SDK (Official Docs)</strong>: Its <a href="https://developers.openai.com/api/docs/guides/agents/integrations-observability">observability guide</a> builds a complete call tree around model generations, tool calls, Handoffs, and Guardrails rather than logging only the final prompt and answer.</li>
-<li><strong>AgentScope Java (Official Docs)</strong>: <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/session-log.md">Session Log</a> correlates persistent execution records, user-readable history, and live event subscriptions so a refreshed page can catch up by Run ID.</li>
-<li><strong>OpenTelemetry GenAI Semantic Conventions</strong>: The original <a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/">GenAI page</a> has migrated to the <a href="https://github.com/open-telemetry/semantic-conventions-genai">dedicated semantic-conventions-genai repository</a>; pin the semantic convention version when integrating.</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-G"><h3>5. A Three-Tier Testing &amp; Evaluation Pyramid</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>Tier 1: Local component unit tests</strong>: Pass arguments, temporary files, and local storage directly to deterministically verify argument validation, permission interception, context trimming, and session read/write logic.</li>
-<li><strong>Tier 2: Local wire-protocol contract tests</strong>: Point the real model SDK at a local HTTP test server returning canned responses to deterministically verify tool call pairing, refusals, truncation, and network error handling (consumes zero external tokens and does not measure remote model intelligence).</li>
-<li><strong>Tier 3: End-to-end real-task evaluations</strong>: Pin a task suite, initial workspace snapshots, a live model, and result checkers, measuring pass rates, tool call trajectories, token usage, and latency across multiple runs so a single lucky run is never mistaken for long-term reliability.</li>
-</ul></div></div></section>
-</details><section class="lesson-section" id="module-quality-current"><h3>6. Current Implementation &amp; Unimplemented Scope</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>Implemented (as of Stage 3)</strong>:
-  <ul>
-  <li><strong>Execution records &amp; progress</strong>: Runner prints step-by-step console progress, <code>ModelResponse</code> preserves model-returned token usage, and JSONL session files record complete messages and tool receipts.</li>
-  <li><strong>Deterministic test suite</strong>: <code>pytest</code> covers Tier 1 local component unit tests and Tier 2 local HTTP wire-protocol contract tests (see <a href="../stages/stage-3.html#stage-3-checks">Stage 3 Checks</a> and <a href="../reference/validation.html#reference-validation">Verification Scope</a>).</li>
-  </ul>
-</li>
-<li><strong>Not Yet Implemented (Optional Future Extensions)</strong>: OpenTelemetry Trace export, metric aggregation, external observability platform adapters, standalone artifact checkers (Checker), batch real-task evaluation suites, and evaluation-driven automatic repair retries.</li>
-</ul></div></div></section>
-<nav class="chapter-nav" aria-label="Chapter navigation"><a href="context.html#module-context">← Context Manager: Assemble What Goes to the Model</a><a href="memory.html#module-memory">Memory: Select Knowledge Retained Across Sessions →</a></nav></article><footer class="footer"><p>Maintain this HTML page directly; general principles and stage practices are linked together.</p></footer></div></main></div>
-<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+<div class="chapter-card">
+<h4><a href="observability.html#module-observability">👉 Observability: Runtime Telemetry &amp; Tracing</a></h4>
+<p>Detailed coverage of Trace, Generation, Span, and Score primitives, pairing with <strong>Langfuse</strong> for call-tree visualization and non-blocking telemetry.</p>
+</div>
+
+<div class="chapter-card">
+<h4><a href="evaluation.html#module-evaluation">👉 Evaluation: Agent Benchmarks &amp; Sandboxes</a></h4>
+<p>Comprehensive guide to Agent evaluation paradigms, incorporating <strong>Inspect AI</strong>, <strong>DeepEval</strong>, and <strong>SWE-bench</strong> for sandbox isolation, deterministic state verification, and metrics.</p>
+</div>
+</div></div></section>
+
+<!-- Backward-compatible legacy anchors -->
+<span id="module-quality-interaction"></span>
+<span id="module-quality-p1-panel-C"></span>
+<span id="module-quality-p1-panel-D"></span>
+<span id="module-quality-p1-panel-G"></span>
+<span id="module-quality-current"></span>
+
+<nav class="chapter-nav" aria-label="Chapter navigation"><a href="observability.html#module-observability">← Observability: Runtime Telemetry &amp; Tracing</a><a href="evaluation.html#module-evaluation">Evaluation: Agent Benchmarks &amp; Sandboxes →</a></nav></article><footer class="footer"><p>Directly maintain this HTML file; principles and stages connect via hyperlinks.</p></footer></div></main></div>
 </body></html>

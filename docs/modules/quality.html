@@ -1,101 +1,42 @@
 <!doctype html>
 <html lang="zh-CN" data-theme="shadcn" data-mode="light">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quality：观测与评测 · Learn Agent</title>
+<title>Quality：观测与评测（系统解耦导读） · Learn Agent</title>
 <link rel="stylesheet" href="../assets/tutorial.css">
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
-<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：长任务支撑：大输出暂存与历史摘要</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、Harness 核心模块</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="#module-quality" data-chapter="module-quality">Quality：观测与评测</a><div class="nav-group-title">三、进阶扩展模块</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="recovery.html#module-recovery" data-chapter="module-recovery">Recovery：中断检查点、异常容错与安全恢复</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">四、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">五、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：长任务支撑：大输出暂存与历史摘要</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、Harness 核心模块</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="observability.html#module-observability" data-chapter="module-observability">Observability：运行时全链路观测与追踪</a><a class="chapter-link" href="evaluation.html#module-evaluation" data-chapter="module-evaluation">Evaluation：Agent 任务评测与沙箱断言</a><div class="nav-group-title">三、进阶扩展模块</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="recovery.html#module-recovery" data-chapter="module-recovery">Recovery：中断检查点、异常容错与安全恢复</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">四、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">五、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
 <main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/modules/quality.html#module-quality">English</a></p><article class="chapter" id="module-quality">
-<header class="chapter-header"><span class="kind">模块原理 · 已有记录基础，独立模块未实现</span><h2>Quality：观测与评测</h2></header><section class="lesson-section" id="module-quality-principles"><h3>1. 问题起点：为什么“循环正常结束”不等于“任务完成合格”？</h3><div class="lesson-body"><div class="am-md"><p>当模型读取文件并输出“报告已生成”时，系统面临两个不同维度的问题：</p>
-<ul>
-<li><strong>观测（Observability）回答“运行中实际发生了什么”</strong>：调用了哪几个工具、传入了什么参数、返回了什么回执、消耗了多少 Token、耗时多久。</li>
-<li><strong>评测（Evaluation）回答“任务结果是否真正达标”</strong>：生成的报告是否真的包含要求的字段、引用的数据是否与原文一致、是否违反了约束。</li>
-</ul>
-<p><strong>期望达到的效果：</strong></p>
-<ul>
-<li><strong>状态严格区分</strong>：不能把“工具调用成功”“循环正常停止”和“业务结果合格”混为一个状态。</li>
-<li><strong>观测关联真实证据</strong>：每条观测记录都能关联到具体的 Run ID、步骤和工具真实回执。</li>
-<li><strong>评测可复现可对比</strong>：评测固定任务输入、工作区快照与检查标准，明确区分“确定性程序测试”与“真实模型表现评测”。</li>
-</ul></div></div></section>
-<section class="lesson-section" id="module-quality-interaction"><h3>2. 模块协作：观测与评测如何接入系统？</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>观测只读消费执行记录</strong>：Runner 的过程事件、Model 返回的用量与错误、Tools 的真实回执经 <a href="state.html#module-state">State 记录层</a>保存后，由观测模块读取或导出；观测模块绝不能为了补齐图表而重新执行工具。</li>
-<li><strong>评测由独立入口驱动检查</strong>：测试或实验入口固定任务与初始文件快照，调用应用完成运行后，将最终回复与真实产物交给检查器（Checker），输出结论、覆盖范围与证据。</li>
-<li><strong>反馈修复需显式授权</strong>：若要将检查失败反馈交回 Runner 自动重试修复，必须另行设置重试预算与权限；观测或检查器自身不自动拥有重启执行的权力。</li>
-</ul><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-quality-collaboration.svg" width="1000" height="622" alt="可选评测协作示意，当前未接入独立检查器或观测流程；检查失败与运行失败分别记录。" loading="lazy"><figcaption>可选评测协作示意，当前未接入独立检查器或观测流程；检查失败与运行失败分别记录。</figcaption></figure></div></div></section>
+<header class="chapter-header"><span class="kind">模块导读 · 架构解耦拆分</span><h2>Quality：观测与评测</h2></header>
 
+<section class="lesson-section" id="module-quality-principles">
+<h3>1. 核心架构升级：观测与评测正式拆分为两个独立模块</h3>
+<div class="lesson-body"><div class="am-md">
+<p>在 Agent 系统设计中，<strong>观测（Observability）</strong> 与 <strong>评测（Evaluation）</strong> 是两套生命周期不同、关注维度不同、技术方案完全独立的工程模块：</p>
+<ul>
+<li><strong>观测回答“运行中实际发生了什么”</strong>：发生在线上运行时，关注 Trace 调用树、Token 消耗细则、延迟切片与错误回溯。</li>
+<li><strong>评测回答“任务结果是否真正达标”</strong>：发生在离线与预发布阶段，依赖沙箱环境隔离、真实环境状态断言（State Diff）与多维质量评估。</li>
+</ul>
 
+<p>为了让知识结构更清晰、职责边界更彻底，本项目已将 Quality 专题正式拆分为两篇独立的深入模块：</p>
 
-<details class="reference-extra"><summary>按需阅读：后续观测与评测方案</summary>
-<section class="lesson-section" id="module-quality-p1-panel-C"><h3>3. 观测方案对比</h3><div class="lesson-body"><div class="am-md"><p>观测方案主要解决“运行过程如何关联、存储与查看”（不能替代业务结果评测）：</p><h4>A. 结构化本地事件</h4>
-<ul>
-<li><strong>做法</strong>：用本地 JSONL 或 SQLite 按顺序记录关键步骤、固定 ID 和必要元数据。</li>
-<li><strong>适用场景</strong>：单机开发调试与回看执行过程，零外部依赖。</li>
-<li><strong>注意事项</strong>：用于恢复的执行记录不能被采样丢弃，需与允许采样的普通观测日志区分开（详见 <a href="state.html#module-state">State</a>）。</li>
-</ul>
-<h4>B. 分布式 Trace、Span 与指标（OpenTelemetry）</h4>
-<ul>
-<li><strong>做法</strong>：用 Trace 串联整次请求，用 Span 记录模型调用、工具执行和子任务的父子关系、起止时间与状态（参考 <a href="https://opentelemetry.io/docs/specs/otel/trace/api/">OpenTelemetry Trace 规范</a>）。</li>
-<li><strong>适用场景</strong>：跨服务、多 Worker 定位延迟瓶颈与错误链路。</li>
-<li><strong>注意事项</strong>：Token 用量、调用次数适合作为指标（Metrics），但绝不能把完整文件内容或密钥放进指标标签（会导致敏感信息泄露与高基数标签爆炸）。</li>
-</ul>
-<h4>C. 专用 Agent 观测与评测平台</h4>
-<ul>
-<li><strong>做法</strong>：通过适配器导出调用树、Prompt 版本与评测结果，复用外部平台的可视化界面与数据集管理。</li>
-<li><strong>适用场景</strong>：团队协作诊断与多版本横向对比。</li>
-<li><strong>注意事项</strong>：需评估数据外发合规性与平台耦合成本；且平台显示调用链为绿色（无异常），不代表业务结果通过了质量验收。</li>
-</ul>
-<div class="am-table-wrap"><table>
-<thead>
-<tr>
-<th>方案</th>
-<th>适用范围</th>
-<th>主要收益</th>
-<th>主要代价</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>本地结构化事件</td>
-<td>单机学习、回看执行过程</td>
-<td>直观、零外部依赖、易核对</td>
-<td>跨进程聚合与可视化能力有限</td>
-</tr>
-<tr>
-<td>OpenTelemetry</td>
-<td>跨服务与独立 Worker</td>
-<td>标准链路追踪与指标聚合</td>
-<td>上下文传播、采样与语义字段维护</td>
-</tr>
-<tr>
-<td>专用 Agent 平台</td>
-<td>团队诊断与评测数据集管理</td>
-<td>免去自建可视化界面</td>
-<td>数据托管合规性与供应商耦合</td>
-</tr>
-</tbody></table></div>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-D"><h3>4. 开源与工业界观测实践</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>OpenAI Agents SDK（官方文档）</strong>：<a href="https://developers.openai.com/api/docs/guides/agents/integrations-observability">观测说明</a>围绕模型调用、工具执行、Handoff 和 Guardrail 建立完整调用树，而非仅保存最终 Prompt 与回答。</li>
-<li><strong>AgentScope Java（官方文档）</strong>：<a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/session-log.md">Session Log</a> 将持久化执行记录、用户可读历史与实时事件订阅关联，支持页面刷新后按 Run ID 补读。</li>
-<li><strong>OpenTelemetry GenAI 语义约定</strong>：原 <a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/">GenAI 页面</a>已迁移至<a href="https://github.com/open-telemetry/semantic-conventions-genai">独立语义约定仓库</a>，接入时需固定语义版本。</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-quality-p1-panel-G"><h3>5. 测试与评测的三层体系</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>第一层：本地组件单元测试</strong>：直接传入参数、临时文件与本地存储，确定性检查参数校验、权限拦截、上下文裁剪与会话读写。</li>
-<li><strong>第二层：本地协议契约测试</strong>：让真实模型 SDK 连接本机固定响应的 HTTP 测试服务，稳定验证工具调用关联、拒答、截断与网络错误处理（不消耗外部 Token，也不代表远端模型智力表现）。</li>
-<li><strong>第三层：端到端真实任务评测</strong>：固定任务集、初始工作区快照、真实模型与结果检查器，统计多次运行的通过率、工具调用路径、Token 用量与耗时，避免把单次偶然跑通当作长期可靠性。</li>
-</ul></div></div></section>
-</details><section class="lesson-section" id="module-quality-current"><h3>6. 本项目当前实现与未实现范围</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>已实现（截至阶段 3）</strong>：
-  <ul>
-  <li><strong>运行记录与进度</strong>：Runner 打印控制台步骤进度，<code>ModelResponse</code> 保存模型返回的 Token 用量，JSONL 会话文件记录完整消息与工具回执。</li>
-  <li><strong>确定性测试</strong>：<code>pytest</code> 覆盖第一层本地组件测试与第二层本地 HTTP 协议测试（详见<a href="../stages/stage-3.html#stage-3-checks">阶段 3 检查</a>与<a href="../reference/validation.html#reference-validation">验证范围</a>）。</li>
-  </ul>
-</li>
-<li><strong>未实现（后续按需扩展）</strong>：OpenTelemetry Trace 导出、指标聚合、外部观测平台接入、独立产物检查器（Checker）、批量真实任务评测集以及基于评测反馈的自动重试修复。</li>
-</ul></div></div></section>
-<nav class="chapter-nav" aria-label="章节导航"><a href="context.html#module-context">← Context Manager：组织本次发给模型的内容</a><a href="memory.html#module-memory">Memory：选择跨会话保留的知识 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
-<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+<div class="chapter-card">
+<h4><a href="observability.html#module-observability">👉 Observability：运行时全链路观测与追踪</a></h4>
+<p>深入介绍 Trace、Generation、Span、Score 四层抽象，结合 <strong>Langfuse</strong> 开源实践讲解调用链拓扑可视化、实时成本监控与异步非阻塞上报。</p>
+</div>
+
+<div class="chapter-card">
+<h4><a href="evaluation.html#module-evaluation">👉 Evaluation：Agent 任务评测与沙箱断言</a></h4>
+<p>深入介绍 Agent 评测区别于传统 LLM 评测的本质断层，结合 <strong>Inspect AI</strong>、<strong>DeepEval</strong> 与 <strong>SWE-bench</strong> 等开源方案，完整拆解“沙箱隔离 → 动态执行 → 多维打分断言 → 报告输出”闭环。</p>
+</div>
+</div></div></section>
+
+<!-- 保持旧锚点兼容 -->
+<span id="module-quality-interaction"></span>
+<span id="module-quality-p1-panel-C"></span>
+<span id="module-quality-p1-panel-D"></span>
+<span id="module-quality-p1-panel-G"></span>
+<span id="module-quality-current"></span>
+
+<nav class="chapter-nav" aria-label="章节导航"><a href="observability.html#module-observability">← Observability：运行时全链路观测与追踪</a><a href="evaluation.html#module-evaluation">Evaluation：Agent 任务评测与沙箱断言 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
 </body></html>

@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Observability：运行时全链路观测与追踪 · Learn Agent</title>
+<link rel="stylesheet" href="../assets/tutorial.css">
+<script src="../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：长任务支撑：大输出暂存与历史摘要</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、Harness 核心模块</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="#module-observability" data-chapter="module-observability">Observability：运行时全链路观测与追踪</a><a class="chapter-link" href="evaluation.html#module-evaluation" data-chapter="module-evaluation">Evaluation：Agent 任务评测与沙箱断言</a><div class="nav-group-title">三、进阶扩展模块</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="recovery.html#module-recovery" data-chapter="module-recovery">Recovery：中断检查点、异常容错与安全恢复</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">四、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">五、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/modules/observability.html#module-observability">English</a></p><article class="chapter" id="module-observability">
+<header class="chapter-header"><span class="kind">模块原理 · 运行时透视与全链路追踪</span><h2>Observability：运行时全链路观测与追踪</h2></header>
+
+<!-- 1. 问题起点 -->
+<section class="lesson-section" id="observability-principles">
+<h3>1. 问题起点：为什么传统 APM 无法满足 Agent 的观测需求？</h3>
+<div class="lesson-body"><div class="am-md">
+<p>传统后端服务（如 Web API）的调用链路是高度确定性的：网关接收请求 → 路由至 Controller → 查询数据库 → 序列化返回。但在 Agent 运行过程中，情况发生了根本性变化：</p>
+<ul>
+<li><strong>动态决策循环</strong>：单次任务不是线性的，而是经历多次 <code>模型思考 → 工具调用 → 回执观察 → 再次模型决策</code> 的自主闭环（ReAct）。</li>
+<li><strong>非结构化上下文与 Token 膨胀</strong>：每一次模型调用传入的 Prompt 都在动态变化，Token 消耗随轮数递增，普通的 HTTP 状态码无法反映推理内容与成本。</li>
+<li><strong>工具与策略拦截</strong>：工具参数不合法、Policy 拒绝执行等情况属于系统的预期保护行为，不能简单粗暴地当作服务器内部 500 崩溃处理。</li>
+</ul>
+<p>如果只依赖标准日志或传统监控，排查问题时会陷入困境：只知道耗时很长，但不知道模型哪一步陷入了犹豫；只知道花费了高昂 Token，但不知道是哪条历史消息撑爆了上下文。</p>
+<p><strong>期望达到的效果：</strong></p>
+<ul>
+<li><strong>全调用链路可视化</strong>：单次任务的完整生命周期通过统一的 Trace 树呈现，清晰还原模型思考、工具调用与回执嵌套关系。</li>
+<li><strong>Token 与成本精准审计</strong>：精确记录每次模型调用的 Prompt Token 与 Completion Token，自动核算任务开销与延迟分布。</li>
+<li><strong>线上故障可回溯下钻</strong>：一键根据 Session ID 还原当时发给模型的完整上下文，复现并定位 Badcase 诱因。</li>
+<li><strong>零主路径侵入</strong>：观测数据采用异步通道旁路收集，即使监控服务端网络抖动，也绝不阻断 Agent 的执行流。</li>
+</ul>
+</div></div></section>
+
+<!-- 2. 核心抽象 -->
+<section class="lesson-section" id="observability-model">
+<h3>2. 核心抽象：Trace、Generation、Span 与 Score</h3>
+<div class="lesson-body"><div class="am-md">
+<p>为满足大语言模型与 Agent 的特有结构，现代观测标准（如 OpenTelemetry GenAI 规范与 Langfuse 模型）统一抽象出四层核心对象：</p>
+<ol>
+<li><strong>Trace（根追踪）</strong>：
+  <ul>
+  <li>代表一次完整的用户任务或执行生命周期（Agent Run）。</li>
+  <li>承载任务全局属性：唯一的 <code>trace_id</code>、用户所属会话 <code>session_id</code>、用户标识 <code>user_id</code>、初始 Prompt 输入、最终产物与总耗时。</li>
+  </ul>
+</li>
+<li><strong>Generation（模型生成节点）</strong>：
+  <ul>
+  <li>专门用于描述向大模型发起的补全调用。</li>
+  <li>记录关键元数据：使用的模型名称与版本（如 <code>gpt-4o</code>、<code>claude-3-5-sonnet</code>）、输入 Messages 列表、模型最终回复、Token 消耗细则（Prompt / Completion Tokens）与模型首字时延（TTFT）。</li>
+  </ul>
+</li>
+<li><strong>Span（工具与系统动作片段）</strong>：
+  <ul>
+  <li>记录 Agent 内部的关键逻辑步骤与工具执行。</li>
+  <li>常见类型包括：<code>tool_call</code>（真实工具执行及出入参）、<code>policy_check</code>（动作鉴权结果）、<code>context_compaction</code>（上下文裁剪与摘要耗时）。每个 Span 记录起止时间戳、状态码与执行异常。</li>
+  </ul>
+</li>
+<li><strong>Score（质量与反馈打分）</strong>：
+  <ul>
+  <li>附加在 Trace 或 Generation 上的离散/连续评分。</li>
+  <li>数据来源可以是用户的直接点赞/点踩反馈、线上安全规则检测、或轻量级质量拦截信号。</li>
+  </ul>
+</li>
+</ol>
+</div></div></section>
+
+<!-- 3. 架构与 Langfuse 实践 -->
+<section class="lesson-section" id="observability-langfuse">
+<h3>3. 架构与工业界实践：以 Langfuse 为代表的观测体系</h3>
+<div class="lesson-body"><div class="am-md">
+<p>在开源生态中，<strong>Langfuse</strong> 是目前针对 LLM 与 Agent 支持最完善、社区最活跃的开源观测平台之一。它支持私有化 Docker 极速部署，兼容 OpenTelemetry 语义协议，并提供了针对 Agent 调用树的高性能分析看板。</p>
+
+<figure class="am-diagram">
+<button class="am-diagram-expand" type="button" aria-label="放大查看图示"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+<img class="lesson-svg" src="../assets/diagrams/diagram-quality-observability-langfuse.svg" width="920" height="620" alt="运行时观测架构：以 Langfuse 为代表的链路追踪与成本透视" loading="lazy">
+<figcaption>运行时观测架构：Agent 运行时通过异步通道上报 Trace、Generation 与 Span，在 Langfuse 中形成可下钻的树状拓扑并聚合成本指标。</figcaption>
+</figure>
+
+<h4>观测系统选型对比</h4>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>选型方案</th>
+<th>实现机制</th>
+<th>主要收益</th>
+<th>主要代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本地结构化日志<br>(JSONL / SQLite)</strong></td>
+<td>本地逐行追加写入事件流，以纯文件格式持久化记录</td>
+<td>零外部依赖、极低资源开销、无网络延迟、易于 grep 排查</td>
+<td>单机存储受限，缺乏跨会话多维聚合、复杂调用链路拓扑与可视化下钻界面</td>
+</tr>
+<tr>
+<td><strong>OpenTelemetry<br>(GenAI 语义约定)</strong></td>
+<td>遵循 OTel 规范注入 Tracestate 与 Context，通过 OTLP 协议输出至 Jaeger / Tempo</td>
+<td>云原生跨服务统一标准，易于与微服务后端已有的监控看板（Prometheus / Grafana）统一</td>
+<td>集成与配置链路较重；传统 APM 视图默认不适配多轮 Prompt 与 Token 成本统计</td>
+</tr>
+<tr>
+<td><strong>专用开源平台<br>(Langfuse)</strong></td>
+<td>通过轻量 Python SDK 或 OTel 适配器旁路上报至 Langfuse 服务端</td>
+<td>开箱即用的 Agent 调用树界面、Prompt 版本回溯、Token 实时成本计算与 Badcase 数据集标注</td>
+<td>需维护独立的后端服务与 Postgres 数据库存储；需做好私密环境的数据外发合规防护</td>
+</tr>
+</tbody>
+</table></div>
+</div></div></section>
+
+<!-- 4. 落地守则 -->
+<section class="lesson-section" id="observability-rules">
+<h3>4. Agent 观测落地的三项工程守则</h3>
+<div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>1. 异步非阻塞上报（Asynchronous &amp; Non-blocking）</strong>：
+  <ul>
+  <li>Agent 本身的模型推理与工具执行往往耗时数秒，观测上报必须通过后台线程池或异步队列批处理发送。</li>
+  <li>任何网络超时、重试或观测服务端宕机，绝不能向 Agent 主逻辑抛出异常，必须保障核心任务不受任何干扰。</li>
+  </ul>
+</li>
+<li><strong>2. 敏感数据前置脱敏（Data Sanitization）</strong>：
+  <ul>
+  <li>Agent 工具在读取本地环境变量、配置文件或物理代码时，可能携带数据库密码、用户私钥或内部凭证。</li>
+  <li>在进入 Span 或 Generation 之前，必须在客户端配置正则脱敏过滤器（Scrubber），防止敏感机密泄漏至观测平台。</li>
+  </ul>
+</li>
+<li><strong>3. 跨轮会话的 Session 统一聚合</strong>：
+  <ul>
+  <li>在多轮连续追问中，每一次用户提问会触发一次独立的 Agent Run（生成独立的 <code>trace_id</code>）。</li>
+  <li>系统必须将它们统一归属到同一个 <code>session_id</code> 下，以便平台能够按对话主线追踪上下文膨胀趋势与累积计费。</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+
+<!-- 5. 代码示例 -->
+<section class="lesson-section" id="observability-code">
+<h3>5. 实战集成：在 Agent Runner 中无感嵌入观测埋点</h3>
+<div class="lesson-body"><div class="am-md">
+<p>在 Agent Harness 内部，观测埋点可以通过装饰器或回调方式注入，保持核心执行逻辑纯粹：</p>
+
+<div class="am-code"><div class="am-code-head"><span>telemetry_runner.py</span><button class="code-copy" type="button">复制代码</button></div>
+<pre><code>from langfuse import Langfuse
+
+class ObservabilityRunner:
+    def __init__(self, inner_runner):
+        self.inner = inner_runner
+        self.langfuse = Langfuse()
+
+    def run_task(self, session_id: str, prompt: str):
+        # 1. 开启顶层 Trace 容器
+        trace = self.langfuse.trace(
+            name="AgentRun",
+            session_id=session_id,
+            input={"prompt": prompt}
+        )
+
+        try:
+            # 2. 挂载模型生成与工具执行钩子
+            result = self.inner.run_task(
+                session_id=session_id,
+                prompt=prompt,
+                on_model_call=lambda req, resp: trace.generation(
+                    name="ModelCall",
+                    model=req.model,
+                    input=req.messages,
+                    output=resp.content,
+                    usage={"prompt_tokens": resp.prompt_tokens, "completion_tokens": resp.completion_tokens}
+                ),
+                on_tool_execute=lambda call_id, name, args, output: trace.span(
+                    name=f"tool:{name}",
+                    input=args,
+                    output=output
+                )
+            )
+
+            # 3. 记录任务最终交付物
+            trace.update(output={"status": result.status, "answer": result.final_answer})
+            return result
+
+        except Exception as exc:
+            trace.update(output={"error": str(exc)}, level="ERROR")
+            raise
+        finally:
+            # 4. 后台异步刷盘上报
+            self.langfuse.flush()
+</code></pre></div>
+</div></div></section>
+
+<!-- 6. 本项目实现与路线 -->
+<section class="lesson-section" id="observability-current">
+<h3>6. 本项目当前实现与演进路线</h3>
+<div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>已实现（阶段 0–5）</strong>：
+  <ul>
+  <li><strong>运行期控制台输出</strong>：Runner 实时在终端打印单步执行状态、工具调用名称与真实回执，提供直观的本地步骤视图。</li>
+  <li><strong>Token 精准统计</strong>：<code>ModelResponse</code> 结构严格保存每次调用模型服务返回的用量字段（Prompt Tokens、Completion Tokens），由 Runner 累加汇总至 <code>RunResult</code>。</li>
+  <li><strong>持久化执行日志</strong>：会话记录层将用户提问、模型响应、工具调用参数与回执顺序写入单会话 JSONL 文件（详见 <a href="state.html#module-state">State 模块</a>）。</li>
+  </ul>
+</li>
+<li><strong>后续演进路线</strong>：
+  <ul>
+  <li>通过非侵入式 Adapter 接入 Langfuse Python SDK，将现有的控制台输出与 JSONL 事件自动映射为 Trace 拓扑。</li>
+  <li>在长对话和复杂工具调用场景下，通过 Langfuse 看板实时观测 Token 增长瓶颈与耗时切片分布。</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+
+<nav class="chapter-nav" aria-label="章节导航"><a href="context.html#module-context">← Context Manager：组织本次发给模型的内容</a><a href="evaluation.html#module-evaluation">Evaluation：Agent 任务评测与沙箱断言 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>
+

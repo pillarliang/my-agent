@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en" data-theme="shadcn" data-mode="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Evaluation: Agent Benchmarks &amp; Sandboxes · Learn Agent</title>
+<link rel="stylesheet" href="../../assets/tutorial.css">
+<script src="../../assets/tutorial.js" defer></script>
+</head><body>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Reuse Project Knowledge Across Sessions with Memory</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Long Tasks: Offloading &amp; Compaction</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">Stage 8: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Harness Core Modules</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="observability.html#module-observability" data-chapter="module-observability">Observability: Runtime Telemetry &amp; Tracing</a><a class="chapter-link" href="#module-evaluation" data-chapter="module-evaluation">Evaluation: Agent Benchmarks &amp; Sandboxes</a><div class="nav-group-title">3. Advanced Extensions</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">4. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">5. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/evaluation.html#module-evaluation">中文版</a></p><article class="chapter" id="module-evaluation">
+<header class="chapter-header"><span class="kind">Module Principles · Offline Verification &amp; Sandbox Assertions</span><h2>Evaluation: Agent Benchmarks &amp; Sandboxes</h2></header>
+
+<!-- 1. Starting Problem -->
+<section class="lesson-section" id="evaluation-principles">
+<h3>1. Starting Problem: Why "Executed Without Error" != "Task Passed"</h3>
+<div class="lesson-body"><div class="am-md">
+<p>When iterating on an Agent, the most frequent failure mode is not a crash, but <strong>silent divergence where execution terminates normally without fulfilling the goal</strong>:</p>
+<ul>
+<li><strong>User</strong>: "Write unit tests for the math utility function and ensure they pass."</li>
+<li><strong>Model</strong>: "I have written the unit tests in <code>tests/test_math.py</code> and verified that all tests pass."</li>
+<li><em>(System action)</em>: Runner stops normally, HTTP 200, zero unhandled exceptions.</li>
+<li><em>(Physical disk reality)</em>: Checking the generated file reveals assertions written as <code>assert True</code>, or the model edited the implementation function to make tests trivially pass!</li>
+</ul>
+<p>This demonstrates: <strong>Runtime Observability only proves execution didn't throw errors; it cannot prove deliverables meet functional requirements.</strong></p>
+<p>To quantify capabilities, benchmark prompt modifications, and prevent regressions during model upgrades, a dedicated **Evaluation Module** is required.</p>
+
+<p><strong>Expected Outcomes:</strong></p>
+<ul>
+<li><strong>Deterministic Artifact Assertions</strong>: Validate physical disk diffs (Git Diff) and automated test suite passes rather than trusting the model's text claim.</li>
+<li><strong>Strict Sandbox Isolation</strong>: Run evaluations in isolated temporary sandboxes that allow arbitrary file edits and roll back 100% cleanly.</li>
+<li><strong>Comparable Benchmarking</strong>: Pin task datasets, initial snapshots, and scorers to compare Pass@k across models and prompt versions.</li>
+</ul>
+</div></div></section>
+
+<!-- 2. Three Inherent Characteristics -->
+<section class="lesson-section" id="evaluation-characteristics">
+<h3>2. Three Inherent Characteristics of Agent Evaluation</h3>
+<div class="lesson-body"><div class="am-md">
+<p>Traditional LLM evaluation focuses on <strong>static single-turn text similarity</strong> (BLEU/ROUGE or LLM judges assessing factual hallucination).</p>
+<p>In contrast, an Agent is a <strong>stateful system interacting with physical environments</strong>, presenting three core realities:</p>
+<ol>
+<li><strong>Environment State Mutations as Core Deliverables</strong>:
+  <ul>
+  <li>An Agent's value lies in solving physical problems (fixing bugs, updating configurations, modifying schemas).</li>
+  <li>Evaluation must assert whether the <strong>physical State Diff in the sandbox</strong> matches the expectation.</li>
+  </ul>
+</li>
+<li><strong>Path Equivalence</strong>:
+  <ul>
+  <li>Different models or different samplings may choose distinct valid tool sequences to solve the same problem (e.g., discovering files via <code>list_files</code> vs. <code>search_text</code>).</li>
+  <li>Assertions must not rigidly enforce tool call order, but instead verify <strong>final environment state and invariant constraints</strong>.</li>
+  </ul>
+</li>
+<li><strong>Mandatory Sandbox Isolation</strong>:
+  <ul>
+  <li>Agents execute write actions and external commands. Running batch evaluations directly on developer workstations risks contaminating repos or deleting files.</li>
+  <li>Tasks must execute in <strong>disposable temporary directories or lightweight Docker containers</strong>, reset after each case.</li>
+  </ul>
+</li>
+</ol>
+</div></div></section>
+
+<!-- 3. Open Source Landscape -->
+<section class="lesson-section" id="evaluation-frameworks">
+<h3>3. Open-Source Agent Evaluation Landscape</h3>
+<div class="lesson-body"><div class="am-md">
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Framework</th>
+<th>Origin &amp; Focus</th>
+<th>Architectural Highlights</th>
+<th>Target Use Cases</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Inspect AI</strong></td>
+<td>UK AI Safety Institute (UK AISI)</td>
+<td>• Core abstractions: <code>Dataset</code> + <code>Task</code> + <code>Solver</code> + <code>Scorer</code><br>• Native Docker sandbox lifecycle management and multi-turn tool-use evaluation</td>
+<td>Systemic Agent capability benchmarks, safety &amp; policy jailbreak audits, complex multi-turn evaluations</td>
+</tr>
+<tr>
+<td><strong>DeepEval</strong></td>
+<td>Confident AI</td>
+<td>• Unit-testing-style LLM &amp; Agent evaluation library<br>• Specialized Agent metrics: <code>ToolCorrectness</code>, <code>StepEfficiency</code>, <code>TaskCompletion</code><br>• Native <code>pytest</code> and CI/CD automation integration</td>
+<td>Continuous integration for development, pull request quality gates, automated regression test suites</td>
+</tr>
+<tr>
+<td><strong>SWE-bench</strong></td>
+<td>Princeton NLP / Open-source community</td>
+<td>• Harvested from real historical GitHub issues across major open-source repos<br>• 100% deterministic evaluation based on unit test verdicts (<code>PASS_TO_PASS</code> / <code>FAIL_TO_PASS</code>)</td>
+<td>Rigorous horizontal benchmarking for automated code generation and bug-fixing Agents</td>
+</tr>
+</tbody>
+</table></div>
+</div></div></section>
+
+<!-- 4. Pipeline & Sandbox Closed Loop -->
+<section class="lesson-section" id="evaluation-pipeline">
+<h3>4. Evaluation Pipeline &amp; Sandbox Closed Loop</h3>
+<div class="lesson-body"><div class="am-md">
+<p>An Agent evaluation harness operates as a four-stage closed loop: "Sandbox Setup → Autonomous Run → Multi-tiered Scoring → Reporting &amp; Reset":</p>
+
+<figure class="am-diagram">
+<button class="am-diagram-expand" type="button" aria-label="Expand diagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+<img class="lesson-svg" src="../../assets/diagrams/diagram-quality-agent-evaluation.svg" width="920" height="620" alt="Offline Evaluation Architecture: Sandbox Isolation and Multi-tiered Verification" loading="lazy">
+<figcaption>Evaluation Pipeline: From pinned test fixtures and sandbox provisioning to Agent trajectory collection, multi-tiered scoring, and complete sandbox cleanup.</figcaption>
+</figure>
+
+<h4>The Four Standard Pipeline Stages</h4>
+<ul>
+<li><strong>Stage 1: Fixture &amp; Sandbox Setup</strong>:
+  <ul>
+  <li>The evaluation harness loads a test case containing the task prompt, environment dependencies, and expected outcomes.</li>
+  <li>An isolated sandbox is seeded with initial code, configs, or reproducible bug fixtures.</li>
+  </ul>
+</li>
+<li><strong>Stage 2: Agent Autonomous Execution</strong>:
+  <ul>
+  <li>The Agent Runner points to the sandbox workspace, receives the task prompt, and begins its execution loop.</li>
+  <li>Yields two primary artifacts: <strong>Sandbox Environment State Mutations (State Diff)</strong> and the <strong>Execution Trajectory</strong>.</li>
+  </ul>
+</li>
+<li><strong>Stage 3: Multi-tiered Scorers</strong>:
+  <ul>
+  <li><strong>State Diff Checkers</strong>: Run test suites (e.g., <code>pytest</code>), verify artifact existence, and validate file contents (100% deterministic).</li>
+  <li><strong>Trajectory Efficiency Scorers</strong>: Inspect step count budget usage, detect redundant tool calls, and flag endless loop oscillations.</li>
+  <li><strong>Semantic LLM-as-a-Judge</strong>: For open-ended deliverables, a judge model evaluates quality against strict scoring rubrics.</li>
+  </ul>
+</li>
+<li><strong>Stage 4: Reporting &amp; Sandbox Reset</strong>:
+  <ul>
+  <li>Aggregate case metrics: Pass@1, Pass@k, average latency, and token consumption.</li>
+  <li>Tear down and purge the sandbox, ensuring clean state before evaluating the next test case.</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+
+<!-- 5. Evaluation Metrics Grid -->
+<section class="lesson-section" id="evaluation-metrics">
+<h3>5. The 4-Pillar Metric Framework for Agent Evaluation</h3>
+<div class="lesson-body"><div class="am-md">
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Pillar</th>
+<th>Core Metric</th>
+<th>Evaluation Method</th>
+<th>Engineering Significance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="2"><strong>Outcome</strong></td>
+<td><strong>Task Pass Rate<br>(Pass@1 / Pass@k)</strong></td>
+<td>Fraction of <em>k</em> independent runs where deliverables pass all deterministic assertions</td>
+<td>Primary gauge of agent reliability; Pass@1 reflects direct accuracy, Pass@k measures upper capability bounds</td>
+</tr>
+<tr>
+<td><strong>Environment State Diff</strong></td>
+<td>Verification of physical file creations, edits, and automated test suite execution</td>
+<td>Replaces subjective model text with objective disk state verification</td>
+</tr>
+<tr>
+<td rowspan="2"><strong>Trajectory</strong></td>
+<td><strong>Step Efficiency</strong></td>
+<td><code>Effective Steps / Total Steps</code>; penalties for unnecessary wanderings</td>
+<td>Flags aimless directory crawling or hesitation loops before taking decisive actions</td>
+</tr>
+<tr>
+<td><strong>Loop Detection Rate</strong></td>
+<td>Frequency of consecutive identical tool calls with identical parameters</td>
+<td>Measures whether the Agent adapts after tool errors or gets trapped in repetitive retries</td>
+</tr>
+<tr>
+<td rowspan="2"><strong>Safety</strong></td>
+<td><strong>Policy Interception Rate</strong></td>
+<td>Percentage of malicious or out-of-bound actions successfully blocked by Policy</td>
+<td>Ensures guardrails hold when the model attempts out-of-workspace writes or dangerous commands</td>
+</tr>
+<tr>
+<td><strong>Injection Robustness</strong></td>
+<td>Resistance against indirect prompt injection hidden inside external input files</td>
+<td>Evaluates security against adversarial prompts attempting to hijack execution goals</td>
+</tr>
+<tr>
+<td rowspan="2"><strong>Cost &amp; Latency</strong></td>
+<td><strong>Average Token Consumption</strong></td>
+<td>Total prompt and completion tokens consumed per successful task</td>
+<td>Evaluates the cost-efficiency of Context Manager pruning and compaction algorithms</td>
+</tr>
+<tr>
+<td><strong>Latency Breakdown</strong></td>
+<td>Time to First Token (TTFT), thinking latency vs. local tool execution duration</td>
+<td>Identifies whether bottlenecks lie in model inference or local I/O execution</td>
+</tr>
+</tbody>
+</table></div>
+</div></div></section>
+
+<!-- 6. Code Example -->
+<section class="lesson-section" id="evaluation-code">
+<h3>6. Practical Implementation: Minimal Agent Eval Harness</h3>
+<div class="lesson-body"><div class="am-md">
+<div class="am-code"><div class="am-code-head"><span>test_agent_eval.py</span><button class="code-copy" type="button">Copy code</button></div>
+<pre><code>import tempfile
+import shutil
+from pathlib import Path
+from dataclasses import dataclass
+from typing import Dict, Any, List
+
+@dataclass
+class EvalCase:
+    name: str
+    task_prompt: str
+    fixtures: Dict[str, str]       # Initial sandbox files and contents
+    expected_files: Dict[str, str] # Expected output files and required keywords
+    max_steps: int = 8             # Budget limit
+
+class AgentEvaluator:
+    """Agent offline evaluation runner with isolated sandbox support."""
+    def __init__(self, runner_factory):
+        self.runner_factory = runner_factory
+
+    def evaluate_case(self, case: EvalCase) -> Dict[str, Any]:
+        # 1. Create a clean, isolated temporary sandbox directory
+        sandbox_dir = Path(tempfile.mkdtemp(prefix="eval_sandbox_"))
+        try:
+            # Seed initial environment fixtures
+            for rel_path, content in case.fixtures.items():
+                target_file = sandbox_dir / rel_path
+                target_file.parent.mkdir(parents=True, exist_ok=True)
+                target_file.write_text(content, encoding="utf-8")
+
+            # 2. Bind the Agent to the sandbox and execute
+            runner = self.runner_factory(workspace=sandbox_dir)
+            run_result = runner.run_task(case.task_prompt)
+
+            # 3. Multi-tiered scoring and assertions
+            report = {
+                "case_name": case.name,
+                "passed": True,
+                "failures": [],
+                "steps_taken": len(run_result.trajectory),
+                "token_usage": run_result.total_tokens,
+            }
+
+            # Check A: Step budget enforcement
+            if len(run_result.trajectory) > case.max_steps:
+                report["passed"] = False
+                report["failures"].append(f"Budget exceeded: took {len(run_result.trajectory)} steps (max: {case.max_steps})")
+
+            # Check B: Environment state assertions (real file checks)
+            for exp_path, keyword in case.expected_files.items():
+                real_file = sandbox_dir / exp_path
+                if not real_file.exists():
+                    report["passed"] = False
+                    report["failures"].append(f"Expected file was not created: {exp_path}")
+                elif keyword not in real_file.read_text(encoding="utf-8"):
+                    report["passed"] = False
+                    report["failures"].append(f"File {exp_path} missing required keyword: '{keyword}'")
+
+            # Check C: Trajectory loop detection
+            actions = [str(step.action) for step in run_result.trajectory if step.action]
+            if len(actions) != len(set(actions)):
+                report["failures"].append("Trajectory warning: detected duplicate identical tool calls (looping)")
+
+            return report
+
+        finally:
+            # 4. Clean up sandbox to ensure zero state leakage
+            shutil.rmtree(sandbox_dir, ignore_errors=True)
+</code></pre></div>
+</div></div></section>
+
+<!-- 7. Roadmap -->
+<section class="lesson-section" id="evaluation-current">
+<h3>7. Current Implementation &amp; Evolutionary Roadmap</h3>
+<div class="lesson-body"><div class="am-md">
+<ul>
+<li><strong>Implemented (Stages 0–5)</strong>:
+  <ul>
+  <li><strong>Local Unit Testing</strong>: <code>pytest</code> deterministically verifies Policy authorization, Tools parameter validation, Session persistence, and Context budget pruning.</li>
+  <li><strong>Mock Protocol Testing</strong>: Local HTTP mock server tests model wire protocols with zero external API costs.</li>
+  </ul>
+</li>
+<li><strong>Future Roadmap</strong>:
+  <ul>
+  <li>Build a dedicated eval harness entry point to execute automated end-to-end coding tasks in isolated Docker/temp sandboxes.</li>
+  <li>Integrate SWE-bench style benchmarks to quantify Pass@1 / Pass@5 improvements across prompt and model iterations.</li>
+  </ul>
+</li>
+</ul>
+</div></div></section>
+
+<nav class="chapter-nav" aria-label="Chapter navigation"><a href="observability.html#module-observability">← Observability: Runtime Telemetry &amp; Tracing</a><a href="memory.html#module-memory">Memory: Select Knowledge Retained Across Sessions →</a></nav></article><footer class="footer"><p>Directly maintain this HTML file; principles and stages connect via hyperlinks.</p></footer></div></main></div>
+<dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual Size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
+</body></html>
+
