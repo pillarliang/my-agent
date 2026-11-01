@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 780" role="img" aria-labelledby="df-title df-desc">
+  <title id="df-title">全景系统数据流架构：Event、State、Checkpoint 与 Session 协同流转</title>
+  <desc id="df-desc">展示 Agent Harness 五层数据模型流转架构：用户展示层、接口通信层、执行调度核心、持久化存储层与跨会话知识层。</desc>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }
+    .layer-box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; rx: 8px; }
+    .layer-title { font-size: 13px; font-weight: 700; fill: #475569; letter-spacing: 0.5px; }
+    .node-base { rx: 6px; stroke-width: 1.3; }
+    .node-client { fill: #ffffff; stroke: #94a3b8; }
+    .node-transport { fill: #faf5ff; stroke: #c084fc; }
+    .node-state { fill: #eff6ff; stroke: #60a5fa; }
+    .node-guard { fill: #fefce8; stroke: #eab308; }
+    .node-tool { fill: #f0fdf4; stroke: #4ade80; }
+    .node-checkpoint { fill: #fff7ed; stroke: #fb923c; }
+    .node-session { fill: #f0fdf4; stroke: #22c55e; }
+    .node-context { fill: #f1f5f9; stroke: #64748b; }
+    .node-title { font-size: 13px; font-weight: 650; fill: #0f172a; }
+    .node-desc { font-size: 11px; fill: #64748b; }
+    .flow-edge { fill: none; stroke: #475569; stroke-width: 1.4; }
+    .flow-edge-dashed { fill: none; stroke: #475569; stroke-width: 1.4; stroke-dasharray: 4 3; }
+    .flow-edge-event { fill: none; stroke: #9333ea; stroke-width: 1.4; }
+    .flow-edge-accent { fill: none; stroke: #2563eb; stroke-width: 1.4; }
+    .flow-label-bg { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1; rx: 3px; }
+    .flow-label { font-size: 10.5px; fill: #334155; font-weight: 500; }
+    .flow-label-purple { font-size: 10.5px; fill: #7e22ce; font-weight: 600; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 1 L8 5 L0 9 Z" fill="#475569" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 1 L8 5 L0 9 Z" fill="#9333ea" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 1 L8 5 L0 9 Z" fill="#2563eb" />
+    </marker>
+  </defs>
+
+  <!-- 1. 用户与展示层 -->
+  <rect class="layer-box" x="20" y="15" width="920" height="90" />
+  <text class="layer-title" x="35" y="36">1. 用户与展示层 (Client Presentation Layer)</text>
+  
+  <g transform="translate(35, 48)">
+    <rect class="node-base node-client" x="0" y="0" width="270" height="44" />
+    <text class="node-title" x="135" y="22" text-anchor="middle">终端 TUI (如 Claude Code / REPL)</text>
+    <text class="node-desc" x="135" y="37" text-anchor="middle">stdout 打字机流 / Raw Mode 审批拦截</text>
+  </g>
+  <g transform="translate(345, 48)">
+    <rect class="node-base node-client" x="0" y="0" width="270" height="44" />
+    <text class="node-title" x="135" y="22" text-anchor="middle">Web 前端界面 (React / 浏览器)</text>
+    <text class="node-desc" x="135" y="37" text-anchor="middle">渲染 Token 流式、折叠思考块、步骤卡片</text>
+  </g>
+  <g transform="translate(655, 48)">
+    <rect class="node-base node-client" x="0" y="0" width="270" height="44" />
+    <text class="node-title" x="135" y="22" text-anchor="middle">IDE 插件 / 第三方机器人客户端</text>
+    <text class="node-desc" x="135" y="37" text-anchor="middle">收集用户意图 / 捕获主动打断指令 (Abort)</text>
+  </g>
+
+  <!-- 连线：层 1 <-> 层 2 -->
+  <path class="flow-edge" d="M300 105 L300 135" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="225" y="112" width="150" height="18" />
+  <text class="flow-label" x="300" y="125" text-anchor="middle">任务提交 / 审批确认 / 打断</text>
+
+  <path class="flow-edge-event" d="M660 135 L660 105" marker-end="url(#arrow-purple)" />
+  <rect class="flow-label-bg" x="575" y="112" width="170" height="18" />
+  <text class="flow-label-purple" x="660" y="125" text-anchor="middle">Event 瞬态事件流 (JSON 帧)</text>
+
+  <!-- 2. 接口通信与网关层 -->
+  <rect class="layer-box" x="20" y="135" width="920" height="85" />
+  <text class="layer-title" x="35" y="156">2. 接口与通信适配层 (Interfaces &amp; Transport Layer)</text>
+
+  <g transform="translate(35, 168)">
+    <rect class="node-base node-transport" x="0" y="0" width="425" height="42" />
+    <text class="node-title" x="212" y="20" text-anchor="middle">WebSocket 网关 (全双工双向交互)</text>
+    <text class="node-desc" x="212" y="34" text-anchor="middle">管理连接生命周期、分配单调递增 event_id、断线游标补读</text>
+  </g>
+  <g transform="translate(500, 168)">
+    <rect class="node-base node-transport" x="0" y="0" width="425" height="42" />
+    <text class="node-title" x="212" y="20" text-anchor="middle">HTTP 路由 &amp; stdio 管道 (只读查询与启动)</text>
+    <text class="node-desc" x="212" y="34" text-anchor="middle">REST 会话查询不触发执行 / 批处理 CLI 参数与工作区配置</text>
+  </g>
+
+  <!-- 连线：层 2 <-> 层 3 -->
+  <path class="flow-edge" d="M300 220 L300 250" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="235" y="227" width="130" height="18" />
+  <text class="flow-label" x="300" y="240" text-anchor="middle">初始化任务 / 唤醒协程</text>
+
+  <path class="flow-edge-event" d="M660 250 L660 220" marker-end="url(#arrow-purple)" />
+  <rect class="flow-label-bg" x="570" y="227" width="180" height="18" />
+  <text class="flow-label-purple" x="660" y="240" text-anchor="middle">广播内部产生的生命周期事件</text>
+
+  <!-- 3. 执行调度核心与运行时工作内存 -->
+  <rect class="layer-box" x="20" y="250" width="920" height="235" />
+  <text class="layer-title" x="35" y="271">3. 执行调度核心与运行时工作内存 (Execution Core &amp; Working Memory)</text>
+
+  <!-- 核心总线：State -->
+  <g transform="translate(35, 283)">
+    <rect class="node-base node-state" x="0" y="0" width="890" height="48" />
+    <text class="node-title" x="445" y="21" text-anchor="middle" fill="#1d4ed8">State (运行时工作内存 / 状态总线 · 单次 Run 存活)</text>
+    <text class="node-desc" x="445" y="37" text-anchor="middle">维护当前 messages 列表、待执行 tool_calls、步骤计数器 step_count、Map-Reduce 各分段输出中间产物</text>
+  </g>
+
+  <!-- 执行组件 -->
+  <g transform="translate(35, 365)">
+    <rect class="node-base node-state" x="0" y="0" width="250" height="52" />
+    <text class="node-title" x="125" y="22" text-anchor="middle">Model 适配器 (LLM Service)</text>
+    <text class="node-desc" x="125" y="38" text-anchor="middle">请求模型 / 产出 Token Delta</text>
+  </g>
+  <g transform="translate(355, 365)">
+    <rect class="node-base node-guard" x="0" y="0" width="250" height="52" />
+    <text class="node-title" x="125" y="22" text-anchor="middle">Policy 权限拦截器 (安全护栏)</text>
+    <text class="node-desc" x="125" y="38" text-anchor="middle">允许 / 拒绝 / 触发人机审批流程</text>
+  </g>
+  <g transform="translate(675, 365)">
+    <rect class="node-base node-tool" x="0" y="0" width="250" height="52" />
+    <text class="node-title" x="125" y="22" text-anchor="middle">Tools / Subagents 执行器</text>
+    <text class="node-desc" x="125" y="38" text-anchor="middle">物理操作 / 产生真实回执 ToolResult</text>
+  </g>
+
+  <!-- 执行核心内部连线 -->
+  <path class="flow-edge" d="M120 331 L120 365" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="80" y="340" width="80" height="16" />
+  <text class="flow-label" x="120" y="352" text-anchor="middle">请求 Prompt</text>
+
+  <path class="flow-edge-accent" d="M200 365 L200 331" marker-end="url(#arrow-blue)" />
+  <rect class="flow-label-bg" x="160" y="340" width="80" height="16" />
+  <text class="flow-label" x="200" y="352" text-anchor="middle">模型生成回答</text>
+
+  <path class="flow-edge" d="M480 331 L480 365" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="425" y="340" width="110" height="16" />
+  <text class="flow-label" x="480" y="352" text-anchor="middle">派发 ToolCall 检查</text>
+
+  <path class="flow-edge" d="M605 391 L675 391" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="618" y="383" width="46" height="16" />
+  <text class="flow-label" x="641" y="395" text-anchor="middle">获准执行</text>
+
+  <path class="flow-edge" d="M800 365 L800 331" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="740" y="340" width="120" height="16" />
+  <text class="flow-label" x="800" y="352" text-anchor="middle">写入回执 ToolResult</text>
+
+  <!-- 提示框 -->
+  <text class="node-desc" x="480" y="460" text-anchor="middle">工作内存 State 协调全局变量；若 Policy 拦截高危操作则挂起协程，向通信层抛出 approval_required 事件等待用户确认</text>
+
+  <!-- 连线：层 3 -> 层 4 -->
+  <path class="flow-edge-dashed" d="M250 485 L250 515" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="175" y="492" width="150" height="18" />
+  <text class="flow-label" x="250" y="505" text-anchor="middle">关键物理副作用前冷冻快照</text>
+
+  <path class="flow-edge" d="M710 485 L710 515" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="635" y="492" width="150" height="18" />
+  <text class="flow-label" x="710" y="505" text-anchor="middle">任务完成确立边界终态落盘</text>
+
+  <!-- 4. 持久化与容灾存储层 -->
+  <rect class="layer-box" x="20" y="515" width="920" height="125" />
+  <text class="layer-title" x="35" y="536">4. 持久化与容灾存储层 (Durable Persistence Layer: Disk / SQLite / S3)</text>
+
+  <g transform="translate(35, 548)">
+    <rect class="node-base node-checkpoint" x="0" y="0" width="425" height="78" />
+    <text class="node-title" x="212" y="24" text-anchor="middle" fill="#c2410c">Checkpoint (容灾检查点 · 故障恢复)</text>
+    <text class="node-desc" x="212" y="43" text-anchor="middle">存储: step_index、State 序列化快照、调用 ID (invocation_id)、外部物理凭据</text>
+    <text class="node-desc" x="212" y="60" text-anchor="middle" font-weight="600" fill="#9a3412">受众: 崩溃恢复引擎 (Crash Resumption) ── 确保断电重启不重复扣费与写盘</text>
+  </g>
+  <g transform="translate(500, 548)">
+    <rect class="node-base node-session" x="0" y="0" width="425" height="78" />
+    <text class="node-title" x="212" y="24" text-anchor="middle" fill="#15803d">Session / SessionLog (会话历史日志 · 业务脉络)</text>
+    <text class="node-desc" x="212" y="43" text-anchor="middle">存储: 会话 ID、工作区元数据、各 Turn 对话链、工具真实回执与模型最终答复</text>
+    <text class="node-desc" x="212" y="60" text-anchor="middle" font-weight="600" fill="#166534">受众: 人类用户回溯历史 ── 兼作下一轮对话组装上下文的稳定来源</text>
+  </g>
+
+  <!-- 连线：层 4 <-> 层 5 -->
+  <path class="flow-edge-dashed" d="M160 640 L160 670" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="90" y="647" width="140" height="18" />
+  <text class="flow-label" x="160" y="660" text-anchor="middle">宕机重启定位断点恢复</text>
+
+  <path class="flow-edge" d="M780 640 L780 670" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="710" y="647" width="140" height="18" />
+  <text class="flow-label" x="780" y="660" text-anchor="middle">次轮提取已完成历史</text>
+
+  <!-- 5. 跨会话外部知识与上下文管理 -->
+  <rect class="layer-box" x="20" y="670" width="920" height="95" />
+  <text class="layer-title" x="35" y="691">5. 跨会话外部知识与上下文管理 (Long-Term Knowledge &amp; Context Assembly)</text>
+
+  <g transform="translate(35, 703)">
+    <rect class="node-base node-context" x="0" y="0" width="360" height="48" />
+    <text class="node-title" x="180" y="22" text-anchor="middle">Memory (长期项目记忆)</text>
+    <text class="node-desc" x="180" y="38" text-anchor="middle">保存在工作区 MEMORY.md，跨会话保留项目约定与规则</text>
+  </g>
+
+  <!-- 知识汇总到上下文管理器 -->
+  <path class="flow-edge" d="M395 727 L490 727" marker-end="url(#arrow)" />
+  <rect class="flow-label-bg" x="410" y="718" width="70" height="16" />
+  <text class="flow-label" x="445" y="730" text-anchor="middle">注入规则快照</text>
+
+  <g transform="translate(490, 703)">
+    <rect class="node-base node-context" x="0" y="0" width="435" height="48" />
+    <text class="node-title" x="217" y="22" text-anchor="middle">Context Manager (上下文管理器)</text>
+    <text class="node-desc" x="217" y="38" text-anchor="middle">读取 Memory 快照 + Session 历史，在 Token 预算内裁剪并组装新任务输入</text>
+  </g>
+
+  <!-- 回环到 State -->
+  <path class="flow-edge-accent" d="M925 727 Q950 727 950 500 Q950 280 925 295 L925 305" marker-end="url(#arrow-blue)" />
+  <rect class="flow-label-bg" x="870" y="475" width="80" height="18" />
+  <text class="flow-label-purple" x="910" y="488" text-anchor="middle">注入初始 State</text>
+
+</svg>
+

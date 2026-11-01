@@ -83,7 +83,7 @@
 <h4>8.1 协作分工：State、Event 与 Loop</h4>
 <ul>
 <li><strong>初始化与运行期分工</strong>：初始化时由应用入口打开或新建会话；运行期由 Loop 先读取已完成历史组装请求，再在收到用户提问、模型响应、工具回执和任务结束时依次调用写入接口。</li>
-<li><strong>State（当前状态视图）与 Event（状态变化通知）</strong>：State 表示当前时刻的数据快照（如活动消息链、待执行工具），Event 表示一次状态变更（如 pi 的 <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent.ts">processEvents</a> 与 <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/agent-session.ts">AgentSession</a>）。单进程下 Loop 可直接调用保存函数，无需强制引入复杂的事件总线。</li>
+<li><strong>State（当前状态视图）与 Event（状态变化通知）</strong>：State 表示当前时刻的数据快照（如活动消息链、待执行工具），Event 表示一次状态变更（如 pi 的 <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent.ts">processEvents</a> 与 <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/src/core/agent-session.ts">AgentSession</a>）。单进程下 Loop 可直接调用保存函数，无需强制引入复杂的事件总线。在整个 Harness 中，<strong>Event（瞬态通信）、Session（人机会话）、State（工作内存）与 Checkpoint（容灾快照）</strong>各自属于完全不同的数据维度（详见 <a href="interfaces.html#module-interfaces-dataflow-map">Interfaces 模块：全景系统数据流架构</a>）。</li>
 <li><strong>多轮续接不等于中断恢复</strong>：在已完成历史（<code>completed</code>）之上发起新提问属于“多轮续接”；而从进程崩溃、断网或异常退出的断点继续未完成任务，属于“中断安全恢复（Checkpoint & Resumption）”。单纯保存对话历史绝不等于自动具备安全恢复能力。</li>
 </ul>
 

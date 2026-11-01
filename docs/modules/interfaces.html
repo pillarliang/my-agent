@@ -1,124 +1,409 @@
 <!doctype html>
 <html lang="zh-CN" data-theme="shadcn" data-mode="light">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Interfaces：让不同用户入口共用执行流程 · Learn Agent</title>
+<title>Interfaces：用户交互入口与实时通信协议 · Learn Agent</title>
 <link rel="stylesheet" href="../assets/tutorial.css">
 <script src="../assets/tutorial.js" defer></script>
 </head><body>
 <div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>从零实现与扩展 Agent / Harness</small></a><details id="chapter-menu" open><summary>展开 / 收起目录</summary><div class="menu-body"><label for="chapter-search" class="sr-only">查找章节</label><input class="nav-search" id="chapter-search" type="search" placeholder="查找章节标题" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="教程目录"><a class="chapter-link" href="../tutorial.html#overview">开始阅读</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">逐步建成什么样的系统</a><div class="nav-group-title">一、学习主线</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">阶段 0：跑通独立的最小 Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">阶段 1：拆分单文件，定义模块接口</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">阶段 2：用 Policy 控制动作权限</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">阶段 3：会话与记录</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">阶段 4：上下文管理与预算</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">阶段 5：用 Memory 跨会话复用项目知识</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">阶段 6：长任务支撑：大输出暂存与历史摘要</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">阶段 7：中断后怎样安全继续</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">阶段 8：按需求增加入口、扩展与编排</a><div class="nav-group-title">二、Harness 核心模块</div><a class="chapter-link" href="#module-interfaces" data-chapter="module-interfaces">Interfaces：让不同用户入口共用执行流程</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner：控制一次任务怎样继续和停止</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model：适配模型服务与通信协议</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools：执行模型提出的工具调用</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy：在执行前检查操作权限</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State：管理会话与执行记录</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager：组织本次发给模型的内容</a><a class="chapter-link" href="observability.html#module-observability" data-chapter="module-observability">Observability：运行时全链路观测与追踪</a><a class="chapter-link" href="evaluation.html#module-evaluation" data-chapter="module-evaluation">Evaluation：Agent 任务评测与沙箱断言</a><div class="nav-group-title">三、进阶扩展模块</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory：选择跨会话保留的知识</a><a class="chapter-link" href="recovery.html#module-recovery" data-chapter="module-recovery">Recovery：中断检查点、异常容错与安全恢复</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions：接入 Skills、Hooks 和外部工具</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration：安排多个 Agent 分工与协作</a><div class="nav-group-title">四、外部资源</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">模型服务、工作区与外部系统</a><div class="nav-group-title">五、架构与验证</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">当前最小骨架与未来模块蓝图</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">方案依据：源码样本与官方资料</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">本地检查与验证范围</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">术语与图例</a></nav></div></details></aside>
-<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/modules/interfaces.html#module-interfaces">English</a></p><article class="chapter" id="module-interfaces"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Interfaces：让不同用户入口共用执行流程</h2></header><section class="lesson-section" id="module-interfaces-p1-panel-A"><h3>1. 问题起点：如何让不同入口共用同一套执行核心？</h3><div class="lesson-body"><div class="am-md"><p>当系统除了命令行（CLI）还需要提供网页（Web）或 API 入口时，最容易出现的坏味道是“每个入口各自拼装一套工具、权限和循环逻辑”。</p>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← 教程总目录</a> · <a href="../en/modules/interfaces.html#module-interfaces">English</a></p><article class="chapter" id="module-interfaces"><header class="chapter-header"><span class="kind">模块原理与方案</span><h2>Interfaces：用户交互入口与实时通信协议</h2></header><section class="lesson-section" id="module-interfaces-p1-panel-A"><h3>1. 问题起点：为什么 Agent 入口不能当成普通 Web API？</h3><div class="lesson-body"><div class="am-md"><p>传统的 Web 接口是“请求-响应”模式：客户端发送 HTTP POST，几百毫秒内服务器返回 JSON，连接随即关闭。如果直接用这种模式套用在 Agent 系统上，会遇到三个无法解决的体验与工程瓶颈：</p>
+<ul>
+<li><strong>瓶颈 1：长时间运行如同黑盒</strong>：Agent 往往需要数秒乃至数分钟来连续规划、请求模型与执行多次工具。如果用户只能干等单次 HTTP 请求结束，期间没有任何反馈，极易误以为页面卡死而频繁刷新或重发，导致后端重复创建开销巨大的任务。</li>
+<li><strong>瓶颈 2：中途无法等待人工决策（Human-in-the-loop）</strong>：当 Agent 遇到高危工具调用（如删除生产表、发送外部邮件）或参数歧义时，必须停下来向用户询问确认。传统的单向 HTTP 请求无法中途反向向客户端索要输入并挂起等待。</li>
+<li><strong>瓶颈 3：无法实时紧急打断（User Abort）</strong>：当用户在界面上发现模型生成方向跑偏、陷入死循环或正在尝试无意义的工具搜索时，必须能立即点击“停止”。如果缺少双向实时控制通道，前端哪怕关闭了页面，后端仍在盲目消耗 Token 与工具配额。</li>
+</ul>
 <p><strong>期望达到的效果：</strong></p>
 <ul>
-<li><strong>提交、执行与展示分离</strong>：无论是 CLI 还是浏览器发起请求，都经过相同的应用服务配置、权限检查与 Runner 执行流程。</li>
-<li><strong>入口不掺杂底层协议</strong>：前端无需理解模型 SDK 协议，CLI 也不复制 Agent Loop，应用服务统一接收纯业务参数（如会话 ID、任务文本）。</li>
-<li><strong>真实状态以记录为准</strong>：通过存储中的 Run ID 关联执行、历史和进度，不能仅凭前端页面显示判断任务是否真正完成。</li>
+<li><strong>核心逻辑与入口解耦</strong>：无论用户通过终端 CLI、Web 网页、IDE 插件还是第三方机器人提交任务，底层复用同一套 Runner、权限规则与工具集，入口层只负责参数解析与事件转换。</li>
+<li><strong>执行状态全程可见</strong>：模型思考、Token 逐字输出、工具调用起止与执行结果以结构化事件实时推送，用户随时看清当前进展。</li>
+<li><strong>支持全双工人机协作</strong>：高危操作审批、中途追问与主动打断能无缝嵌入运行中的 Agent Loop，无需粗暴销毁整个会话。</li>
+<li><strong>断线可恢复且不重跑</strong>：客户端因网络抖动、页面刷新或断网重连后，能依据事件游标补齐遗漏进度，不触发重复运行。</li>
 </ul>
-<p>下图展示了 CLI 与 Web 共用应用服务的目标结构（当前仅实现 CLI，HTTP / WebRuns 为后续扩展方向）：</p>
+<p>下图展示了 CLI、Web 与后端应用服务的解耦结构（当前代码已实现 CLI，HTTP 与 WebSocket 为后续扩展方向）：</p>
 </div>
 <figure class="am-diagram am-flow"><img class="lesson-svg" src="../assets/diagrams/diagram-module-interfaces-1-panel-A-1.svg" width="291" height="572" alt="流程图：CLI、AgentService、浏览器、HTTP 适配、WebRuns、Runner、SQLite" loading="lazy"></figure>
 </div>
 </section>
-<section class="lesson-section" id="module-interfaces-interaction"><h3>2. 模块协作：执行路径与查询路径如何分离？</h3><div class="lesson-body"><div class="am-md"><p>在多入口架构中，“提交运行”和“查询记录”是两条完全独立的路径：</p>
+<section class="lesson-section" id="module-interfaces-interaction"><h3>2. 核心架构：展示层、通信层、调度层与执行核心</h3><div class="lesson-body"><div class="am-md"><p>为了让不同入口共用同一套底层 Agent 逻辑，系统必须严格分为四层：</p>
 <ul>
-<li><strong>提交运行路径</strong>：入口收集用户问题 → <strong>应用服务</strong>选定工作目录、工具集与 Policy 配置 → 交由 <a href="loop.html#module-loop">Runner</a> 控制循环执行 → <a href="state.html#module-state">State 记录层</a>保存真实过程与结果。</li>
-<li><strong>只读查询路径</strong>：入口发起会话列表或历史详情查询 → 直接读取已保存的记录 → 原样展示，<strong>绝不触发模型调用或工具执行</strong>。</li>
-<li><strong>错误分层呈现</strong>：展示层明确区分“请求参数被拒”“运行过程失败”和“查询记录失败”，绝不能将空结果伪装成执行成功。</li>
-</ul><figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-interfaces-collaboration.svg" width="1000" height="622" alt="通用协作示例：运行经应用服务进入 Runner；查询读取记录，不触发执行。" loading="lazy"><figcaption>通用协作示例：运行经应用服务进入 Runner；查询读取记录，不触发执行。</figcaption></figure><p><strong>初始化与运行期分离：</strong>初始化阶段确定组件与权限配置；运行期只传递任务输入、会话 ID、执行结果和错误信息，前端按钮状态不能直接决定工具权限。</p></div></div></section>
+<li><strong>展示层（Presentation Layer）</strong>：CLI 终端界面、Web 前端界面或 IDE 插件。只负责收集用户键盘/鼠标输入并渲染后端推送过来的结构化事件，<strong>严禁在展示层编写模型调用或工具权限判断逻辑</strong>。</li>
+<li><strong>通信层（Transport &amp; Adapters）</strong>：CLI 参数解析器、HTTP 路由处理器、WebSocket 协议网关。负责连接生命周期管理、鉴权、心跳保活、协议编解码（如 JSON-RPC 或自定义 Event Schema）。</li>
+<li><strong>调度与应用层（AgentService / Task Manager）</strong>：接收规范化的业务参数（任务文本、会话 ID、用户确认结果），负责定位历史记录、解析工作区与 Policy 权限配置，并管理后台协程或 Worker 任务生命周期。</li>
+<li><strong>执行核心（Runner Loop）</strong>：纯粹的 Agent Loop 调度中枢。接收 <code>run_task</code> 请求，推进模型调用、工具分发与状态持久化；对外仅通过事件通道广播生命周期事件，接收打断或用户回复信号。</li>
+</ul>
+<p>在多入口架构中，“提交运行”与“只读查询”必须从物理路径上彻底分开：</p>
+<ul>
+<li><strong>提交运行路径</strong>：入口收集用户问题 → 应用服务配置环境与 Policy → 启动 Runner 循环 → State 实时持久化记录 → 通信层向客户端推送进度事件。</li>
+<li><strong>只读查询路径</strong>：入口发起会话列表或历史详情查看 → 直接读取持久化存储（如 JSONL 或数据库）并返回原样数据 → <strong>绝对不触发模型调用，也绝对不执行任何工具</strong>。</li>
+<li><strong>错误分层返回</strong>：展示层必须如实区分“请求参数非法（400 校验错误）”、“工具执行失败（受控回执已交回模型）”与“系统崩溃（500 异常）”，绝不将空结果或失败伪装成执行成功。</li>
+</ul>
+<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/module-interfaces-collaboration.svg" width="1000" height="622" alt="通用协作示例：运行经应用服务进入 Runner；查询读取记录，不触发执行。" loading="lazy"><figcaption>通用协作示例：运行经应用服务进入 Runner；查询读取记录，不触发执行。</figcaption></figure>
+<p><strong>初始化与运行期分离原则</strong>：组件依赖（模型 Key、工作区路径、Policy 规则）在服务启动或任务创建时固定注入；运行期交互只传递纯业务载荷（任务描述、会话 ID、事件增量与审批结果），前端的按钮状态不能作为后端工具权限的决定源。</p></div></div></section>
 
-<section class="lesson-section" id="module-interfaces-p1-panel-C"><h3>3. 核心方案对比：任务在哪里运行、调用方是否等待？</h3><div class="lesson-body"><div class="am-md"><p>根据任务耗时与部署形态，执行服务有 4 种常见方案（当前采用方案 A，B/C/D 为可选扩展）：</p><h4>A. 请求内同步执行</h4>
+<section class="lesson-section" id="module-interfaces-p1-panel-C"><h3>3. 通信与任务调度方案对比</h3><div class="lesson-body"><div class="am-md"><p>根据任务耗时、并发要求与部署形态，执行服务有 4 种常见方案（本项目当前采用方案 A，B/C/D 为可选扩展）：</p>
+<h4>A. 单次批处理执行（One-shot CLI 与自动化脚本）</h4>
 <ul>
-<li><strong>做法</strong>：调用入口一直阻塞等待 Runner 返回最终结果。</li>
-<li><strong>适用场景</strong>：CLI 工具及耗时极短的调用，实现最简单、错误返回最直接。</li>
-<li><strong>代价与局限</strong>：任务运行时长受限于单次请求超时时间，连接断开后难以追踪中间状态。</li>
+<li><strong>工作方式</strong>：单次命令调用即退出（Run-to-completion）。入口函数一直阻塞等待，直到 Runner 循环彻底结束并打印最终结果。</li>
+<li><strong>适用场景</strong>：CI/CD 自动化流水线、定时批处理脚本或单次运行的简单命令行工具（如本项目阶段 0–5 的 CLI）。</li>
+<li><strong>主要代价</strong>：执行期间不监听外部输入，无法在中途进行人机协同审批；若封装为传统同步 HTTP 接口，极易触发网关超时。</li>
 </ul>
-<h4>B. 进程内后台执行</h4>
+<h4>B. 进程内后台任务（本地 Web MVP）</h4>
 <ul>
-<li><strong>做法</strong>：接口先立即返回任务 ID，在当前 Web 进程内启动后台任务运行 Runner，客户端通过独立接口查询进度和结果（参考 <a href="https://fastapi.tiangolo.com/async/">FastAPI 并发说明</a>）。</li>
-<li><strong>适用场景</strong>：本地单机 Web MVP，代码量少，可避免模型网络等待阻塞 HTTP 事件循环。</li>
-<li><strong>代价与局限</strong>：Web 进程退出或重启时后台任务会直接丢失，且同步阻塞操作无法仅靠取消异步 Task 立即停止。</li>
+<li><strong>工作方式</strong>：客户端提交任务后，服务端立即返回任务 ID，并在当前 Web 进程内部启动异步任务（如 Python <code>asyncio.create_task</code>）执行 Runner，客户端通过独立通道观察进度。</li>
+<li><strong>适用场景</strong>：个人本地运行的 Web UI（如基于 FastAPI / Starlette），架构极轻，开发验证成本低。</li>
+<li><strong>主要代价</strong>：Web 服务重启或异常崩溃时，正在运行的后台任务直接丢失；多实例部署时状态不互通。</li>
 </ul>
-<h4>C. 持久队列与独立 Worker</h4>
+<h4>C. 持久任务队列与独立 Worker（生产长任务系统与 Temporal 编排）</h4>
 <ul>
-<li><strong>做法</strong>：先把提交的任务持久化到存储中，由独立 Worker 进程领取并运行，前端按任务 ID 查询。</li>
-<li><strong>适用场景</strong>：长耗时任务、需要支持服务重启与独立水平扩容的系统。</li>
-<li><strong>代价与局限</strong>：需额外处理任务租约、重复投递、取消信号传递与外部副作用核对（详见 <a href="state.html#module-state">State</a>）。</li>
-</ul>
-<h4>D. 外部托管 Agent 运行服务</h4>
-<ul>
-<li><strong>做法</strong>：CLI 或 Web 直接调用外部完整运行服务，接收任务 ID 与事件流。</li>
-<li><strong>适用场景</strong>：希望复用现成调度基础设施的场景。</li>
-<li><strong>代价与局限</strong>：必须明确会话、权限与历史记录由哪一方作为唯一事实源，避免本地与远端维护两套冲突状态。</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-D"><h3>4. 进度传输协议如何选择？</h3><div class="lesson-body"><div class="am-md"><p><strong>Web 进度推送、断线补读与历史查询示意（未来方案）</strong></p>
-</div>
-<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-module-interfaces-1-panel-D-1.svg" width="607" height="624" alt="时序图：浏览器、HTTP、AgentService、Store" loading="lazy"></figure>
-<div class="am-md"><div class="am-table-wrap"><table>
-<thead>
-<tr>
-<th>传输方案</th>
-<th>工作方式</th>
-<th>适用场景</th>
-<th>主要实现代价</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>HTTP 轮询</td>
-<td>客户端定时请求任务状态或增量事件</td>
-<td>低频状态更新、极简客户端</td>
-<td>存在轮询间隔延迟与无效请求</td>
-</tr>
-<tr>
-<td>POST + SSE + GET</td>
-<td>POST 提交任务、SSE 单向推流、GET 查历史</td>
-<td>对话流式展示与工具步骤进度</td>
-<td>需维护长连接、事件游标与断线补读</td>
-</tr>
-<tr>
-<td>WebSocket</td>
-<td>全双工持久消息通道</td>
-<td>高频双向控制与实时交互</td>
-<td>需自定义消息协议、心跳与重连状态机</td>
-</tr>
-</tbody></table></div>
-<p><strong>关键概念区分：</strong></p>
-<ul>
-<li><strong>SSE 单向事件流</strong>：<a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events">MDN SSE 规范</a>定义了单向事件、事件 ID 与自动重连机制。Web 入口若主要接收进度，使用“普通 POST 提交/取消 + SSE 收进度 + GET 查历史”通常比 WebSocket 更简单清晰。</li>
-<li><strong>任务步骤进度 vs 模型逐字流式</strong>：推送“开始请求模型、工具已返回”等步骤事件，与模型的 Token 级流式输出是两件事；后者还需同步改造 Model 适配器。</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-E"><h3>5. 开源系统如何组织多入口？</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>AgentScope Java（官方文档）</strong>：<a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/architecture.md">架构说明</a>明确区分直接调用、当前请求内流式事件与持久会话任务操作，让不同入口复用同一套模型、工具与中间件配置。</li>
-<li><strong>pi（官方文档）</strong>：<a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/docs/rpc.md">RPC 接口</a>通过标准化的结构化命令与事件，将同一个运行核心接入不同界面（不局限于 HTTP 或浏览器）。</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-F"><h3>6. 边界处理：断线重连、重复提交与取消</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>断线补读与去重</strong>：为每个事件分配递增或固定 ID，客户端记录已读游标；重连后先从持久化记录补读遗漏事件，再按事件 ID 去重，不能只靠前端内存数组保存聊天记录。</li>
-<li><strong>防止重复提交</strong>：网络抖动时用户重发请求，若直接重发普通 POST 会启动第二次重复任务。应支持客户端传入幂等请求 ID（<code>client_request_id</code>），由服务端做提交去重。</li>
-<li><strong>诚实表达取消状态</strong>：需严格区分“页面关闭”“连接断开”“用户请求取消”与“执行真正停止”。取消接口应先返回“已受理取消请求”，待执行端确认停止后再更新最终状态，UI 绝不能在点击取消瞬间假装后台工具已经停止。</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-G"><h3>7. 本项目当前实现与未实现范围</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>已实现（截至阶段 3：同步 CLI + 会话查询）</strong>：
+<li><strong>工作方式</strong>：任务提交后先写入持久化存储或分布式工作流引擎（如 Redis/Celery、RabbitMQ 或 <strong>Temporal 状态机</strong>），独立 Worker 进程通过长轮询（Long Polling）领取任务并执行 Runner，前端按任务 ID 查询或订阅完成事件。</li>
+<li><strong>适用场景</strong>：企业级多用户平台、耗时数十分钟的深度报告/多素材总结 Agent、需要水平弹性扩容与故障自动接盘的生产系统。</li>
+<li><strong>工程代表与落地方态</strong>：
   <ul>
-  <li>任务提交经 <code>run_task()</code> 进入 Runner 同步等待返回 <code>RunResult</code>，支持通过 <code>--session ID</code> 续接同一会话。</li>
-  <li>提供 <code>--list-sessions</code> 与 <code>--show-session ID</code> 只读查询本地 JSONL 会话记录，查询过程不调用模型或工具（详见<a href="../stages/stage-1.html#stage-1">阶段 1</a> 与<a href="../stages/stage-3.html#stage-3">阶段 3</a>）。</li>
+    <li><strong>原生 Worker 模式（如 Temporal Activity Worker）</strong>：Agent 服务不暴露 Web API，常驻进程直接订阅 Task Queue，崩溃时由调度中心自动超时重试并切换节点接盘。</li>
+    <li><strong>外部解耦模式（如 HTTP 202 + Signal 回传）</strong>：上游持久化引擎（如 Temporal）发起 HTTP 触发，Agent 服务立即返回 202 并放入后台执行，执行完成后通过 Signal/Webhook 异步回填结果，配合 K8s 优雅关停保障在途任务。</li>
   </ul>
 </li>
-<li><strong>未实现（留待<a href="../stages/stage-8.html#stage-8">阶段 8 按需扩展</a>）</strong>：Web HTTP 服务、后台任务、持久化队列、SSE / WebSocket 实时推流、请求幂等去重与任务取消协议。</li>
+<li><strong>主要代价</strong>：系统引入分布式协调依赖；需处理任务租约心跳（Heartbeat）、幂等去重、分布式打断取消与外部副作用对齐（详见 <a href="state.html#module-state">State</a> 与 <a href="recovery.html#module-recovery">Recovery</a>）。</li>
+</ul>
+<h4>D. 外部托管 Agent 运行时（云端全托管服务）</h4>
+<ul>
+<li><strong>工作方式</strong>：开发者完全不自建 Runner 调度器与会话数据库，直接调用云端托管的 Agent 平台（如 Dify API、Coze 扣子、OpenAI Assistants API 或 LangGraph Cloud）。云端平台全权负责维护会话历史、上下文裁剪、工具循环推进与代码沙箱，前端只负责收发标准事件流。</li>
+<li><strong>适用场景</strong>：初创团队验证 MVP、无需复杂私有化权限控制、仅专注前端业务界面定制的轻量产品。</li>
+<li><strong>主要代价</strong>：
+  <ul>
+    <li><strong>双重状态分叉（Split-Brain）</strong>：云端平台存有一份完整会话记录，你自己的业务数据库往往也想存一份。一旦网络异常，本地与云端数据极易不一致。</li>
+    <li><strong>黑盒不可控与厂商锁定</strong>：无法自由定制上下文裁剪算法、无法在工具执行前做细粒度 Policy 本地拦截，且模型调用与调度成本昂贵。</li>
+  </ul>
+</li>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-p1-panel-D"><h3>4. 传输协议选择：HTTP 轮询、SSE 还是 WebSocket？</h3><div class="lesson-body"><div class="am-md"><p>客户端如何实时获取 Agent 的执行进度？业界有三种主流传输协议：</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>通信协议</th>
+<th>通信通道特征</th>
+<th>适合场景</th>
+<th>局限与核心代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HTTP 定时轮询</strong></td>
+<td>单向拉取：客户端每隔 1–2 秒发送 GET 请求获取增量事件</td>
+<td>极简只读前端、网络环境极受限（禁止长连接）的企业内网</td>
+<td>存在固定轮询延迟，高频空查消耗服务器性能，无法做到打字机级流式效果</td>
+</tr>
+<tr>
+<td><strong>POST + SSE + GET</strong></td>
+<td>半双工：POST 提交任务，SSE（Server-Sent Events）单向推流，GET 查历史</td>
+<td>纯文本对话、只读进度展示（如个人聊天助手、标准文档问答）</td>
+<td>仅支持服务端向客户端推流；客户端若要打断或回复确认，必须另起新 HTTP POST，连接逻辑分散</td>
+</tr>
+<tr>
+<td><strong>WebSocket 全双工</strong></td>
+<td>全双工：一条持久长连接，双向均可随时收发高频结构化帧</td>
+<td>复杂 Agent IDE、人机协作审批（HITL）、实时交互提问与低延迟主动打断</td>
+<td>需要设计完整的心跳保活、断线重连状态机与帧协议路由</td>
+</tr>
+</tbody></table></div>
+
+<p><strong>为什么涉及人机协同（HITL）时，推荐使用 WebSocket？</strong></p>
+<p>在真实的自主代码或运维 Agent 中，Agent 并不是只进不出地“吐字”，而是高频伴随双向沟通：</p>
+<ul>
+<li><strong>实时双向对话能力</strong>：WebSocket 在同一个已认证的持久 TCP 连接上，既能由服务端以毫秒级延迟向客户端下发模型 Token 和步骤事件，又能随时由客户端向上游投递控制帧。</li>
+<li><strong>连接状态与任务绑定</strong>：当 WebSocket 物理断开时，服务端能够第一时间触发连接关闭事件，进而根据策略决定是暂停任务等待重连，还是继续在后台静默运行。</li>
+<li><strong>连接与信令开销低</strong>：无需在每次用户点击审批确认时重新建立 TCP 握手、TLS 协商与 HTTP Header 鉴权解析。</li>
+</ul>
+<p><strong>架构分工清晰化原则</strong>：在实际工程落地时，推荐采取 <strong>“RESTful API 负责静态资源与历史查询 + WebSocket 负责运行中实时双向交互”</strong> 的混合架构，兼具两者的优势。</p>
+</div>
+<figure class="am-diagram am-seq"><img class="lesson-svg" src="../assets/diagrams/diagram-module-interfaces-1-panel-D-1.svg" width="607" height="624" alt="时序图：浏览器、HTTP、AgentService、Store" loading="lazy"><figcaption>单向流方案时序图：基于「POST 提交 + SSE 单向推流 + GET 查历史」的解耦交互。</figcaption></figure>
+<div class="am-md">
+<p><strong>图示辨析：为什么上图没有出现 WebSocket？</strong></p>
+<p>上图展示的是典型的 <strong>“半双工 / 单向流式”</strong> 架构（即前述表格中的方案 2）：</p>
+<ul>
+<li>浏览器通过 HTTP POST 提交任务，建立独立的长连接接收 <code>SSE progress</code> 单向推流，最后通过 HTTP GET 查历史。</li>
+<li><strong>此方案的局限</strong>：只能“服务端单向通知浏览器”。如果中途需要人工审批高危操作、补充参数或用户主动按“停止”，浏览器不能在 SSE 连接上反向发送数据，必须另外再发起新的 HTTP POST 请求，前后端连接与状态逻辑是割裂的。</li>
+</ul>
+<p><strong>若切换为 WebSocket 全双工（方案 3），全链路时序将发生本质升级：</strong></p>
+<ul>
+<li><strong>单通道常驻会话</strong>：浏览器与服务端仅需一次握手建立 WebSocket，任务提交、实时 Token 流、步骤事件全部在同一个持久 TCP 连接上传输。</li>
+<li><strong>零摩擦双向打断与审批</strong>：服务端下发 <code>approval_required</code> 时，浏览器无需重开 HTTP 请求，直接在当前 WebSocket 上即时发送审批结果（<code>approval_response</code>）或取消指令（<code>abort_run</code>），实现真正的双向人机协同（详见下节）。</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-hitl"><h3>5. 深入全双工通信：人机协同与实时控制流程</h3><div class="lesson-body"><div class="am-md"><p>通过 WebSocket，系统可以优雅支持以下三种核心人机协作场景：</p>
+
+<h4>场景一：高危工具的人机审批（Human-in-the-loop Approval）</h4>
+<p>当 Policy 判定某工具操作超出免密授权范围（如删除文件、修改生产环境配置）时，Runner 暂停执行并等待用户裁决：</p>
+<ul>
+<li><strong>Runner</strong>：检测到工具 <code>delete_file</code> 需要人工确认，生成审批请求 <code>approval_requested</code> 并挂起协程。</li>
+<li><strong>服务端（WebSocket）</strong>：向客户端推送帧：<code>{"type": "approval_required", "action_id": "act_981", "tool": "delete_file", "params": {"path": "main.py"}}</code>。</li>
+<li><strong>客户端（前端）</strong>：弹出确认对话框，展示具体操作与危险提示，阻止用户继续无意义输入。</li>
+<li><strong>用户</strong>：点击“拒绝，禁止删除”。</li>
+<li><strong>客户端（WebSocket）</strong>：向上游发送确认帧：<code>{"type": "approval_response", "action_id": "act_981", "approved": false, "reason": "保留原文件，改为新建副本"}</code>。</li>
+<li><strong>Runner</strong>：唤醒挂起协程，生成受拒回执 <code>ToolResult(error="用户拒绝操作：保留原文件，改为新建副本")</code>，交回模型引导下一步。</li>
+</ul>
+
+<h4>场景二：运行中向用户求助或澄清（Ask User / Clarification）</h4>
+<p>当任务目标存在歧义或缺少必要输入时，模型主动调用内置交互工具向用户提问：</p>
+<ul>
+<li><strong>模型</strong>：发出工具调用 <code>ask_user(prompt="请问测试环境数据库密码是多少？")</code>。</li>
+<li><strong>服务端（WebSocket）</strong>：推送事件 <code>{"type": "user_input_requested", "prompt": "请问测试环境数据库密码是多少？"}</code>。</li>
+<li><strong>用户</strong>：在前端输入框输入内容并回车发送。</li>
+<li><strong>客户端（WebSocket）</strong>：发送 <code>{"type": "user_input_response", "answer": "secret_123"}</code>。</li>
+<li><strong>Runner</strong>：将用户回答作为工具执行结果反馈给模型，继续自动化流程。</li>
+</ul>
+
+<h4>场景三：用户主动打断与紧急停止（User Abort / Interrupt）</h4>
+<p>当用户发现模型思路出现偏差时，点击界面“停止”按钮：</p>
+<ul>
+<li><strong>客户端（WebSocket）</strong>：发送打断控制帧：<code>{"type": "abort_run", "run_id": "run_001"}</code>。</li>
+<li><strong>服务端</strong>：触发该任务对应的 <code>asyncio.Event</code> 取消信号，并通知当前等待的网络请求或工具线程抛出 <code>CancelledError</code>。</li>
+<li><strong>Runner</strong>：安全收尾当前未完成步骤，在会话中标记该 Turn 状态为 <code>interrupted</code>，释放工作区资源。</li>
+<li><strong>服务端（WebSocket）</strong>：回传事件 <code>{"type": "run_interrupted", "run_id": "run_001"}</code>，前端恢复可输入状态。</li>
+</ul>
+
+<h4 id="module-interfaces-tui-diff">【认知破局】Claude Code 也是 CLI，为什么它具备强大的人机交互？</h4>
+<p>很多开发者会产生直觉困惑：<em>“既然终端命令往往是单次阻塞执行的脚本，为什么 Claude Code、Cursor Terminal 或 Aider 也是跑在终端里，却能做到打字机流式输出、实时高危命令审批（[Y/n]）甚至按 Ctrl+C 随时打断？”</em></p>
+<p>这是因为 <strong>CLI 存在两种截然不同的形态</strong>：</p>
+<ul>
+<li><strong>形态 1：单次批处理命令（One-shot CLI / 传统脚本）</strong>：
+  <ul>
+    <li><strong>运行特征</strong>：单次运行即退出（如本项目阶段 0–5 的 <code>python -m learn_agent --task "..."</code>）。主线程同步阻塞直到任务全部结束，中途不监听终端事件，适合自动化流水线。</li>
+  </ul>
+</li>
+<li><strong>形态 2：全交互式终端应用（Interactive TUI / REPL，如 Claude Code、pi）</strong>：
+  <ul>
+    <li><strong>运行特征</strong>：进程常驻运行，由终端事件循环驱动。它在操作系统终端标准输入输出层（stdio）实现了与 WebSocket 全双工完全等价的三大能力：
+      <ol>
+        <li><strong>标准输出流式推流（stdout streaming）</strong>：不等待模型全部返回，而是监听模型的 delta chunk，通过向 <code>stdout</code> 写入 ANSI 转义序列（Escape Codes），实现实时的打字机动画、光标重绘与折叠式思考进度条。</li>
+        <li><strong>终端原始模式人机审批（Raw Mode &amp; stdin）</strong>：当 Policy 判定工具高危时，Runner 挂起协程，终端进入原始模式（Raw Mode）直接监听方向键、回车或 <code>y/n</code> 按键。用户交互确认后，立即恢复终端并唤醒 Runner 推进。</li>
+        <li><strong>操作系统信号打断（POSIX Signals）</strong>：捕获操作系统的 <code>SIGINT</code>（Ctrl+C）信号，向底层的 LLM 网络请求触发 <code>AbortController</code>，安全终止当前调用并释放资源。</li>
+      </ol>
+    </li>
+  </ul>
+</li>
+</ul>
+<p><strong>架构启示</strong>：优秀的 Agent 架构中，UI 形式（无论是 Web 浏览器还是终端 TUI）只是<strong>展示层外壳</strong>；其底层都依赖于<strong>“事件驱动流式推流 + 异步挂起/唤醒状态机 + 真实打断信令”</strong>这套完全通用的交互协议。成熟的 Agent（如 pi）内部甚至将 TUI 作为前端客户端，与 Headless Core 通过 stdio 交换 JSON-RPC 消息，两端架构高度一致。</p>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-events"><h3>6. 全景数据流架构与事件协议设计</h3><div class="lesson-body"><div class="am-md">
+<h4 id="module-interfaces-data-dimensions">6.1 核心概念辨析：Event、Session、State 与 Checkpoint 的四个不同维度</h4>
+<p>在设计系统数据模型时，千万不能把前端收到的“步骤事件（Event）”和系统的底层状态混为一谈。这四个概念分别处于完全不同的系统维度，服务于截然不同的受众：</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>概念名称</th>
+<th>所属维度与本质</th>
+<th>主要受众</th>
+<th>存储位置与生命周期</th>
+<th>核心回答的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Event（事件流）</strong></td>
+<td><strong>通信与观测维度</strong><br>运行时不可变的瞬态广播脉冲</td>
+<td>展示层（Web / TUI）<br>链路追踪（如 Langfuse）</td>
+<td>内存环形缓冲区或临时流，任务结束后即可丢弃</td>
+<td><em>“刚才这 10 毫秒内，系统发生了什么动静？”</em></td>
+</tr>
+<tr>
+<td><strong>Session（会话记录）</strong></td>
+<td><strong>人机交互维度</strong><br>逻辑对话与业务 Turn 脉络</td>
+<td>人类用户（回溯历史）<br>模型（次轮组装历史上下文）</td>
+<td>持久化存储（JSONL / 数据库），长期留存</td>
+<td><em>“我和模型之前聊了什么、达成过什么结论？”</em></td>
+</tr>
+<tr>
+<td><strong>State（运行时状态）</strong></td>
+<td><strong>执行中枢维度</strong><br>任务内部共享的“黑板与变量”</td>
+<td>Runner 调度器<br>各工具节点与子 Agent</td>
+<td>进程内存变量对象，仅在单次 Run 期间存活</td>
+<td><em>“当前拿到了哪些中间数据？下一步依赖什么参数？”</em></td>
+</tr>
+<tr>
+<td><strong>Checkpoint（检查点）</strong></td>
+<td><strong>容灾恢复维度</strong><br>关键执行节点的物理冷冻快照</td>
+<td>崩溃恢复状态机<br>人工介入核对器</td>
+<td>持久化磁盘/存储，在关键副作用前落盘</td>
+<td><em>“若机器此刻断电重启，从哪一步恢复才不重复扣费或重写文件？”</em></td>
+</tr>
+</tbody></table></div>
+
+<h4 id="module-interfaces-dataflow-map">6.2 全景系统数据流图：数据如何在各层协同流转？</h4>
+<p>为了让不同层级的数据职责清晰、互不污染，工业级 Agent 系统的全景数据流动遵循以下五层流转体系：</p>
+
+<figure class="am-diagram"><img class="lesson-svg" src="../assets/diagrams/system-dataflow-architecture.svg" width="960" height="780" alt="全景系统数据流架构：Event、State、Checkpoint 与 Session 协同流转" loading="lazy"><figcaption>全景系统数据流架构：展示层、通信层、执行工作内存 State、持久化层（Checkpoint / Session）与上下文知识层的协同流转。</figcaption></figure>
+
+<p><strong>全景数据流动的五大阶段剖析：</strong></p>
+<ol>
+<li><strong>阶段 1：启动加载与上下文初始化（Memory + Session → Context → State）</strong>：
+  <ul>
+    <li>当用户发起新一轮提问时，<a href="context.html#module-context">Context Manager</a> 从持久化存储读取该会话已完成的历史记录（Session），并结合工作区锁定的一致性项目记忆（Memory 快照）。</li>
+    <li>在严格的 Token 输入预算内，完成历史裁剪与系统指令组装，注入为当前执行中枢的初始工作状态（State）。</li>
+  </ul>
+</li>
+<li><strong>阶段 2：执行中枢推进与事件瞬态广播（State ↔ Model ↔ Policy ↔ Event）</strong>：
+  <ul>
+    <li>Runner 驱动模型生成。模型吐出的 Token 增量通过通信层立即包装为 <code>model_delta</code> 事件推向展示层，实现打字机效果，不改变系统持久状态。</li>
+    <li>当模型提出工具调用时，调用信息写入内存 State，同时向客户端广播 <code>tool_call_started</code> 步骤事件。</li>
+  </ul>
+</li>
+<li><strong>阶段 3：高危动作前的容灾冷冻（State → Checkpoint 刷盘）</strong>：
+  <ul>
+    <li>在执行可能产生物理外部副作用的动作（如文件改写、外部 API 扣费）之前，系统将当前步骤序号、调用唯一 ID（<code>invocation_id</code>）和 State 序列化快照写入持久化 <a href="recovery.html#module-recovery">Checkpoint</a>。</li>
+    <li>若机器此时突发断电，重启后恢复引擎严格依据该检查点核对物理证据，绝不重复派发动作。</li>
+  </ul>
+</li>
+<li><strong>阶段 4：全双工人机协同挂起与唤醒（State 挂起 ↔ Event 询问 ↔ Client 确认 ↔ State 唤醒）</strong>：
+  <ul>
+    <li>Policy 拦截到高危操作时，Runner 挂起当前协程，通信层向客户端推送 <code>approval_required</code> 事件。</li>
+    <li>用户在前端点击审批确认后，客户端在同一 WebSocket 通道上原路送回 <code>approval_response</code> 控制帧，Runner 被唤醒并将结果写入 State 继续。</li>
+  </ul>
+</li>
+<li><strong>阶段 5：任务闭合与长期历史沉淀（State → SessionLog / S3 / 磁盘工作区）</strong>：
+  <ul>
+    <li>当模型给出最终答复且不再调用工具时，Runner 确立本次 Turn 结束边界。</li>
+    <li>将提问、完整回答、工具真实回执与消耗用量正式追加写入持久化 <a href="state.html#module-state">SessionLog</a>；中间复杂的草稿与临时状态释放，只留下干净的领域交付物供人类回溯与后续轮次复用。</li>
+  </ul>
+</li>
+</ol>
+
+<h4 id="module-interfaces-event-levels">6.3 区分两级事件流与标准帧格式</h4>
+<p>在通信通道（WebSocket 或 SSE）上分发的 Event 流中，必须进一步分清两个层级：</p>
+<ul>
+<li><strong>层级 1：模型 Token 增量流（Token Streaming）</strong>：模型服务生成的逐字增量文本（Delta）。只用于前端打字机效果，不改变系统状态。</li>
+<li><strong>层级 2：Harness 步骤事件流（Step / Lifecycle Events）</strong>：反映 Agent 真实的生命周期与工具交互，驱动前端 UI 组件状态切换（如折叠思考框、显示执行进度条、渲染工具结果卡片）。</li>
+</ul>
+
+<p>推荐采用统一的 JSON 帧结构，包含事件类型、会话 ID、递增序列号与负载数据：</p>
+<pre><code>{
+  "event_id": 104,
+  "run_id": "run_20261031_001",
+  "session_id": "sess_default",
+  "timestamp": 1793433600.123,
+  "type": "tool_call_started",
+  "payload": {
+    "tool_call_id": "call_abc123",
+    "tool_name": "search_text",
+    "arguments": {"keyword": "Policy"}
+  }
+}</code></pre>
+
+<p>核心事件类型规范表：</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>事件类型（type）</th>
+<th>触发时机</th>
+<th>前端展现与行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run_started</code></td>
+<td>Runner 接收任务并校验通过</td>
+<td>清空草稿、锁定输入框、显示运行中状态</td>
+</tr>
+<tr>
+<td><code>model_delta</code></td>
+<td>接收到模型吐出的文本片段</td>
+<td>打字机追加渲染当前段落</td>
+</tr>
+<tr>
+<td><code>thought_delta</code></td>
+<td>接收到模型的思维链内容（Thinking）</td>
+<td>在专属可折叠的“思考中”区块内流式渲染</td>
+</tr>
+<tr>
+<td><code>tool_call_started</code></td>
+<td>模型提出工具调用，即将执行</td>
+<td>显示“正在执行某工具”卡片与入参</td>
+</tr>
+<tr>
+<td><code>tool_call_completed</code></td>
+<td>工具执行完成，取得真实回执</td>
+<td>更新工具卡片为成功/失败状态，展示输出折叠</td>
+</tr>
+<tr>
+<td><code>approval_required</code></td>
+<td>触发高危动作，等待人工审批</td>
+<td>弹出审批卡片，高亮允许/拒绝按钮</td>
+</tr>
+<tr>
+<td><code>run_completed</code></td>
+<td>模型输出最终答案且不再调工具</td>
+<td>解锁输入框、记录完成用时与消耗 Token</td>
+</tr>
+<tr>
+<td><code>run_error</code></td>
+<td>模型报错、预算超限或系统异常</td>
+<td>标红显示具体错误说明，提示可重试或修改要求</td>
+</tr>
+</tbody></table></div>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-p1-panel-F"><h3>7. 工业级边界处理：断线重连、重复提交与真实取消</h3><div class="lesson-body"><div class="am-md">
+<h4>A. 断线重连与增量补读（Event Cursor）</h4>
+<p>移动端锁屏、网络抖动或切换 Wi-Fi 会导致 WebSocket 断开。此时绝不能在重连后简单重新提交任务：</p>
+<ul>
+<li><strong>服务端分配有序游标</strong>：每个由服务端下发的事件都携带单调递增的 <code>event_id</code>（如 1, 2, 3...）。</li>
+<li><strong>客户端维护最新游标</strong>：客户端在内存与本地缓存中记录当前已收到的最大 <code>last_event_id</code>。</li>
+<li><strong>重连带入游标补读</strong>：客户端重建 WebSocket 连接时，第一条握手帧发送 <code>{"action": "resume", "run_id": "run_001", "after_event_id": 42}</code>。服务端直接从持久化记录或环形事件缓冲区中，回放 <code>event_id &gt; 42</code> 的未收消息，最后切换为实时推送。</li>
+<li><strong>幂等去重</strong>：客户端对已渲染的 <code>event_id</code> 做集合排重，防止网络重传导致界面出现重复消息。</li>
+</ul>
+
+<h4>B. 防止重复提交（Client Request ID）</h4>
+<p>在网络卡顿或用户焦虑连续点击提交按钮时，如果接口不加保护，会同时触发两次完全一样的 Agent 执行过程：</p>
+<ul>
+<li><strong>客户端生成幂等 Key</strong>：提交新任务时，前端生成唯一的 UUID（<code>client_request_id</code>）一并发送。</li>
+<li><strong>服务端锁与去重判断</strong>：服务端先以 <code>client_request_id</code> 为键尝试获取任务执行锁；如果发现同一个 ID 正在运行，直接返回已有任务的 <code>run_id</code> 并绑定到当前通信通道，绝不启动第二个 Runner 循环。</li>
+</ul>
+
+<h4>C. 诚实表达取消状态（真实取消传播）</h4>
+<p>需严格区分“界面关闭”、“网络断连”、“收到取消请求”与“执行真正停止”：</p>
+<ul>
+<li><strong>真实传播取消信号</strong>：用户点击“停止”后，不能只在前端让转圈图标消失，必须通过服务端的取消管道通知底层 Runner。</li>
+<li><strong>不可强杀操作的安全检查</strong>：对于正在进行的原子性物理操作（如正在刷盘写入大文件、正在提交数据库事务），应等待当前单一调用安全完成后再退出循环，并在会话记录中如实写入“已取消”标志与已产生的副作用。</li>
+<li><strong>状态诚实性</strong>：取消接口先返回“已受理取消请求”，待 Runner 确认彻底跳出循环并释放工作区后，再推送 <code>run_cancelled</code> 终态，UI 绝不能伪造成功或停止状态。</li>
+</ul>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-p1-panel-E"><h3>8. 开源系统如何组织多入口？</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>pi（官方文档）</strong>：其 <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/docs/rpc.md">RPC 协议</a> 将 Agent 核心设计为无界面的服务端，CLI、Web 前端与 VS Code 插件均通过标准的 JSON-RPC 消息与事件帧驱动。前端仅需实现 UI 渲染和命令发送，所有权限、状态和工具调度均在核心进程中完成。</li>
+<li><strong>AgentScope Java（官方文档）</strong>：其 <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/architecture.md">架构设计</a> 显式拆分了同步请求、请求内流式事件管道与基于持久任务的异步交互，确保多入口可以无缝共享相同的 Model 客户端、工具注册表和过滤器中间件。</li>
+<li><strong>OpenAI Assistants / Realtime API</strong>：采用运行（Run）与线程（Thread）分离的模式，通过 Server-Sent Events 或 WebSocket 实时广播 <code>thread.run.step.created</code>、<code>thread.run.step.completed</code> 等细粒度生命周期，并在需要工具回执或人工输入时产生 <code>requires_action</code> 挂起状态。</li>
+</ul>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-p1-panel-G"><h3>9. 本项目当前实现与未实现范围</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>已实现（截至阶段 5：同步 CLI + 会话查询）</strong>：
+  <ul>
+  <li>任务提交经 <code>run_task()</code> 进入 Runner 同步等待返回 <code>RunResult</code>，支持通过 <code>--session ID</code> 续接同一会话。</li>
+  <li>提供 <code>--list-sessions</code> 与 <code>--show-session ID</code> 只读查询本地 JSONL 会话记录，查询过程完全不调用模型或工具（详见<a href="../stages/stage-1.html#stage-1">阶段 1</a> 与<a href="../stages/stage-3.html#stage-3">阶段 3</a>）。</li>
+  </ul>
+</li>
+<li><strong>未实现（留待<a href="../stages/stage-8.html#stage-8">阶段 8 按需扩展</a>）</strong>：Web HTTP / WebSocket 服务网关、后台持久任务管理、双向人机协同交互帧协议（审批与反向提问）、断线游标补读与任务取消信令。</li>
 </ul></div></div></section>
-<section class="lesson-section" id="module-interfaces-p2-panel-A"><h3>8. 期望达到的效果（后续 Web 入口练习）</h3><div class="lesson-body"><div class="am-md"><p>当后续需要增加 Web 入口时，先让 CLI 与 HTTP 路由共用同一个应用服务，再按以下标准验证：</p>
+
+<section class="lesson-section" id="module-interfaces-p2-panel-A"><h3>10. 期望达到的效果（后续 Web 与 WebSocket 入口练习）</h3><div class="lesson-body"><div class="am-md"><p>当后续为 Agent 接入 Web 界面或 WebSocket 交互入口时，按照以下核心指标进行验收与验证：</p>
 <p><strong>期望达到的效果：</strong></p>
 <ul>
-<li><strong>双入口行为一致</strong>：从 CLI 和 HTTP 提交相同任务，遵循完全一致的工具集与 Policy 权限限制。</li>
-<li><strong>查询与刷新零副作用</strong>：查询历史或刷新浏览器页面只读取已保存记录，绝不触发新的模型请求或工具执行。</li>
-<li><strong>断线可补读进度</strong>：SSE 连接断开重连后，能根据事件游标补齐缺失步骤，且不会重复渲染同一事件。</li>
-<li><strong>重复提交不重跑</strong>：携带相同客户端请求 ID 重复提交时，服务端直接返回已有任务状态，不会启动第二次运行。</li>
-<li><strong>取消状态真实可信</strong>：发起取消或关闭前端页面后，任务状态如实反映后台执行端是否真正停止，不伪造成功或停止状态。</li>
+<li><strong>多端行为完全一致</strong>：从 CLI 终端和 Web 浏览器提交相同任务，底层调用同一套 Runner，遵循完全一致的工具集与 Policy 权限拦截。</li>
+<li><strong>查询操作绝对只读</strong>：查看会话列表、加载历史对话或刷新浏览器页面只读取已保存记录，绝不触发新的模型请求或工具执行。</li>
+<li><strong>全双工协作无缝顺畅</strong>：高危工具审批与提问能通过 WebSocket 实时弹窗，用户确认后流程即时继续，拒绝后安全流转。</li>
+<li><strong>断线可依据游标补齐</strong>：网络中断或刷新网页后，前端带上最后事件游标重连，能精确补齐断连期间遗漏的步骤事件，不丢帧也不重复渲染。</li>
+<li><strong>重复提交安全幂等</strong>：携带相同客户端请求 ID 重复提交时，服务端直接返回已有任务状态，绝不启动第二个并发执行循环。</li>
+<li><strong>停止指令真实生效</strong>：前端点击“停止”后，后端在收到取消信号后安全中断循环并记录中断状态，绝不发生前端假装停止而后台仍在消耗 Token 的情况。</li>
 </ul></div></div></section><nav class="chapter-nav" aria-label="章节导航"><a href="../stages/stage-8.html#stage-8">← 阶段 8：按需求增加入口、扩展与编排</a><a href="loop.html#module-loop">Loop / Runner：控制一次任务怎样继续和停止 →</a></nav></article><footer class="footer"><p>直接维护本页 HTML；通用原理与阶段实践通过链接关联。</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">图示</span><div><button id="diagram-size" type="button">原始尺寸</button><button id="diagram-close" type="button">关闭</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 </body></html>

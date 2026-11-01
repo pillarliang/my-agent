@@ -1,124 +1,408 @@
 <!doctype html>
 <html lang="en" data-theme="shadcn" data-mode="light">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Interfaces: Share Execution Flow Across Entry Points · Learn Agent</title>
+<title>Interfaces: User Entry Points &amp; Real-Time Communication Protocols · Learn Agent</title>
 <link rel="stylesheet" href="../../assets/tutorial.css">
 <script src="../../assets/tutorial.js" defer></script>
 </head><body>
-<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Reuse Project Knowledge Across Sessions with Memory</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Long Tasks: Offloading &amp; Compaction</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">Stage 8: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Harness Core Modules</div><a class="chapter-link" href="interfaces.html#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="observability.html#module-observability" data-chapter="module-observability">Observability: Runtime Telemetry &amp; Tracing</a><a class="chapter-link" href="evaluation.html#module-evaluation" data-chapter="module-evaluation">Evaluation: Agent Benchmarks &amp; Sandboxes</a><div class="nav-group-title">3. Advanced Extensions</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">4. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">5. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
-<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/interfaces.html#module-interfaces">中文版</a></p><article class="chapter" id="module-interfaces"><header class="chapter-header"><span class="kind">Module Principles &amp; Design Options</span><h2>Interfaces: Share Execution Flow Across Entry Points</h2></header><section class="lesson-section" id="module-interfaces-p1-panel-A"><h3>1. Starting Problem: How Do Different Entry Points Share a Single Execution Core?</h3><div class="lesson-body"><div class="am-md"><p>When a system needs to provide a Web UI or API in addition to a CLI, the most common code smell is each entry point assembling its own set of tools, permissions, and loop logic.</p>
+<div class="layout"><aside class="sidebar"><a class="brand" href="../tutorial.html#overview">Learn Agent<small>Build &amp; Extend an Agent Harness from Scratch</small></a><details id="chapter-menu" open><summary>Toggle Contents</summary><div class="menu-body"><label for="chapter-search" class="sr-only">Search chapters</label><input class="nav-search" id="chapter-search" type="search" placeholder="Search chapter titles" autocomplete="off"><div class="search-count" id="search-count" aria-live="polite"></div><nav aria-label="Tutorial contents"><a class="chapter-link" href="../tutorial.html#overview">Getting Started</a><a class="chapter-link" href="../tutorial.html#system-map" data-chapter="system-map">What System We Are Building</a><div class="nav-group-title">1. Learning Path</div><a class="chapter-link" href="../stages/stage-0.html#stage-0" data-chapter="stage-0">Stage 0: Run a Minimal Standalone Agent Loop</a><a class="chapter-link" href="../stages/stage-1.html#stage-1" data-chapter="stage-1">Stage 1: Split Single File &amp; Define Module Interfaces</a><a class="chapter-link" href="../stages/stage-2.html#stage-2" data-chapter="stage-2">Stage 2: Control Action Permissions with Policy</a><a class="chapter-link" href="../stages/stage-3.html#stage-3" data-chapter="stage-3">Stage 3: Sessions &amp; Records</a><a class="chapter-link" href="../stages/stage-4.html#stage-4" data-chapter="stage-4">Stage 4: Context Management &amp; Budgets</a><a class="chapter-link" href="../stages/stage-5.html#stage-5" data-chapter="stage-5">Stage 5: Reuse Project Knowledge Across Sessions with Memory</a><a class="chapter-link" href="../stages/stage-6.html#stage-6" data-chapter="stage-6">Stage 6: Long Tasks: Offloading &amp; Compaction</a><a class="chapter-link" href="../stages/stage-7.html#stage-7" data-chapter="stage-7">Stage 7: Resume Safely After Interruption</a><a class="chapter-link" href="../stages/stage-8.html#stage-8" data-chapter="stage-8">Stage 8: Add Entry Points, Extensions &amp; Orchestration on Demand</a><div class="nav-group-title">2. Harness Core Modules</div><a class="chapter-link" href="#module-interfaces" data-chapter="module-interfaces">Interfaces: Share Execution Flow Across Entry Points</a><a class="chapter-link" href="loop.html#module-loop" data-chapter="module-loop">Loop / Runner: Control How a Task Continues and Stops</a><a class="chapter-link" href="model.html#module-model" data-chapter="module-model">Model: Adapt Model Services &amp; Wire Protocols</a><a class="chapter-link" href="tools.html#module-tools" data-chapter="module-tools">Tools: Execute Model-Requested Tool Calls</a><a class="chapter-link" href="policy.html#module-policy" data-chapter="module-policy">Policy: Check Action Permissions Before Execution</a><a class="chapter-link" href="state.html#module-state" data-chapter="module-state">Session / State: Manage Sessions &amp; Execution Records</a><a class="chapter-link" href="context.html#module-context" data-chapter="module-context">Context Manager: Assemble What Goes to the Model</a><a class="chapter-link" href="observability.html#module-observability" data-chapter="module-observability">Observability: Runtime Telemetry &amp; Tracing</a><a class="chapter-link" href="evaluation.html#module-evaluation" data-chapter="module-evaluation">Evaluation: Agent Benchmarks &amp; Sandboxes</a><div class="nav-group-title">3. Advanced Extensions</div><a class="chapter-link" href="memory.html#module-memory" data-chapter="module-memory">Memory: Select Knowledge Retained Across Sessions</a><a class="chapter-link" href="extensions.html#module-extensions" data-chapter="module-extensions">Extensions: Connect Skills, Hooks &amp; External Tools</a><a class="chapter-link" href="orchestration.html#module-orchestration" data-chapter="module-orchestration">Orchestration: Coordinate Multi-Agent Division of Labor</a><div class="nav-group-title">4. External Resources</div><a class="chapter-link" href="../tutorial.html#external-resources" data-chapter="external-resources">Model Services, Workspace &amp; External Systems</a><div class="nav-group-title">5. Architecture &amp; Verification</div><a class="chapter-link" href="../reference/architecture-agent-harness.html#architecture-agent-harness" data-chapter="architecture-agent-harness">Current Minimal Skeleton &amp; Future Module Blueprint</a><a class="chapter-link" href="../reference/research.html#reference-research" data-chapter="reference-research">Design Basis: Source Samples &amp; Official Docs</a><a class="chapter-link" href="../reference/validation.html#reference-validation" data-chapter="reference-validation">Local Checks &amp; Verification Scope</a><a class="chapter-link" href="../reference/glossary.html#reference-glossary" data-chapter="reference-glossary">Glossary &amp; Legend</a></nav></div></details></aside>
+<main class="content"><div class="reading"><p class="reading-rule"><a href="../tutorial.html#overview">← Table of Contents</a> · <a href="../../modules/interfaces.html#module-interfaces">中文版</a></p><article class="chapter" id="module-interfaces"><header class="chapter-header"><span class="kind">Module Principles &amp; Design Options</span><h2>Interfaces: User Entry Points &amp; Real-Time Communication Protocols</h2></header><section class="lesson-section" id="module-interfaces-p1-panel-A"><h3>1. Starting Problem: Why Can&#39;t an Agent Entry Point Be a Plain Web API?</h3><div class="lesson-body"><div class="am-md"><p>Traditional Web endpoints follow a standard request-response cycle: the client issues an HTTP POST, receives JSON within a few hundred milliseconds, and closes the connection. Applying this pattern directly to an Agent system breaks down under three engineering hurdles:</p>
+<ul>
+<li><strong>Hurdle 1: Long-running black box execution</strong>: An Agent frequently requires seconds or minutes to perform multi-step planning, model invocations, and tool executions. If the user must wait blindly for a single HTTP response without any intermediate signals, they often assume the UI is frozen, reload the page, or resend requests—creating costly duplicate tasks.</li>
+<li><strong>Hurdle 2: Inability to pause for human intervention (Human-in-the-loop)</strong>: When an Agent encounters high-risk actions (e.g., deleting production database tables, executing write operations on critical files) or ambiguous goals, it must halt and request human authorization. A unidirectional HTTP request cannot pause mid-stream to solicit reverse user input.</li>
+<li><strong>Hurdle 3: Inability to interrupt promptly (User Abort)</strong>: If a user notices that the model is hallucinating, spiraling into a loop, or making useless tool calls, they need to cancel immediately. Without a bidirectional control channel, closing the browser tab leaves the backend burning tokens and rate limits unattended.</li>
+</ul>
 <p><strong>Expected Outcomes:</strong></p>
 <ul>
-<li><strong>Separate submission, execution, and presentation</strong>: Whether a request originates from the CLI or a browser, it passes through the exact same application service configuration, permission checks, and Runner execution flow.</li>
-<li><strong>Keep entry points free of wire-protocol details</strong>: The frontend does not need to understand model SDK protocols, and the CLI does not duplicate the Agent Loop; the application service accepts plain domain parameters (such as session ID and task text).</li>
-<li><strong>Ground truth lives in persistent records</strong>: Link execution, history, and progress via stored Run IDs rather than judging task completion solely by what the frontend page displays.</li>
+<li><strong>Decoupled execution core</strong>: Whether invoked from a CLI, Web UI, IDE extension, or Slack bot, tasks share the exact same Runner, Policy rules, and toolsets; interface layers only parse inputs and translate events.</li>
+<li><strong>Transparent execution visibility</strong>: Model thoughts, token-level typing, and tool call start/finish states are streamed in real time via structured events so users always know what is happening.</li>
+<li><strong>Seamless Human-in-the-loop support</strong>: Approvals for sensitive tools, clarifications, and user cancellations integrate naturally into the running loop without tearing down the entire session.</li>
+<li><strong>Resilience across disconnects</strong>: Clients that reconnect after Wi-Fi blips or page reloads catch up on missed progress using event cursors without triggering duplicate runs.</li>
 </ul>
-<p>The diagram below shows the target structure where CLI and Web share an application service (currently only the CLI is implemented; HTTP / WebRuns are future extension directions):</p>
+<p>The diagram below shows the decoupling between CLI, Web, and backend application services (the CLI is implemented; HTTP and WebSocket are future extensions):</p>
 </div>
 <figure class="am-diagram am-flow"><img class="lesson-svg" src="../../assets/diagrams/diagram-module-interfaces-1-panel-A-1.svg" width="291" height="572" alt="Flowchart: CLI, AgentService, Browser, HTTP Adapter, WebRuns, Runner, SQLite" loading="lazy"></figure>
 </div>
 </section>
-<section class="lesson-section" id="module-interfaces-interaction"><h3>2. Module Collaboration: How Are the Execution Path and Query Path Separated?</h3><div class="lesson-body"><div class="am-md"><p>In a multi-entry architecture, "submitting a run" and "querying records" are two completely independent paths:</p>
+<section class="lesson-section" id="module-interfaces-interaction"><h3>2. Architecture Layers: Presentation, Transport, Application, and Execution Core</h3><div class="lesson-body"><div class="am-md"><p>To share the underlying Agent logic cleanly across various interfaces, the system is separated into four layers:</p>
 <ul>
-<li><strong>Run submission path</strong>: The entry point collects the user prompt → the <strong>application service</strong> selects the workspace directory, toolset, and Policy configuration → hands off to <a href="loop.html#module-loop">Runner</a> to drive the execution loop → the <a href="state.html#module-state">State recording layer</a> persists the actual steps and results.</li>
-<li><strong>Read-only query path</strong>: The entry point requests a session list or history details → reads saved records directly → renders them as-is, <strong>never triggering model calls or tool execution</strong>.</li>
-<li><strong>Layered error presentation</strong>: The presentation layer clearly distinguishes between "request parameters rejected," "run execution failed," and "record query failed," never disguising an empty result as a successful execution.</li>
-</ul><figure class="am-diagram am-seq"><img class="lesson-svg" src="../../assets/diagrams/module-interfaces-collaboration.svg" width="1000" height="622" alt="General collaboration example: runs enter Runner via the application service; queries read records without triggering execution." loading="lazy"><figcaption>General collaboration example: runs enter Runner via the application service; queries read records without triggering execution.</figcaption></figure><p><strong>Separating initialization from runtime:</strong> Initialization fixes components and permission configurations; runtime only passes task input, session ID, execution results, and error details—frontend button state cannot directly dictate tool permissions.</p></div></div></section>
+<li><strong>Presentation Layer</strong>: Terminal CLI, Web frontend, or IDE extension. Only collects user input and renders structured events emitted by the server. <strong>Never place model SDK calls or permission evaluations in the presentation layer</strong>.</li>
+<li><strong>Transport Layer</strong>: CLI argument parser, HTTP route handlers, and WebSocket gateways. Handles connection lifecycles, authentication, heartbeats, and serialization (e.g., JSON-RPC or custom Event Schemas).</li>
+<li><strong>Application &amp; Dispatcher Layer (AgentService / Task Manager)</strong>: Accepts normalized domain requests (task text, session ID, approval results), locates past session records, resolves workspaces and Policy rules, and tracks background workers or tasks.</li>
+<li><strong>Execution Core (Runner Loop)</strong>: The pure Agent Loop orchestration engine. Takes <code>run_task</code> requests, drives model invocations, dispatches tools, and logs state; communicates outward solely through lifecycle event broadcasts and abort signals.</li>
+</ul>
+<p>In a multi-entry architecture, execution and query paths must remain strictly separated:</p>
+<ul>
+<li><strong>Run submission path</strong>: The entry point collects prompt → application service configures workspace and Policy → launches Runner loop → State persists history → transport pushes events to the client.</li>
+<li><strong>Read-only query path</strong>: The entry point requests session listings or conversation details → reads directly from persistent storage (JSONL or database) → returns raw records <strong>without invoking models or tools</strong>.</li>
+<li><strong>Layered error reporting</strong>: The presentation layer clearly differentiates between validation errors (400), controlled tool failures (returned to the model), and system crashes (500), never disguising failure as success.</li>
+</ul>
+<figure class="am-diagram am-seq"><img class="lesson-svg" src="../../assets/diagrams/module-interfaces-collaboration.svg" width="1000" height="622" alt="General collaboration example: runs enter Runner via the application service; queries read records without triggering execution." loading="lazy"><figcaption>General collaboration example: runs enter Runner via the application service; queries read records without triggering execution.</figcaption></figure>
+<p><strong>Separation of Initialization and Runtime</strong>: Component dependencies (API keys, workspace paths, Policy definitions) are injected when the service starts or a task is initialized; runtime messages only convey domain payloads, and frontend UI states never serve as the authority for backend permissions.</p></div></div></section>
 
-<section class="lesson-section" id="module-interfaces-p1-panel-C"><h3>3. Comparing Core Approaches: Where Does the Task Run, and Does the Caller Wait?</h3><div class="lesson-body"><div class="am-md"><p>Depending on task duration and deployment topology, there are 4 common execution service approaches (Approach A is currently used; B, C, and D are optional extensions):</p><h4>A. Synchronous In-Request Execution</h4>
+<section class="lesson-section" id="module-interfaces-p1-panel-C"><h3>3. Execution and Scheduling Approaches</h3><div class="lesson-body"><div class="am-md"><p>Depending on task duration and concurrency needs, runtime execution falls into 4 common patterns (Pattern A is currently implemented; B, C, and D are extension paths):</p>
+<h4>A. One-Shot Batch Execution (Non-interactive CLI &amp; Automated Scripts)</h4>
 <ul>
-<li><strong>How it works</strong>: The calling entry point blocks and waits until Runner returns the final result.</li>
-<li><strong>Best for</strong>: CLI tools and very short calls—simplest to implement with the most direct error reporting.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Task runtime is bounded by a single request timeout, and intermediate state is hard to track if the connection drops.</li>
+<li><strong>How it works</strong>: Run-to-completion invocation. The calling process blocks until Runner completes the entire loop and prints the final output.</li>
+<li><strong>Best for</strong>: CI/CD automation pipelines, cron scripts, and simple CLI commands (such as the Stages 0–5 CLI in this repository).</li>
+<li><strong>Trade-offs</strong>: Does not listen for user input during execution, making mid-run human approval impossible; wrapping this directly into a synchronous HTTP route easily triggers gateway timeouts.</li>
 </ul>
-<h4>B. In-Process Background Execution</h4>
+<h4>B. In-Process Background Task (Local Web MVP)</h4>
 <ul>
-<li><strong>How it works</strong>: The endpoint immediately returns a task ID and spawns a background task inside the current Web process to run Runner; the client queries progress and results via separate endpoints (see <a href="https://fastapi.tiangolo.com/async/">FastAPI Concurrency Docs</a>).</li>
-<li><strong>Best for</strong>: Local single-node Web MVPs with minimal code, avoiding blocking the HTTP event loop during model network waits.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Background tasks are lost if the Web process exits or restarts, and synchronous blocking operations cannot be stopped immediately just by cancelling an async Task.</li>
+<li><strong>How it works</strong>: The endpoint returns a task ID immediately and spawns an asynchronous coroutine (e.g., Python <code>asyncio.create_task</code>) to run the Runner, while the client monitors progress via a separate channel.</li>
+<li><strong>Best for</strong>: Single-user local Web UIs (e.g., FastAPI / Starlette) with minimal architectural footprint.</li>
+<li><strong>Trade-offs</strong>: Tasks are lost if the Web process restarts or crashes; state is isolated to a single process.</li>
 </ul>
-<h4>C. Persistent Queue &amp; Dedicated Worker</h4>
+<h4>C. Persistent Queue &amp; Dedicated Worker (Production Long Tasks &amp; Temporal Orchestration)</h4>
 <ul>
-<li><strong>How it works</strong>: Submitted tasks are persisted to storage first, claimed and executed by separate Worker processes, and queried by the frontend via task ID.</li>
-<li><strong>Best for</strong>: Long-running tasks and systems requiring service restarts and independent horizontal scaling.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: Requires handling task leases, duplicate delivery, cancellation propagation, and external side-effect reconciliation (see <a href="state.html#module-state">State</a>).</li>
-</ul>
-<h4>D. Externally Hosted Agent Runtime Service</h4>
-<ul>
-<li><strong>How it works</strong>: The CLI or Web app calls a full external runtime service directly and receives a task ID and event stream.</li>
-<li><strong>Best for</strong>: Scenarios that want to reuse existing scheduling infrastructure.</li>
-<li><strong>Trade-offs &amp; limitations</strong>: You must clearly define which side serves as the single source of truth for sessions, permissions, and history records to avoid maintaining two conflicting states locally and remotely.</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-D"><h3>4. How to Choose a Progress Transport Protocol?</h3><div class="lesson-body"><div class="am-md"><p><strong>Web Progress Push, Reconnect Catch-up &amp; History Query (Future Design)</strong></p>
-</div>
-<figure class="am-diagram am-seq"><img class="lesson-svg" src="../../assets/diagrams/diagram-module-interfaces-1-panel-D-1.svg" width="607" height="624" alt="Sequence diagram: Browser, HTTP, AgentService, Store" loading="lazy"></figure>
-<div class="am-md"><div class="am-table-wrap"><table>
-<thead>
-<tr>
-<th>Transport Approach</th>
-<th>How It Works</th>
-<th>Best For</th>
-<th>Main Implementation Cost</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>HTTP Polling</td>
-<td>Client periodically requests task status or incremental events</td>
-<td>Low-frequency status updates, minimal clients</td>
-<td>Polling interval latency and redundant requests</td>
-</tr>
-<tr>
-<td>POST + SSE + GET</td>
-<td>POST to submit task, one-way SSE stream, GET for history</td>
-<td>Streaming conversation display and tool step progress</td>
-<td>Requires managing long-lived connections, event cursors, and reconnect catch-up</td>
-</tr>
-<tr>
-<td>WebSocket</td>
-<td>Full-duplex persistent message channel</td>
-<td>High-frequency bidirectional control and real-time interaction</td>
-<td>Requires custom message protocol, heartbeats, and reconnect state machine</td>
-</tr>
-</tbody></table></div>
-<p><strong>Key Conceptual Distinctions:</strong></p>
-<ul>
-<li><strong>SSE one-way event stream</strong>: The <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events">MDN SSE specification</a> defines one-way events, event IDs, and automatic reconnection. When a Web entry point mainly receives progress, using "plain POST for submit/cancel + SSE for progress + GET for history" is usually simpler and cleaner than WebSocket.</li>
-<li><strong>Task step progress vs. token-by-token streaming</strong>: Pushing step events such as "model request started" or "tool returned" is distinct from token-level streaming output from the model; the latter also requires adapting the Model adapter.</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-E"><h3>5. How Open-Source Systems Organize Multiple Entry Points</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>AgentScope Java (Official Docs)</strong>: Its <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/architecture.md">architecture guide</a> explicitly separates direct invocation, in-request streaming events, and persistent session task operations, allowing different entry points to reuse the same model, tool, and middleware configuration.</li>
-<li><strong>pi (Official Docs)</strong>: Its <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/docs/rpc.md">RPC interface</a> connects the same runtime core to different UIs (not limited to HTTP or browsers) via standardized structured commands and events.</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-F"><h3>6. Edge Cases: Reconnection, Duplicate Submission &amp; Cancellation</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>Reconnect catch-up &amp; deduplication</strong>: Assign a monotonically increasing or fixed ID to each event and track the read cursor on the client; after reconnecting, catch up on missed events from persistent storage first and deduplicate by event ID rather than relying solely on an in-memory frontend array for chat history.</li>
-<li><strong>Preventing duplicate submissions</strong>: If a user resends a plain POST during network jitter, a second duplicate task would launch. Support a client-supplied idempotency key (<code>client_request_id</code>) so the server can deduplicate submissions.</li>
-<li><strong>Expressing cancellation state honestly</strong>: Strictly distinguish between "page closed," "connection dropped," "user requested cancellation," and "execution actually stopped." A cancel endpoint should first return "cancellation request accepted" and update the final state only after the executor confirms termination; the UI must never pretend a background tool has stopped the instant the cancel button is clicked.</li>
-</ul>
-</div></div>
-</section>
-<section class="lesson-section" id="module-interfaces-p1-panel-G"><h3>7. Current Implementation &amp; Unimplemented Scope</h3><div class="lesson-body"><div class="am-md"><ul>
-<li><strong>Implemented (as of Stage 3: Synchronous CLI + Session Queries)</strong>:
+<li><strong>How it works</strong>: Submitted tasks are persisted to storage or durable execution engines (such as Redis/Celery, RabbitMQ, or <strong>Temporal state machines</strong>); independent Worker processes claim tasks via long-polling, run the Runner, and notify clients upon completion.</li>
+<li><strong>Best for</strong>: Multi-user enterprise platforms, long-horizon deep research or project-summary agents, and systems requiring horizontal elasticity and automated failover.</li>
+<li><strong>Architectural Patterns</strong>:
   <ul>
-  <li>Task submissions enter Runner via <code>run_task()</code> and wait synchronously to return <code>RunResult</code>, supporting session continuation via <code>--session ID</code>.</li>
-  <li>Provides <code>--list-sessions</code> and <code>--show-session ID</code> for read-only queries against local JSONL session records without invoking the model or tools (see <a href="../stages/stage-1.html#stage-1">Stage 1</a> and <a href="../stages/stage-3.html#stage-3">Stage 3</a>).</li>
+    <li><strong>Native Worker Pattern (e.g., Temporal Activity Worker)</strong>: The agent exposes no HTTP API; workers poll a Task Queue directly, with the coordinator automatically handling timeouts and node failover.</li>
+    <li><strong>External Service Pattern (e.g., HTTP 202 + Signal Callback)</strong>: An upstream orchestrator (like Temporal) triggers the agent via HTTP; the agent immediately returns 202 Accepted, executes in background coroutines, and notifies the workflow via asynchronous Signals upon completion, paired with K8s graceful shutdown.</li>
   </ul>
 </li>
-<li><strong>Not Yet Implemented (deferred to <a href="../stages/stage-8.html#stage-8">Stage 8 On-Demand Extensions</a>)</strong>: Web HTTP server, background tasks, persistent queues, SSE / WebSocket real-time streaming, request idempotency deduplication, and task cancellation protocol.</li>
+<li><strong>Trade-offs &amp; limitations</strong>: Introduces distributed dependencies; requires lease heartbeats, idempotency locks, distributed cancellation routing, and side-effect reconciliation (see <a href="state.html#module-state">State</a> and <a href="../stages/stage-7.html#stage-7">Stage 7: Recovery</a>).</li>
+</ul>
+<h4>D. Externally Hosted Agent Runtime (Fully Managed Cloud Services)</h4>
+<ul>
+<li><strong>How it works</strong>: Developers do not build a custom Runner or session database; instead, they call managed cloud Agent platforms (such as Dify API, Coze, OpenAI Assistants API, or LangGraph Cloud). The cloud orchestrator fully manages conversation history, context truncation, tool loop execution, and sandboxes, while the client merely renders incoming standard event streams.</li>
+<li><strong>Best for</strong>: Early MVPs, lightweight interfaces, and teams focusing strictly on frontend product experience without needing deep private Policy governance.</li>
+<li><strong>Trade-offs &amp; limitations</strong>:
+  <ul>
+    <li><strong>Dual-State Split-Brain</strong>: The cloud platform stores one version of conversation records, while your internal database usually wants to store another. Network hiccups easily lead to desynchronization.</li>
+    <li><strong>Black-Box Inflexibility &amp; Vendor Lock-in</strong>: Inability to customize context compaction logic or inject granular local Policy permission checks before tool dispatch, paired with higher per-run costs.</li>
+  </ul>
+</li>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-p1-panel-D"><h3>4. Choosing a Transport Protocol: Polling, SSE, or WebSocket?</h3><div class="lesson-body"><div class="am-md"><p>How should clients receive real-time execution progress from an Agent? Three main protocols exist:</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Transport Protocol</th>
+<th>Channel Characteristics</th>
+<th>Best For</th>
+<th>Trade-offs &amp; Overhead</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HTTP Polling</strong></td>
+<td>Unidirectional pull: Client issues GET requests every 1–2 seconds to fetch incremental events</td>
+<td>Minimal read-only clients, restricted corporate networks banning websockets</td>
+<td>Fixed polling latency, high server query overhead, no smooth token-by-token streaming</td>
+</tr>
+<tr>
+<td><strong>POST + SSE + GET</strong></td>
+<td>Half-duplex: POST to start, SSE (Server-Sent Events) for downstream push, GET for history</td>
+<td>Text chat and read-only progress views (e.g., standard Q&amp;A assistants)</td>
+<td>Only supports server-to-client push; client interruptions or replies require separate HTTP calls</td>
+</tr>
+<tr>
+<td><strong>WebSocket Full-Duplex</strong></td>
+<td>Full-duplex: Single persistent connection allowing bidirectional, low-latency structured frames</td>
+<td>Agent IDEs, human approvals (HITL), interactive prompts, and instant cancellations</td>
+<td>Requires handling heartbeats, connection reconnect state machines, and frame routing</td>
+</tr>
+</tbody></table></div>
+
+<p><strong>Why WebSocket Excels for Human-in-the-Loop Workflows</strong></p>
+<p>Autonomous coding and DevOps agents are rarely passive text generators; they require frequent two-way collaboration:</p>
+<ul>
+<li><strong>Immediate two-way communication</strong>: A single authenticated TCP connection enables the server to stream tokens while the client sends control signals with sub-millisecond dispatch.</li>
+<li><strong>Explicit connection lifecycle</strong>: When a WebSocket disconnects, the server immediately detects the drop and decides whether to pause execution or continue running in the background.</li>
+<li><strong>Lower signaling overhead</strong>: Eliminates repetitive TCP handshakes, TLS negotiation, and header re-authentication for every user approval click.</li>
+</ul>
+<p><strong>Recommended Pattern</strong>: Adopt a hybrid pattern of <strong>"RESTful HTTP for static history queries + WebSocket for active bidirectional execution"</strong>.</p>
+</div>
+<figure class="am-diagram am-seq"><img class="lesson-svg" src="../../assets/diagrams/diagram-module-interfaces-1-panel-D-1.svg" width="607" height="624" alt="Sequence diagram: Browser, HTTP, AgentService, Store" loading="lazy"><figcaption>One-way streaming sequence diagram: decoupled interactions using POST submit + SSE progress + GET history.</figcaption></figure>
+<div class="am-md">
+<p><strong>Diagram Note: Why Doesn't the Diagram Above Show WebSocket?</strong></p>
+<p>The sequence diagram above illustrates the typical <strong>"half-duplex / one-way streaming"</strong> approach (Pattern 2 in the table above):</p>
+<ul>
+<li>The browser submits tasks via HTTP POST, opens an SSE connection to listen to <code>SSE progress</code> one-way broadcasts, and checks records via HTTP GET.</li>
+<li><strong>Limitations</strong>: Data travels only downstream. If the agent needs mid-run human approvals or if the user clicks "Stop", the browser cannot send data back over SSE; it must initiate separate HTTP POST calls, leaving connections and state fragmented.</li>
+</ul>
+<p><strong>Switching to full-duplex WebSocket (Pattern 3) brings an architectural upgrade:</strong></p>
+<ul>
+<li><strong>Single persistent session</strong>: A single WebSocket handshake multiplexes task triggers, token streams, and lifecycle steps over one persistent TCP socket.</li>
+<li><strong>Zero-friction bidirectional signaling</strong>: When the server sends an <code>approval_required</code> frame, the client replies immediately over the same socket with <code>approval_response</code> or <code>abort_run</code>, achieving true full-duplex collaboration (detailed in the next section).</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-hitl"><h3>5. Deep Dive into Full-Duplex Control: Human-in-the-Loop Flows</h3><div class="lesson-body"><div class="am-md"><p>Over WebSocket, the system cleanly supports three essential interaction patterns:</p>
+
+<h4>Scenario 1: Human Approval for Sensitive Actions</h4>
+<p>When Policy identifies an action requiring explicit user consent (e.g., deleting a file, changing production config), Runner pauses and requests guidance:</p>
+<ul>
+<li><strong>Runner</strong>: Detects that <code>delete_file</code> needs authorization, emits an <code>approval_requested</code> event, and pauses the coroutine.</li>
+<li><strong>Server (WebSocket)</strong>: Pushes frame: <code>{"type": "approval_required", "action_id": "act_981", "tool": "delete_file", "params": {"path": "main.py"}}</code>.</li>
+<li><strong>Client (UI)</strong>: Renders a modal displaying parameters and warning dialogs.</li>
+<li><strong>User</strong>: Clicks "Reject action".</li>
+<li><strong>Client (WebSocket)</strong>: Emits: <code>{"type": "approval_response", "action_id": "act_981", "approved": false, "reason": "Keep original, make a copy instead"}</code>.</li>
+<li><strong>Runner</strong>: Resumes coroutine with <code>ToolResult(error="User rejected: Keep original, make a copy instead")</code> and lets the model adapt.</li>
+</ul>
+
+<h4>Scenario 2: Mid-Run Clarifications (Ask User)</h4>
+<p>When task instructions are ambiguous, the model calls an interactive prompt tool:</p>
+<ul>
+<li><strong>Model</strong>: Requests <code>ask_user(prompt="What is the database password for testing?")</code>.</li>
+<li><strong>Server (WebSocket)</strong>: Broadcasts <code>{"type": "user_input_requested", "prompt": "What is the database password for testing?"}</code>.</li>
+<li><strong>User</strong>: Types credentials and submits.</li>
+<li><strong>Client (WebSocket)</strong>: Sends <code>{"type": "user_input_response", "answer": "secret_123"}</code>.</li>
+<li><strong>Runner</strong>: Feeds the reply as the tool output back into the model context.</li>
+</ul>
+
+<h4>Scenario 3: User Interrupt and Safe Cancellation</h4>
+<p>When the user notices bad trajectory drift, they click "Stop":</p>
+<ul>
+<li><strong>Client (WebSocket)</strong>: Pushes <code>{"type": "abort_run", "run_id": "run_001"}</code>.</li>
+<li><strong>Server</strong>: Triggers the task's <code>asyncio.Event</code> cancellation flag.</li>
+<li><strong>Runner</strong>: Safely winds down current steps, writes an <code>interrupted</code> status in the session log, and releases workspace resources.</li>
+<li><strong>Server (WebSocket)</strong>: Emits <code>{"type": "run_interrupted", "run_id": "run_001"}</code> to unlock the frontend interface.</li>
+</ul>
+
+<h4 id="module-interfaces-tui-diff">Why Does Claude Code Support Rich Human Interactions Despite Being a CLI?</h4>
+<p>Developers often wonder: <em>"If terminal commands are typically batch scripts, why do tools like Claude Code, Cursor Terminal, or Aider run in the terminal yet provide real-time typewriter streaming, interactive approvals ([Y/n]), and instant Ctrl+C cancellation?"</em></p>
+<p>This is because <strong>CLI applications exist in two fundamentally different forms</strong>:</p>
+<ul>
+<li><strong>Form 1: One-Shot Batch CLI (Traditional Scripts)</strong>:
+  <ul>
+    <li><strong>Runtime Profile</strong>: Run-to-completion invocation (like <code>python -m learn_agent --task "..."</code> in Stages 0–5). The main process blocks synchronously until the entire task finishes, ignoring terminal events in between. Ideal for CI/CD pipelines.</li>
+  </ul>
+</li>
+<li><strong>Form 2: Interactive Terminal User Interface (TUI / REPL, like Claude Code or pi)</strong>:
+  <ul>
+    <li><strong>Runtime Profile</strong>: A persistent, event-loop-driven application. Operating directly over OS standard streams (stdio), it achieves capabilities identical to full-duplex WebSockets:
+      <ol>
+        <li><strong>Stdout Streaming</strong>: Intercepts model delta chunks and writes ANSI escape codes directly to <code>stdout</code>, delivering typewriter animations, cursor repositioning, and folding progress bars.</li>
+        <li><strong>Raw Mode &amp; Interactive stdin (Approvals)</strong>: When Policy halts on high-risk tools, Runner pauses its coroutine while the terminal switches into Raw Mode to capture arrow keys, Enter, or <code>y/n</code> keystrokes. Upon user confirmation, stdin restores normal mode and Runner resumes.</li>
+        <li><strong>Signal Interruption (POSIX Signals)</strong>: Captures <code>SIGINT</code> (Ctrl+C) and triggers <code>AbortController</code> signals to abort active network calls and child processes cleanly.</li>
+      </ol>
+    </li>
+  </ul>
+</li>
+</ul>
+<p><strong>Architecture Takeaway</strong>: In robust Agent design, the frontend (whether a Web browser or a terminal TUI) is purely a <strong>presentation shell</strong>. Both rely on the same fundamental trinity: <strong>event-driven streaming + coroutine suspend/resume state machines + honest cancellation signaling</strong>. Headless architectures (like pi) even run the TUI as a client communicating with an Agent Core via stdio-based JSON-RPC frames.</p>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-events"><h3>6. End-to-End System Data Flow Architecture &amp; Event Protocols</h3><div class="lesson-body"><div class="am-md">
+<h4 id="module-interfaces-data-dimensions">6.1 Core Distinctions: Four Different Dimensions of Event, Session, State, and Checkpoint</h4>
+<p>When designing data models, never confuse incoming step events with internal state. These four concepts occupy distinct system dimensions and serve entirely different audiences:</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Dimension &amp; Nature</th>
+<th>Primary Consumer</th>
+<th>Storage &amp; Lifecycle</th>
+<th>Core Question Answered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Event (Stream)</strong></td>
+<td><strong>Transport &amp; Telemetry</strong><br>Immutable transient pulses emitted at runtime</td>
+<td>Presentation (Web / TUI)<br>Tracing (e.g., Langfuse)</td>
+<td>In-memory ring buffer or socket stream, discardable after task finish</td>
+<td><em>"What micro-step just happened in the last 10 milliseconds?"</em></td>
+</tr>
+<tr>
+<td><strong>Session (Log)</strong></td>
+<td><strong>Human-Agent Interaction</strong><br>Domain conversation &amp; task Turns</td>
+<td>Humans (history review)<br>Model (next turn context assembly)</td>
+<td>Persistent storage (JSONL / DB), durable for long horizons</td>
+<td><em>"What did the user and agent discuss and conclude previously?"</em></td>
+</tr>
+<tr>
+<td><strong>State (Working Memory)</strong></td>
+<td><strong>Execution Core</strong><br>Shared blackboard &amp; variables inside a task</td>
+<td>Runner orchestrator<br>Tools &amp; Subagents</td>
+<td>In-process object variables, active only during a single Run</td>
+<td><em>"What structured data has been accumulated right now? What are the next step dependencies?"</em></td>
+</tr>
+<tr>
+<td><strong>Checkpoint</strong></td>
+<td><strong>Fault-Tolerance &amp; Recovery</strong><br>Frozen physical snapshot at key milestones</td>
+<td>Recovery state machine<br>Human intervention reconciler</td>
+<td>Persistent disk/store, flushed before critical side-effects</td>
+<td><em>"If the node crashes right now, where do I safely resume without double-charging or re-writing files?"</em></td>
+</tr>
+</tbody></table></div>
+
+<h4 id="module-interfaces-dataflow-map">6.2 End-to-End System Data Flow Architecture: How Data Flows Across Layers</h4>
+<p>To keep data boundaries clean and decoupled, an industrial-grade Agent harness coordinates data across five distinct architectural tiers:</p>
+
+<figure class="am-diagram"><img class="lesson-svg" src="../../assets/diagrams/system-dataflow-architecture.svg" width="960" height="780" alt="End-to-End System Data Flow Architecture: Event, State, Checkpoint &amp; Session" loading="lazy"><figcaption>End-to-End System Data Flow Architecture: Presentation, Transport, Working Memory (State), Durable Persistence (Checkpoint / Session), and Long-Term Context Assembly.</figcaption></figure>
+
+<p><strong>The Five Stages of Data Lifecycle:</strong></p>
+<ol>
+<li><strong>Stage 1: Initialization &amp; Context Assembly (Memory + Session → Context → State)</strong>:
+  <ul>
+    <li>When a user sends a prompt, <a href="context.html#module-context">Context Manager</a> reads closed past turns from Session storage and loads the pinned project memory snapshot (Memory).</li>
+    <li>It truncates history within strict Token budgets and initializes the active in-memory State.</li>
+  </ul>
+</li>
+<li><strong>Stage 2: Loop Execution &amp; Transient Event Broadcasts (State ↔ Model ↔ Policy ↔ Event)</strong>:
+  <ul>
+    <li>Runner drives model inference. Token fragments are packaged as <code>model_delta</code> events to feed the frontend typewriter effect without altering persistent state.</li>
+    <li>Tool call proposals update in-memory State and trigger <code>tool_call_started</code> lifecycle events to the client.</li>
+  </ul>
+</li>
+<li><strong>Stage 3: Crash Recovery Freezing (State → Checkpoint Flush)</strong>:
+  <ul>
+    <li>Before executing physical actions with side effects (file modifications, external payments), the system persists step index, unique <code>invocation_id</code>, and State snapshots to <a href="../stages/stage-7.html#stage-7">Checkpoint</a> storage.</li>
+    <li>If the node crashes, recovery logic verifies physical receipts to prevent duplicated operations.</li>
+  </ul>
+</li>
+<li><strong>Stage 4: Full-Duplex Human Suspension &amp; Resumption (State Pauses ↔ Event ↔ Client Approval ↔ State Resumes)</strong>:
+  <ul>
+    <li>Upon encountering high-risk tools, Runner suspends the active coroutine and emits an <code>approval_required</code> event.</li>
+    <li>The user decides in the UI; the client sends an <code>approval_response</code> back over the same WebSocket, resuming the Runner.</li>
+  </ul>
+</li>
+<li><strong>Stage 5: Turn Finalization &amp; History Archival (State → SessionLog / S3 / Workspace)</strong>:
+  <ul>
+    <li>When the model finishes without further tool calls, Runner seals the Turn boundary.</li>
+    <li>Clean inputs, final answers, and tool results append to <a href="state.html#module-state">SessionLog</a>, releasing temporary scratchpads while preserving domain artifacts.</li>
+  </ul>
+</li>
+</ol>
+
+<h4 id="module-interfaces-event-levels">6.3 Tiered Event Streams and Standard Frame Formats</h4>
+<p>When designing WebSocket or SSE protocols, distinguish two tiers of events:</p>
+<ul>
+<li><strong>Tier 1: Model Token Streaming (Deltas)</strong>: Incremental token fragments generated by the model. Used solely for typewriter rendering, without modifying state.</li>
+<li><strong>Tier 2: Harness Step / Lifecycle Events</strong>: Structured events reflecting agent milestones and tool invocations, driving UI components like folding thought boxes and progress indicators.</li>
+</ul>
+
+<p>Recommended standard JSON frame structure:</p>
+<pre><code>{
+  "event_id": 104,
+  "run_id": "run_20261031_001",
+  "session_id": "sess_default",
+  "timestamp": 1793433600.123,
+  "type": "tool_call_started",
+  "payload": {
+    "tool_call_id": "call_abc123",
+    "tool_name": "search_text",
+    "arguments": {"keyword": "Policy"}
+  }
+}</code></pre>
+
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>Event Type</th>
+<th>Trigger Condition</th>
+<th>Frontend Presentation &amp; Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run_started</code></td>
+<td>Runner validates and starts the task</td>
+<td>Lock input, show spinning indicator</td>
+</tr>
+<tr>
+<td><code>model_delta</code></td>
+<td>Incoming model token fragment</td>
+<td>Append text in the active message bubble</td>
+</tr>
+<tr>
+<td><code>thought_delta</code></td>
+<td>Incoming reasoning trace (Thinking)</td>
+<td>Stream into a collapsible thought accordion</td>
+</tr>
+<tr>
+<td><code>tool_call_started</code></td>
+<td>Model requests tool execution</td>
+<td>Display tool badge and argument preview</td>
+</tr>
+<tr>
+<td><code>tool_call_completed</code></td>
+<td>Tool execution finishes with output</td>
+<td>Update badge to success/fail, fold result preview</td>
+</tr>
+<tr>
+<td><code>approval_required</code></td>
+<td>Policy flags high-risk tool call</td>
+<td>Display approval modal with Approve / Deny buttons</td>
+</tr>
+<tr>
+<td><code>run_completed</code></td>
+<td>Model outputs final answer and stops</td>
+<td>Unlock input box, display summary stats</td>
+</tr>
+<tr>
+<td><code>run_error</code></td>
+<td>Model error, budget exceeded, or crash</td>
+<td>Highlight error message, allow retry</td>
+</tr>
+</tbody></table></div>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-p1-panel-F"><h3>7. Edge Cases: Reconnection, Deduplication &amp; Honest Cancellation</h3><div class="lesson-body"><div class="am-md">
+<h4>A. Reconnect Catch-up with Event Cursors</h4>
+<p>Mobile lock-screens or network drops terminate WebSocket connections. Rather than restarting tasks:</p>
+<ul>
+<li><strong>Monotonic Server Event IDs</strong>: Every event emitted carries an incrementing <code>event_id</code> (e.g., 1, 2, 3...).</li>
+<li><strong>Client Cursor Tracking</strong>: The frontend stores the highest received <code>last_event_id</code>.</li>
+<li><strong>Resume Handshake</strong>: Upon reconnection, the client sends <code>{"action": "resume", "run_id": "run_001", "after_event_id": 42}</code>; the server replays all events newer than 42 before switching to live stream.</li>
+<li><strong>Deduplication</strong>: The client filters event IDs to prevent duplicate renders.</li>
+</ul>
+
+<h4>B. Idempotent Submission (Client Request ID)</h4>
+<p>To prevent double execution caused by repeated user clicks:</p>
+<ul>
+<li><strong>Client UUID</strong>: Each new task sends a unique <code>client_request_id</code>.</li>
+<li><strong>Server Lock</strong>: The server checks if the request ID is already processing; if so, it binds to the existing <code>run_id</code> without launching a duplicate loop.</li>
+</ul>
+
+<h4>C. Honest Cancellation Propagation</h4>
+<p>Differentiate between tab closure, disconnection, cancellation requests, and confirmed halts:</p>
+<ul>
+<li><strong>Real Signal Routing</strong>: Clicking "Stop" propagates cancellation tokens into the Runner rather than merely hiding the spinner in the UI.</li>
+<li><strong>Safe Completion of Atomic Actions</strong>: If a tool is currently writing a file to disk, wait for the single write call to complete cleanly before terminating the loop.</li>
+<li><strong>Truthful States</strong>: The server returns "Cancellation accepted" first, updating to <code>run_cancelled</code> only when the Runner safely terminates.</li>
+</ul>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-p1-panel-E"><h3>8. How Open-Source Systems Organize Multiple Entry Points</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>pi (Official Docs)</strong>: Its <a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/coding-agent/docs/rpc.md">RPC interface</a> turns the core Agent into a headless server. CLI, Web, and VS Code extensions speak JSON-RPC commands and event frames, keeping permissions and tool logic unified in the core engine.</li>
+<li><strong>AgentScope Java (Official Docs)</strong>: Its <a href="https://github.com/agentscope-ai/agentscope-java/blob/40a4a57ad79e82f8505572d3b195d0264ec7efcb/docs/v2/zh/docs/harness/architecture.md">architecture guide</a> separates direct synchronous execution, in-request streaming, and persistent background tasks, ensuring shared configurations across entry points.</li>
+<li><strong>OpenAI Assistants &amp; Realtime APIs</strong>: Decouple Threads and Runs, broadcasting granular step events (e.g., <code>thread.run.step.created</code>) and yielding a <code>requires_action</code> state whenever tool approval or external results are needed.</li>
+</ul>
+</div></div>
+</section>
+
+<section class="lesson-section" id="module-interfaces-p1-panel-G"><h3>9. Current Implementation &amp; Unimplemented Scope</h3><div class="lesson-body"><div class="am-md"><ul>
+<li><strong>Implemented (as of Stage 5: Synchronous CLI + Session Queries)</strong>:
+  <ul>
+  <li>Task submission enters Runner via <code>run_task()</code>, waiting synchronously for <code>RunResult</code> with session continuation support via <code>--session ID</code>.</li>
+  <li>Provides <code>--list-sessions</code> and <code>--show-session ID</code> for read-only queries against local JSONL logs without calling models or tools (see <a href="../stages/stage-1.html#stage-1">Stage 1</a> and <a href="../stages/stage-3.html#stage-3">Stage 3</a>).</li>
+  </ul>
+</li>
+<li><strong>Not Yet Implemented (deferred to <a href="../stages/stage-8.html#stage-8">Stage 8 On-Demand Extensions</a>)</strong>: Web HTTP / WebSocket gateway, persistent background tasks, bidirectional human approval frames, cursor-based replay, and cancellation signals.</li>
 </ul></div></div></section>
-<section class="lesson-section" id="module-interfaces-p2-panel-A"><h3>8. Expected Outcomes (Future Web Entry Exercise)</h3><div class="lesson-body"><div class="am-md"><p>When adding a Web entry point later, first make the CLI and HTTP routes share the same application service, then verify against these criteria:</p>
+
+<section class="lesson-section" id="module-interfaces-p2-panel-A"><h3>10. Expected Outcomes (Future Web &amp; WebSocket Entry Exercise)</h3><div class="lesson-body"><div class="am-md"><p>When connecting Web and WebSocket interfaces to the Agent, verify against these criteria:</p>
 <p><strong>Expected Outcomes:</strong></p>
 <ul>
-<li><strong>Consistent behavior across entry points</strong>: Submitting the same task from CLI and HTTP obeys the exact same toolset and Policy permission restrictions.</li>
-<li><strong>Zero side effects on queries and refreshes</strong>: Querying history or refreshing the browser page only reads saved records and never triggers new model requests or tool executions.</li>
-<li><strong>Catch-up progress after disconnect</strong>: After an SSE connection drops and reconnects, missing steps are filled in using the event cursor without rendering duplicate events.</li>
-<li><strong>No duplicate runs on resubmission</strong>: Submitting repeatedly with the same client request ID returns the existing task state directly without starting a second run.</li>
-<li><strong>Truthful cancellation status</strong>: After initiating cancellation or closing the frontend page, task status accurately reflects whether the backend executor has truly stopped, without fabricating success or stopped states.</li>
+<li><strong>Identical execution across interfaces</strong>: Submissions from the CLI and Web browser share the exact same Runner, tool definitions, and Policy restrictions.</li>
+<li><strong>Zero side-effects on read queries</strong>: Listing sessions or loading history only reads persisted records, never triggering model calls or tool executions.</li>
+<li><strong>Fluid full-duplex collaboration</strong>: Sensitive tool approvals and model questions pop up in the UI seamlessly; decisions immediately resume or cancel the runner.</li>
+<li><strong>Lossless catch-up on reconnect</strong>: Clients reconnecting with a cursor receive all missed step events in order, without duplicate renders.</li>
+<li><strong>Idempotent submissions</strong>: Submitting identical client request IDs rejoins the existing run rather than launching duplicate agent loops.</li>
+<li><strong>Truthful cancellation</strong>: Stopping a task cancels backend execution safely and logs the interruption; the backend never runs invisibly after cancellation.</li>
 </ul></div></div></section><nav class="chapter-nav" aria-label="Chapter navigation"><a href="../stages/stage-8.html#stage-8">← Stage 8: Add Entry Points, Extensions &amp; Orchestration on Demand</a><a href="loop.html#module-loop">Loop / Runner: Control How a Task Continues and Stops →</a></nav></article><footer class="footer"><p>Maintain this HTML page directly; general principles and stage practices are linked together.</p></footer></div></main></div>
 <dialog id="diagram-view" aria-labelledby="diagram-title"><div class="dialog-bar"><span id="diagram-title">Diagram</span><div><button id="diagram-size" type="button">Actual size</button><button id="diagram-close" type="button">Close</button></div></div><div id="diagram-canvas" class="diagram-canvas"></div></dialog>
 </body></html>
