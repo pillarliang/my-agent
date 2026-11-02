@@ -20,7 +20,12 @@
 <li><strong>全量重发会撑爆窗口并稀释重点</strong>：早已作废的草稿和大段工具输出会反复占用模型上下文窗口（Context Window），不仅拉高耗时与费用，还会触发输入超限报错，或把第 1 轮的“UTC 时间”要求淹没在噪音中。</li>
 <li><strong>盲目截断会丢失约束或破坏协议</strong>：如果简单截取“最近 K 条消息”，既可能把第 1 轮的核心要求删掉，又可能把一次工具调用（<code>ToolCall</code>）和它的执行回执（<code>ToolResult</code>）从中间切断，直接触发模型接口协议报错。</li>
 </ul>
-<p>因此，<strong>“存储层保存了多少历史（State / Transcript）”与“本次请求实际发给模型多少内容（Context）”必须拆成两个独立职责</strong>。<strong>Context Manager（上下文管理器）</strong>专门负责：在每次调用模型前，根据输入预算从候选历史、当前任务消息、参考资料与工具定义中筛选并组装本轮请求。</p>
+<p>因此，<strong>“存储层保存了多少历史（State / Transcript）”与“本次请求实际发给模型多少内容（Context）”必须彻底解耦为两个独立职责</strong>：</p>
+<ul>
+<li><strong>存储层（物理账本）</strong>：由数据库（SQLite / Postgres）或 JSONL 完整保存 <strong>100% 真实的原始物理记录（Full Fidelity Raw Events）</strong>，作为合规审计、排查问题与崩溃恢复（Recovery）的不变事实底稿，绝不因上下文超限而擅自修改或删除。</li>
+<li><strong>上下文窗口（运行时 L1 缓存）</strong>：单次发给大模型的 Context Window 是<strong>寸土寸金的高速缓存</strong>，绝不能无脑倾倒几万字的历史日志。</li>
+</ul>
+<p><strong>Context Manager（上下文管理器）</strong>正是连接物理账本与模型窗口的“守门员”：专门负责在每次调用模型前的最后一毫秒，依据输入预算对全量历史执行筛选、大输出截断（Spill）、滚动摘要与链式引用钩子装配，产出精炼高效的本轮请求。</p>
 <div class="am-table-wrap"><table>
 <thead>
 <tr>
@@ -329,6 +334,13 @@
 <td>状态黑盒不可读、跨供应商失效</td>
 <td>可选扩展（特定协议适配器）</td>
 </tr>
+<tr>
+<td>Inline &amp; Spill 与链式召回</td>
+<td>持续在线多任务下，主窗口撑爆与长程记忆遗忘的根本矛盾</td>
+<td>将 Context 视为 L1 缓存，近期摘要内联（Inline），长文本与老历史外溢（Spill）存盘，以唯一 ID 引用图按需展开</td>
+<td>链路过深引发多跳工具往返耗时；对引用 ID 提取精度要求高</td>
+<td>前沿自主系统（<a href="../reference/super-agent-design.html#super-agent-design">Super-agent</a>）</td>
+</tr>
 </tbody></table></div>
 <p><strong>切勿混淆“前缀缓存（Prefix Caching）”与“上下文预算管理”：</strong>保持系统指令与前文前缀稳定，可以让模型服务商命中前缀缓存，从而降低重复计算的费用与首字延迟；但<strong>缓存命中的 Token 依然完整占用本轮上下文窗口长度</strong>，绝不能用前缀缓存替代输入计量与裁剪。</p>
 </div></div>
@@ -336,6 +348,12 @@
 <section class="lesson-section" id="module-context-p1-panel-F"><h3>6. 开源与工业界源码依据汇总</h3><div class="lesson-body"><div class="am-md">
 <p>以下固定版本源码与官方文档展示了上述机制在工业界项目中的具体落地位置（完整仓库样本见<a href="../reference/research.html#reference-research">方案依据</a>）：</p>
 <ul>
+<li><strong>DeepSeek Super-agent（基于 <code>dsh-superagent-prototype</code> 架构探索）</strong>：
+  <ul>
+  <li><strong>L1 缓存哲学</strong>：将 Context Window 视为高频高速缓存，近期核心信息内联（Inline），超出预算或低频长文本溢出（Spill）存入物理存储。</li>
+  <li><strong>链式召回（Chain of Recall）</strong>：对象赋予唯一 ID 构成底层引用图，模型在需要深层历史时按需发起多跳检索，避免全量历史挤占主窗口（详见<a href="../reference/super-agent-design.html#super-agent-design">Super-agent 前沿深度解读</a>）。</li>
+  </ul>
+</li>
 <li><strong>pi（固定提交 <code>9d2ec7ffabe927bfad2214c1cee25b6632a78dcf</code>）</strong>：
   <ul>
   <li><a href="https://github.com/earendil-works/pi/blob/9d2ec7ffabe927bfad2214c1cee25b6632a78dcf/packages/agent/src/agent-loop.ts">packages/agent/src/agent-loop.ts</a>：在每次请求模型前依次调用 <code>transformContext</code> 与 <code>convertToLlm</code>。</li>
